@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 
 
@@ -8,6 +9,8 @@ class Job(models.Model):
     description = models.TextField(verbose_name="定義與說明")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
+    updated_by = models.ForeignKey(User, related_name='job_updated_by', on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey(User, related_name='job_created_by', on_delete=models.DO_NOTHING, null=True)
 
     def __str__(self):
         return self.name
@@ -33,6 +36,8 @@ class Label(models.Model):
     description = models.TextField(verbose_name="標籤定義")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
+    updated_by = models.ForeignKey(User, related_name='label_updated_by', on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey(User, related_name='label_created_by', on_delete=models.DO_NOTHING, null=True)
 
     def __str__(self):
         return self.name
@@ -52,6 +57,8 @@ class Document(models.Model):
     content = models.TextField(verbose_name="內文")
     post_time = models.DateTimeField(verbose_name="發布時間")
     labels = models.ManyToManyField(Label, verbose_name="被標記標籤")
+    updated_by = models.ForeignKey(User, related_name='document_updated_by', on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey(User, related_name='document_created_by', on_delete=models.DO_NOTHING, null=True)
 
     def __str__(self):
         return self.title

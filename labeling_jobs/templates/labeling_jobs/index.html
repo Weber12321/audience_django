@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>標記任務列表</title>
+</head>
+<body>
+{% if jobs %}
+    <ul>
+        {% for job in jobs %}
+            <li><a href="{% url 'labeling_jobs:job_detail' job.id %}">{{ job.name }}</a></li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>目前沒有標記任務</p>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ job.name }}</title>
+</head>
+<body>
+<h1>{{ job.name }}</h1>
+<small>{{ job.created_by }} created at {{ job.created_at }}</small>
+<p>{{ job.description }}</p>
+<p>{{ job.show_labels }}</p>
+<p>documents: {{ job.show_document_count }}</p>
+<a href="{% url 'labeling_jobs:index' %}">back</a>
+</body>
+</html>

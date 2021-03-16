@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 
-app_name = 'labeling_job'
+app_name = 'polls'
 urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
     # ex: /labeling_job/5/
