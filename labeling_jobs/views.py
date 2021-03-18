@@ -1,12 +1,8 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.forms import modelformset_factory
-from django.shortcuts import render, redirect
-from django.urls import reverse, reverse_lazy
-from django.views import generic, View
-from django import forms
+from django.urls import reverse_lazy
+from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
 
-from .forms import JobForm
 from .models import Job
 
 
@@ -43,39 +39,6 @@ class JobUpdate(LoginRequiredMixin, generic.UpdateView):
 class JobDelete(LoginRequiredMixin, generic.DeleteView):
     model = Job
     success_url = reverse_lazy('index')
-
-
-# class JobFormView(generic.FormView):
-#     form_class = JobForm
-#     initial = {"created_by": 1,
-#                "name": "new job",
-#                "description": "say something"}
-#     template_name = "labeling_jobs/job_form.html"
-
-# def get(self, request, *args, **kwargs):
-#     form = self.form_class(initial=self.initial)
-#     return render(request, self.template_name, {'form': form})
-#
-# def post(self, request):
-#     form = self.form_class(request.POST)
-#     if form.is_valid():
-#         form.save()
-#         return redirect('labeling_jobs:index')
-#     return render(request, self.template_name, {'form': form})
-
-
-def create_job(request):
-    form = JobForm()
-    if request.method == "POST":
-        form = JobForm(request.POST)
-        if form.is_valid():
-            form.save()
-        return redirect('labeling_jobs:index')
-    context = {
-        'form': form
-    }
-
-    return render(request, 'labeling_jobs/job_edit.html', context=context)
 
 
 class JobDocumentsView(SingleObjectMixin, generic.ListView):
