@@ -20,13 +20,26 @@ class JobAdmin(admin.ModelAdmin):
     fieldsets = [
         (
             None, {
-                "fields": ['name', 'description']
+                "fields": ['name', 'description', 'is_multi_label']
             }),
     ]
     inlines = [LabelInline, DocumentInline]
-    list_display = ('name', 'show_labels', 'show_document_count', 'created_at', 'updated_at')
-    list_filter = ['created_at', "updated_at"]
-    search_fields = ['name', 'description']
+    list_display = ('name', 'show_labels', 'is_multi_label', 'show_document_count', 'created_at', 'updated_at', 'created_by')
+    list_filter = ['created_at', "updated_at", 'created_by']
+    search_fields = ['name', 'description', 'created_by']
+
+    def save_model(self, request, obj, form, change):
+        obj.created_by = request.user
+        obj.save()
+
+    def save_formset(self, request, form, formset, change):
+        if formset.model == Job:
+            instances = formset.save(commit=False)
+            for instance in instances:
+                instance.created_by = request.user
+                instance.save()
+        else:
+            formset.save()
 
 
 class DocumentAdmin(admin.ModelAdmin):

@@ -7,5 +7,8 @@ app_name = 'labeling_jobs'
 urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
     path('<int:pk>/', views.JobDetailView.as_view(), name='job_detail'),
-    path('create', views.create_job, name='create_job'),
+    path('create/', views.JobCreate.as_view(), name='job-create'),
+    path('<int:pk>/update/', views.JobUpdate.as_view(), name='job-update'),
+    path('<int:pk>/delete/', views.JobDelete.as_view(), name='job-delete'),
+    path('<int:pk>/documents', views.JobDocumentsView.as_view(), name="job_docs")
 ]

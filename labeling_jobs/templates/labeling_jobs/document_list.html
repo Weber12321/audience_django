@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h2>{{ job.name }}</h2>
+{% if page_obj %}
+    <ul>
+        {% for doc in page_obj %}
+            <li><a href="">{{ doc.title }}</a>, <p>{{ doc.content }}</p>
+                {% for label in job.label_set.all %}
+                    {% if label in doc.labels.all %}
+                        [v]
+                    {% else %}
+                        [ ]
+                    {% endif %}
+                    <a href="">{{ label.name }}</a> ({{ label.description }})
+                {% endfor %}
+            </li>
+        {% endfor %}
+    </ul>
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+            {% endif %}
+        </span>
+    </div>
+{% else %}
+    <p>沒有文件</p>
+{% endif %}
+<a href="{% url 'labeling_jobs:job_detail' job.id %}">回任務概述</a>
+</body>
+</html>

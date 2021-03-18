@@ -6,10 +6,11 @@
 </head>
 <body>
 <h1>{{ job.name }}</h1>
-<small>{{ job.created_by }} created at {{ job.created_at }}</small>
+<small><strong>{{ job.created_by }}</strong> created this job at <strong>{{ job.created_at }}</strong></small>
 <p>{{ job.description }}</p>
 <p>{{ job.show_labels }}</p>
 <p>documents: {{ job.show_document_count }}</p>
+<a href="{% url 'labeling_jobs:job_docs' job.id %}">查看資料集</a>
 <a href="{% url 'labeling_jobs:index' %}">back</a>
 </body>
 </html>

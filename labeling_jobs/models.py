@@ -3,17 +3,22 @@ from django.db import models
 
 
 # Create your models here.
+from django.urls import reverse
+
 
 class Job(models.Model):
     name = models.CharField(max_length=200, verbose_name="標記工作名稱")
     description = models.TextField(verbose_name="定義與說明")
+    is_multi_label = models.BooleanField(default=False, verbose_name="是否屬於多標籤")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
-    updated_by = models.ForeignKey(User, related_name='job_updated_by', on_delete=models.DO_NOTHING, null=True)
-    created_by = models.ForeignKey(User, related_name='job_created_by', on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse('labeling_jobs:job_detail', kwargs={'pk': self.pk})
 
     def show_labels(self):
         return [f'"{label.name}"' for label in self.label_set.all()]
@@ -36,8 +41,6 @@ class Label(models.Model):
     description = models.TextField(verbose_name="標籤定義")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
-    updated_by = models.ForeignKey(User, related_name='label_updated_by', on_delete=models.DO_NOTHING, null=True)
-    created_by = models.ForeignKey(User, related_name='label_created_by', on_delete=models.DO_NOTHING, null=True)
 
     def __str__(self):
         return self.name
@@ -57,8 +60,6 @@ class Document(models.Model):
     content = models.TextField(verbose_name="內文")
     post_time = models.DateTimeField(verbose_name="發布時間")
     labels = models.ManyToManyField(Label, verbose_name="被標記標籤")
-    updated_by = models.ForeignKey(User, related_name='document_updated_by', on_delete=models.DO_NOTHING, null=True)
-    created_by = models.ForeignKey(User, related_name='document_created_by', on_delete=models.DO_NOTHING, null=True)
 
     def __str__(self):
         return self.title

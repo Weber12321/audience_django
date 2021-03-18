@@ -5,6 +5,7 @@
     <title>標記任務列表</title>
 </head>
 <body>
+<a href="{% url 'labeling_jobs:job-create' %}">建立標記任務</a>
 {% if jobs %}
     <ul>
         {% for job in jobs %}
