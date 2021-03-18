@@ -1,10 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}任務{% endblock %}
+{% block content %}
 <h2>{{ job.name }}</h2>
 {% if page_obj %}
     <ul>
@@ -39,6 +36,4 @@
 {% else %}
     <p>沒有文件</p>
 {% endif %}
-<a href="{% url 'labeling_jobs:job_detail' job.id %}">回任務概述</a>
-</body>
-</html>
+{% endblock %}

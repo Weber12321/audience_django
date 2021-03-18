@@ -33,12 +33,12 @@ class JobCreate(LoginRequiredMixin, generic.CreateView):
 
 class JobUpdate(LoginRequiredMixin, generic.UpdateView):
     model = Job
-    fields = ['name', 'description']
+    fields = ['name', 'description', 'is_multi_label']
 
 
 class JobDelete(LoginRequiredMixin, generic.DeleteView):
     model = Job
-    success_url = reverse_lazy('index')
+    success_url = reverse_lazy('labeling_jobs:index')
 
 
 class JobDocumentsView(SingleObjectMixin, generic.ListView):

@@ -1,19 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>標記任務列表</title>
-</head>
-<body>
-<a href="{% url 'labeling_jobs:job-create' %}">建立標記任務</a>
-{% if jobs %}
-    <ul>
-        {% for job in jobs %}
-            <li><a href="{% url 'labeling_jobs:job_detail' job.id %}">{{ job.name }}</a></li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>目前沒有標記任務</p>
-{% endif %}
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}標記任務列表{% endblock %}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <a class="btn btn-outline-primary" href="{% url 'labeling_jobs:job-create' %}" role="button">建立標記任務</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                {% if jobs %}
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">任務名稱</th>
+                            <th scope="col">建立者</th>
+                            <th scope="col">建立日期</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for job in jobs %}
+                            <tr>
+                                <th scope="row">1</th>
+                                <td><a href="{% url 'labeling_jobs:job_detail' job.id %}">{{ job.name }}</a></td>
+                                <td>{{ job.created_by }}</td>
+                                <td>{{ job.created_at }}</td>
+                                <td><a class="btn btn-outline-primary" href="{% url 'labeling_jobs:job-update' job.id %}"
+                                       role="button">編輯</a></td>
+                                <td><a class="btn btn-outline-danger" href="{% url 'labeling_jobs:job-delete' job.id %}"
+                                       role="button">刪除</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>目前沒有標記任務</p>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+{% endblock %}

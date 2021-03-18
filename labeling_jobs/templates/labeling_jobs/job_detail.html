@@ -1,16 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ job.name }}</title>
-</head>
-<body>
-<h1>{{ job.name }}</h1>
-<small><strong>{{ job.created_by }}</strong> created this job at <strong>{{ job.created_at }}</strong></small>
-<p>{{ job.description }}</p>
-<p>{{ job.show_labels }}</p>
-<p>documents: {{ job.show_document_count }}</p>
-<a href="{% url 'labeling_jobs:job_docs' job.id %}">查看資料集</a>
-<a href="{% url 'labeling_jobs:index' %}">back</a>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}任務{% endblock %}
+{% block content %}
+    <h1>{{ job.name }}</h1>
+    <small><strong>{{ job.created_by }}</strong> created this job at <strong>{{ job.created_at }}</strong></small>
+    <p>{{ job.description }}</p>
+    <p>{{ job.show_labels }}</p>
+    <p>documents: {{ job.show_document_count }}</p>
+    <a href="{% url 'labeling_jobs:job_docs' job.id %}">查看資料集</a>
+    <a href="{% url 'labeling_jobs:job-update' job.id %}">編輯任務</a>
+    <a href="{% url 'labeling_jobs:job-delete' job.id %}">刪除任務</a>
+{% endblock %}
