@@ -1,47 +1,57 @@
 {% extends "base.html" %}
 
-{% block title %}標記任務列表{% endblock %}
+{% block title %}資料標記任務{% endblock %}
 {% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col">
-                <a class="btn btn-outline-primary" href="{% url 'labeling_jobs:job-create' %}" role="button">建立標記任務</a>
-            </div>
+    <!-- Begin Page Content -->
+    <div class="container-fluid">
+
+        <!-- Page Heading -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">資料標記任務</h1>
+            <a href="{% url 'labeling_jobs:job-create' %}">建立新任務</a>
         </div>
+
         <div class="row">
-            <div class="col">
-                {% if jobs %}
-                    <table class="table">
-                        <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">任務名稱</th>
-                            <th scope="col">建立者</th>
-                            <th scope="col">建立日期</th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for job in jobs %}
-                            <tr>
-                                <th scope="row">1</th>
-                                <td><a href="{% url 'labeling_jobs:job_detail' job.id %}">{{ job.name }}</a></td>
-                                <td>{{ job.created_by }}</td>
-                                <td>{{ job.created_at }}</td>
-                                <td><a class="btn btn-outline-primary" href="{% url 'labeling_jobs:job-update' job.id %}"
-                                       role="button">編輯</a></td>
-                                <td><a class="btn btn-outline-danger" href="{% url 'labeling_jobs:job-delete' job.id %}"
-                                       role="button">刪除</a></td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>目前沒有標記任務</p>
-                {% endif %}
-            </div>
+
+            {% if jobs %}
+                <div class="card-columns">
+                    {% for job in jobs %}
+
+                        <div class="card mb-4">
+                            <!-- Card Body -->
+                            <div class="card-body">
+                                <div class="card-title font-weight-bold text-dark">{{ job.name }}</div>
+                                <h6 class="card-subtitle mb-2 text-muted">{{ job.labels }}</h6>
+                                <p class="card-text">{{ job.description }}</p>
+                                <p class="card-text"><small class="text-muted">{{ job.created_by.username }}
+                                    於 {{ job.created_at }} 建立這個任務</small></p>
+                                <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                                    <button type="button" class="btn btn-link"><a
+                                            href="{% url 'labeling_jobs:job_detail' job.id %}"
+                                            class="card-link">任務細節</a></button>
+                                    <div class="btn-group" role="group">
+                                        <button id="btnGroupDrop1" type="button" class="btn btn-link dropdown-toggle"
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            動作
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                            <a class="dropdown-item" href="{% url 'labeling_jobs:job-update' job.id %}">編輯任務</a>
+                                            <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' job.id %}">刪除任務</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>目前沒有標記任務</p>
+            {% endif %}
 
         </div>
+
     </div>
+    <!-- /.container-fluid -->
+
 {% endblock %}

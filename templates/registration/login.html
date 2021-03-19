@@ -2,37 +2,56 @@
 
 {% block content %}
 
-{% if form.errors %}
-<p>Your username and password didn't match. Please try again.</p>
-{% endif %}
-
-{% if next %}
-    {% if user.is_authenticated %}
-    <p>Your account doesn't have access to this page. To proceed,
-    please login with an account that has access.</p>
-    {% else %}
-    <p>Please login to see this page.</p>
+    {% if next %}
+        {% if user.is_authenticated %}
+            <div class="alert alert-danger text-center" role="alert">
+                您沒有權限造訪此頁面
+            </div>
+        {% else %}
+            <div class="alert alert-primary text-center" role="alert">
+                請先登入
+            </div>
+        {% endif %}
     {% endif %}
-{% endif %}
+    <div class="row justify-content-center">
 
-<form method="post" action="{% url 'login' %}">
-{% csrf_token %}
-<table>
-<tr>
-    <td>{{ form.username.label_tag }}</td>
-    <td>{{ form.username }}</td>
-</tr>
-<tr>
-    <td>{{ form.password.label_tag }}</td>
-    <td>{{ form.password }}</td>
-</tr>
-</table>
+        <div class="col-xl-5 col-lg-5 col-md-5">
 
-<input type="submit" value="login">
-<input type="hidden" name="next" value="{{ next }}">
-</form>
+            <div class="card o-hidden border-0 shadow-lg my-5">
+                <div class="card-body p-0">
+                    <!-- Nested Row within Card Body -->
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="p-5">
+                                <div class="text-center">
+                                    <h1 class="h4 text-gray-900 mb-4">登入</h1>
+                                </div>
+                                <form class="user" method="post" action="{% url 'login' %}">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <input type="text" class="form-control form-control-user"
+                                               id="{{ form.username.id_for_label }}" name="{{ form.username.name }}"
+                                               aria-describedby="emailHelp"
+                                               placeholder="{{ form.username.label }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="password" class="form-control form-control-user"
+                                               id="{{ form.password.id_for_label }}" name="{{ form.password.name }}"
+                                               placeholder="{{ form.password.label }}">
+                                    </div>
+                                    {% if form.errors %}
+                                        <p>您的帳號或密碼輸入錯誤，請確認再試一次。</p>
+                                    {% endif %}
+                                    <input type="submit" class="btn btn-primary btn-user btn-block" value="登入">
+                                    <input type="hidden" name="next" value="{{ next }}">
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-{# Assumes you setup the password_reset view in your URLconf #}
-<p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+        </div>
 
+    </div>
 {% endblock %}

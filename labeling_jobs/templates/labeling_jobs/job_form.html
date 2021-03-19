@@ -2,15 +2,51 @@
 
 {% block title %}任務{% endblock %}
 {% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col">
-
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form }}
-                    <button type="submit">送出</button>
-                </form>
+    <div class="row justify-content-center">
+        <div class="col">
+            <div class="card o-hidden border-0 shadow-lg my-5">
+                <div class="card-body p-0">
+                    <!-- Nested Row within Card Body -->
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="p-5">
+                                <h1>標記任務</h1>
+                                <p>請盡量描述標記任務的定義與細節。</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-8">
+                            <div class="p-5">
+                                <form method="post" class="">{% csrf_token %}
+                                    <form method="post">
+                                        <div class="form-group">
+                                            {{ form.name.label_tag }}
+                                            {{ form.name }}
+                                            {{ form.name.error }}
+                                        </div>
+                                        <div class="form-group">
+                                            {{ form.description.label_tag }}
+                                            {{ form.description }}
+                                            {{ form.description.error }}
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.is_multi_label }}
+                                            <label class="form-check-label"
+                                                   for="{{ form.is_multi_label.id_for_label }}">
+                                                {{ form.is_multi_label.label }}
+                                            </label>
+                                            {{ form.is_multi_label.error }}
+                                        </div>
+                                        <div class="form-group">
+                                            {% csrf_token %}
+                                        </div>
+                                        <input type="submit" class="btn btn-primary" value="送出">
+                                        <input type="reset" name="cancel" class="btn btn-link btn-user" value="清空"/>
+                                    </form>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

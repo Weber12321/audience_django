@@ -1,13 +1,15 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
 
+from .forms import JobForm
 from .models import Job
 
 
 # Create your views here.
-class IndexView(generic.ListView):
+class IndexView(LoginRequiredMixin, generic.ListView):
     queryset = Job.objects.order_by('-created_at')
     # generic.ListView use default template_name = '<app name>/<model name>_list.html'
     template_name = 'labeling_jobs/index.html'
@@ -16,15 +18,15 @@ class IndexView(generic.ListView):
     #     return Job.objects.order_by('-created_at')
 
 
-class JobDetailView(generic.DetailView):
+class JobDetailView(LoginRequiredMixin, generic.DetailView):
     model = Job
     # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
     # template_name = 'labeling_jobs/job_detail.html'
 
 
 class JobCreate(LoginRequiredMixin, generic.CreateView):
-    model = Job
-    fields = ['name', 'description', 'is_multi_label']
+    form_class = JobForm
+    template_name = 'labeling_jobs/job_form.html'
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -33,12 +35,19 @@ class JobCreate(LoginRequiredMixin, generic.CreateView):
 
 class JobUpdate(LoginRequiredMixin, generic.UpdateView):
     model = Job
-    fields = ['name', 'description', 'is_multi_label']
+    form_class = JobForm
+    template_name = 'labeling_jobs/job_form.html'
 
 
 class JobDelete(LoginRequiredMixin, generic.DeleteView):
     model = Job
     success_url = reverse_lazy('labeling_jobs:index')
+
+    def post(self, request, *args, **kwargs):
+        if "cancel" in request.POST:
+            return HttpResponseRedirect(self.success_url)
+        else:
+            return super(JobDelete, self).post(request, *args, **kwargs)
 
 
 class JobDocumentsView(SingleObjectMixin, generic.ListView):

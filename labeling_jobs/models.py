@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-
 # Create your models here.
 from django.urls import reverse
 
@@ -13,6 +12,10 @@ class Job(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
     created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+
+    class Meta:
+        verbose_name = "資料標記工作"
+        verbose_name_plural = "資料標記工作列表"
 
     def __str__(self):
         return self.name
@@ -42,6 +45,10 @@ class Label(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
 
+    class Meta:
+        verbose_name = "類別標籤"
+        verbose_name_plural = "類別標籤列表"
+
     def __str__(self):
         return self.name
 
@@ -60,6 +67,10 @@ class Document(models.Model):
     content = models.TextField(verbose_name="內文")
     post_time = models.DateTimeField(verbose_name="發布時間")
     labels = models.ManyToManyField(Label, verbose_name="被標記標籤")
+
+    class Meta:
+        verbose_name = "文件"
+        verbose_name_plural = "文件列表"
 
     def __str__(self):
         return self.title
