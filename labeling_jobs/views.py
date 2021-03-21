@@ -4,8 +4,8 @@ from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
 
-from .forms import JobForm
-from .models import Job
+from .forms import JobForm, LabelForm
+from .models import Job, Label
 
 
 # Create your views here.
@@ -68,3 +68,5 @@ class JobDocumentsView(SingleObjectMixin, generic.ListView):
 
     def get_queryset(self):
         return self.object.document_set.all()
+
+

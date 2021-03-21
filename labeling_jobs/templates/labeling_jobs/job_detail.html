@@ -1,13 +1,56 @@
 {% extends "base.html" %}
 
-{% block title %}任務{% endblock %}
+{% block title %}{{ job.name }} | 資料標記任務{% endblock %}
+{% block nav_title %}資料標記任務{% endblock %}
+{% block page_title %}{{ job.name }}{% endblock %}
+{% block page_functions %}
+    <div class="dropdown mb-4">
+        <button class="btn btn-primary dropdown-toggle" type="button"
+                id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+            操作
+        </button>
+        <div class="dropdown-menu animated--fade-in"
+             aria-labelledby="dropdownMenuButton">
+{#            <a class="dropdown-item"#}
+{#               href="{% url 'labeling_jobs:label-create' job.id %}?next={{ request.path }}">新增標籤</a>#}
+            <a class="dropdown-item" href="{% url 'labeling_jobs:job-update' job.id %}?next={{ request.path }}">修改</a>
+            <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' job.id %}">刪除</a>
+        </div>
+    </div>
+{% endblock %}
+{% block page_info %}
+    <div class="mb-2">
+        <small><strong>{{ job.created_by }}</strong> created this job at
+            <strong>{{ job.created_at }}</strong></small>
+        {% if job.is_multi_label %}
+            <span class="badge badge-success">多標籤</span>
+        {% else %}
+            <span class="badge badge-primary">單標籤</span>
+        {% endif %}
+    </div>
+{% endblock %}
+{% block page_description %}<p class="mb-4">{{ job.description }}</p>{% endblock %}
 {% block content %}
-    <h1>{{ job.name }}</h1>
-    <small><strong>{{ job.created_by }}</strong> created this job at <strong>{{ job.created_at }}</strong></small>
-    <p>{{ job.description }}</p>
-    <p>{{ job.show_labels }}</p>
-    <p>documents: {{ job.show_document_count }}</p>
-    <a href="{% url 'labeling_jobs:job_docs' job.id %}">查看資料集</a>
-    <a href="{% url 'labeling_jobs:job-update' job.id %}">編輯任務</a>
-    <a href="{% url 'labeling_jobs:job-delete' job.id %}">刪除任務</a>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- label summary card -->
+        {% for label in job.label_set.all %}
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as color_tag %} shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="h5 font-weight-bold text-{{ color_tag }} text-uppercase mb-1">
+                                    <a href="#">{{ label.name }}</a>
+                                </div>
+                                <div class="mb-0 text-gray-800">{{ label.description }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
 {% endblock %}

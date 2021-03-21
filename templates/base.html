@@ -72,7 +72,9 @@
                 <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
                     <i class="fa fa-bars"></i>
                 </button>
-
+                <div class="navbar-nav mr-auto ml-md-2 my-2 my-md-0 mw-100 ">
+                    <div class="h4 text-gray-800 my-0">{% block nav_title %}{% endblock %}</div>
+                </div>
                 <!-- Topbar Navbar -->
                 <ul class="navbar-nav ml-auto">
                     <div class="topbar-divider d-none d-sm-block"></div>
@@ -123,6 +125,12 @@
 
             <!-- Begin Page Content -->
             <div class="container-fluid">
+                <div class="d-sm-flex align-items-center justify-content-between mb-2">
+                    <h1 class="h1 mb-2 text-gray-800">{% block page_title %}{% endblock %}</h1>
+                    {% block page_functions %}{% endblock %}
+                </div>
+                {% block page_info %}{% endblock %}
+                {% block page_description %}{% endblock %}
                 {% block content %}{% endblock %}
             </div>
             <!-- /.container-fluid -->
@@ -166,8 +174,6 @@
         </div>
     </div>
 </div>
-
-
 <!-- Bootstrap core JavaScript-->
 <script src="/static/vendor/jquery/jquery.min.js"></script>
 <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -177,5 +183,10 @@
 
 <!-- Custom scripts for all pages-->
 <script src="/static/js/sb-admin-2.min.js"></script>
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
 </body>
 </html>

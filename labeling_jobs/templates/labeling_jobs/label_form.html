@@ -3,10 +3,10 @@
 {% block title %}資料標記任務{% endblock %}
 {% block nav_title %}資料標記任務{% endblock %}
 {% block page_title %}
-    新增/編輯標記任務
+    新增/編輯標籤任務
 {% endblock %}
 {% block page_description %}
-<p>請盡量描述標記任務的定義與細節。</p>
+    <p>請盡量描述標籤的定義與細節。</p>
 {% endblock %}
 {% block content %}
     <div class="row justify-content-center">
@@ -27,14 +27,6 @@
                                         {{ form.description.label_tag }}
                                         {{ form.description }}
                                         {{ form.description.error }}
-                                    </div>
-                                    <div class="form-check">
-                                        {{ form.is_multi_label }}
-                                        <label class="form-check-label"
-                                               for="{{ form.is_multi_label.id_for_label }}">
-                                            {{ form.is_multi_label.label }}
-                                        </label>
-                                        {{ form.is_multi_label.error }}
                                     </div>
                                     <div class="form-group">
                                         {% csrf_token %}
