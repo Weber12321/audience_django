@@ -11,9 +11,10 @@ class JobForm(forms.ModelForm):
     class Meta:
         model = Job
         fields = ["name", "description", "is_multi_label"]
+        last_job_id = Job.objects.last().id if Job.objects.last() is not None else 0
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control',
-                                           'value': f'Jab {(Job.objects.last().id if Job.objects.last() is not None else 0) + 1}'}),
+                                           'value': f'Jab {last_job_id + 1}'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
             'is_multi_label': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'created_by': forms.TextInput(attrs={'hidden': True})
