@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'home.apps.HomeConfig',
     'labeling_jobs.apps.LabelingJobsConfig',
     'predict_jobs.apps.PredictJobsConfig',
+    'modeling_jobs.apps.ModelingJobsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
