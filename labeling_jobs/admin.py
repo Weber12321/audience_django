@@ -24,7 +24,8 @@ class JobAdmin(admin.ModelAdmin):
             }),
     ]
     inlines = [LabelInline, DocumentInline]
-    list_display = ('name', 'show_labels', 'is_multi_label', 'show_document_count', 'created_at', 'updated_at', 'created_by')
+    list_display = (
+        'name', 'show_labels', 'is_multi_label', 'show_document_count', 'created_at', 'updated_at', 'created_by')
     list_filter = ['created_at', "updated_at", 'created_by']
     search_fields = ['name', 'description', 'created_by']
 

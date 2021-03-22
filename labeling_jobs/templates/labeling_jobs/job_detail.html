@@ -4,20 +4,23 @@
 {% block nav_title %}資料標記任務{% endblock %}
 {% block page_title %}{{ job.name }}{% endblock %}
 {% block page_functions %}
-    <div class="dropdown mb-4">
-        <button class="btn btn-primary dropdown-toggle" type="button"
-                id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
-                aria-expanded="false">
-            操作
-        </button>
-        <div class="dropdown-menu animated--fade-in"
-             aria-labelledby="dropdownMenuButton">
-{#            <a class="dropdown-item"#}
-{#               href="{% url 'labeling_jobs:label-create' job.id %}?next={{ request.path }}">新增標籤</a>#}
-            <a class="dropdown-item" href="{% url 'labeling_jobs:job-update' job.id %}?next={{ request.path }}">修改</a>
-            <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' job.id %}">刪除</a>
+    {% if user.is_staff %}
+        <div class="dropdown mb-4">
+            <button class="btn btn-primary dropdown-toggle" type="button"
+                    id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false">
+                操作
+            </button>
+            <div class="dropdown-menu animated--fade-in"
+                 aria-labelledby="dropdownMenuButton">
+                {#            <a class="dropdown-item"#}
+                {#               href="{% url 'labeling_jobs:label-create' job.id %}?next={{ request.path }}">新增標籤</a>#}
+                <a class="dropdown-item"
+                   href="{% url 'labeling_jobs:job-update' job.id %}?next={{ request.path }}">修改</a>
+                <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' job.id %}">刪除</a>
+            </div>
         </div>
-    </div>
+    {% endif %}
 {% endblock %}
 {% block page_info %}
     <div class="mb-2">
