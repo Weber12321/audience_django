@@ -5,4 +5,4 @@ from django.views.generic import TemplateView
 
 
 class IndexView(TemplateView):
-    template_name = "predict_jobs/index.html"
+    template_name = "predicting_jobs/index.html"

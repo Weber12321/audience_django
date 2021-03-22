@@ -30,7 +30,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'home.apps.HomeConfig',
     'labeling_jobs.apps.LabelingJobsConfig',
-    'predict_jobs.apps.PredictJobsConfig',
+    'predicting_jobs.apps.PredictingJobsConfig',
     'modeling_jobs.apps.ModelingJobsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
