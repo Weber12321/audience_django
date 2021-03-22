@@ -15,5 +15,5 @@ python manage.py runserver
 You can read and learn everything in [documents](https://docs.djangoproject.com/zh-hans/3.1/).
 
 ### template
-We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap template
+We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap template.
 
