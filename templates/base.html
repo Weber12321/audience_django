@@ -35,6 +35,13 @@
         <hr class="sidebar-divider my-0">
 
 
+        <!-- Nav Item - Dashboard -->
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home:index' %}">
+                <i class="fas fa-fw fa-tachometer-alt"></i>
+                <span>Dashboard</span></a>
+        </li>
+
         <!-- Nav Item - labeling jobs -->
         <li class="nav-item">
             <a class="nav-link" href="{% url 'labeling_jobs:index' %}">
@@ -45,7 +52,7 @@
         <!-- Nav Item - ML Models -->
         <li class="nav-item">
             <a class="nav-link" href="{% url 'modeling_jobs:index' %}" disabled="">
-                <i class="fas fa-fw fa-cogs"></i>
+                <i class="fas fa-fw fa-layer-group"></i>
                 <span>模型訓練任務</span></a>
         </li>
 

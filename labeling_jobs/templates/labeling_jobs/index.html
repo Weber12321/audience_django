@@ -31,14 +31,16 @@
                                         <span class="badge badge-primary float-right">單標籤</span>
                                     {% endif %}
                                 </div>
-                                <h6 class="card-subtitle mb-2 text-muted"><small
-                                        class="text-muted">{{ job.created_by.username }}
-                                    於 {{ job.created_at }} 建立這個任務。</small></h6>
+                                <h6 class="card-subtitle mb-2 text-muted"><small class="text-muted">
+                                    <strong>由 {{ job.created_by.username }}</strong> 於 {{ job.created_at }} 建立。</small>
+                                </h6>
                                 <p class="card-text">
                                     {% for label in  job.label_set.all %}
                                         <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
                                               data-toggle="tooltip" data-placement="top"
-                                              title="{{ label.description }}">{{ label }}</span>
+                                              title="{{ label.description }}">
+                                            <i class="fas fa-tag"></i> {{ label }}
+                                        </span>
                                     {% endfor %}
                                     {% resetcycle %}
                                 </p>

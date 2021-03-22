@@ -13,8 +13,10 @@
             </button>
             <div class="dropdown-menu animated--fade-in"
                  aria-labelledby="dropdownMenuButton">
-                {#            <a class="dropdown-item"#}
-                {#               href="{% url 'labeling_jobs:label-create' job.id %}?next={{ request.path }}">新增標籤</a>#}
+                <a class="dropdown-item"
+                   href="{% url 'labeling_jobs:job_docs' job.id %}?next={{ request.path }}">文章列表</a>
+                <a class="dropdown-item"
+                   href="{% url 'labeling_jobs:job_docs' job.id %}?next={{ request.path }}">開始貼標</a>
                 <a class="dropdown-item"
                    href="{% url 'labeling_jobs:job-update' job.id %}?next={{ request.path }}">修改</a>
                 <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' job.id %}">刪除</a>
@@ -39,12 +41,15 @@
     <div class="row">
         <!-- label summary card -->
         {% for label in job.label_set.all %}
-            <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card border-left-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as color_tag %} shadow h-100 py-2">
+            <div class="col-md-12 mb-4">
+                <div class="card border-left-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %} shadow h-100 py-2">
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="h5 font-weight-bold text-{{ color_tag }} text-uppercase mb-1">
+                            <div class="col-auto">
+                                <i class="fas fa-tag fa-2x text-{{ tag_color }}"></i>
+                            </div>
+                            <div class="col ml-3">
+                                <div class="h5 font-weight-bold text-{{ tag_color }} text-uppercase mb-1">
                                     <a href="#">{{ label.name }}</a>
                                 </div>
                                 <div class="mb-0 text-gray-800">{{ label.description }}</div>

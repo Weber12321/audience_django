@@ -18,7 +18,6 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    # path('polls/', include('polls.urls')),
     path('', include('home.urls')),
     path('labeling_jobs/', include('labeling_jobs.urls')),
     path('modeling_jobs/', include('modeling_jobs.urls')),

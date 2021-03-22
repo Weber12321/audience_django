@@ -1,24 +1,37 @@
 {% extends "base.html" %}
 
 {% block title %}任務{% endblock %}
+{% block nav_title %}
+資料標記任務
+{% endblock %}
+{% block page_title %}{{ job.name }}{% endblock %}
+{% block page_functions %}
+    <a href="{% url 'labeling_jobs:job-detail' job.id %}">上一頁</a>
+{% endblock %}
+{% block page_info %}
+    {% for label in job.label_set.all %}
+        <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
+              data-toggle="tooltip" data-placement="top"
+              title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>
+    {% endfor %}
+{% endblock %}
+{% block page_description %}
+<p>{{ job.description }}</p>
+{% endblock %}
 {% block content %}
-<h2>{{ job.name }}</h2>
-{% if page_obj %}
-    <ul>
-        {% for doc in page_obj %}
-            <li><a href="">{{ doc.title }}</a>, <p>{{ doc.content }}</p>
-                {% for label in job.label_set.all %}
-                    {% if label in doc.labels.all %}
-                        [v]
-                    {% else %}
-                        [ ]
-                    {% endif %}
-                    <a href="">{{ label.name }}</a> ({{ label.description }})
-                {% endfor %}
-            </li>
-        {% endfor %}
-    </ul>
-    <div class="pagination">
+    {% if page_obj %}
+        <ul>
+            {% for doc in page_obj %}
+                <li><a href="">{{ doc.title }}</a>, <p>{{ doc.content }}</p>
+                    {% for label in job.label_set.all %}
+                    <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
+                          data-toggle="tooltip" data-placement="top"  {% if label not in doc.labels.all %}hidden{% endif %}
+                          title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>
+                    {% endfor %}
+                </li>
+            {% endfor %}
+        </ul>
+        <div class="pagination">
         <span class="step-links">
             {% if page_obj.has_previous %}
                 <a href="?page={{ page_obj.previous_page_number }}">previous</a>
@@ -32,8 +45,8 @@
                 <a href="?page={{ page_obj.next_page_number }}">next</a>
             {% endif %}
         </span>
-    </div>
-{% else %}
-    <p>沒有文件</p>
-{% endif %}
+        </div>
+    {% else %}
+        <p>沒有文件</p>
+    {% endif %}
 {% endblock %}
