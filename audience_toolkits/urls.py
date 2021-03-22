@@ -21,6 +21,7 @@ urlpatterns = [
     # path('polls/', include('polls.urls')),
     path('', include('home.urls')),
     path('labeling_jobs/', include('labeling_jobs.urls')),
+    path('modeling_jobs/', include('modeling_jobs.urls')),
     path('predicting_jobs/', include('predicting_jobs.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
