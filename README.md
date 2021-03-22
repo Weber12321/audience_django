@@ -17,3 +17,5 @@ You can read and learn everything in [documents](https://docs.djangoproject.com/
 ### template
 We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap template.
 
+### icons
+We use [font-awesome](https://fontawesome.com/icons?d=gallery&p=1&m=free) icons.
