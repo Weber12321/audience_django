@@ -15,7 +15,7 @@ python manage.py runserver
 You can read and learn everything in [documents](https://docs.djangoproject.com/zh-hans/3.1/).
 
 ### template
-We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap template.
+We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap template (You can find files in `/static/`).
 
 ### icons
 We use [font-awesome](https://fontawesome.com/icons?d=gallery&p=1&m=free) icons.
