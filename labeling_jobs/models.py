@@ -6,13 +6,13 @@ from django.urls import reverse
 
 
 class LabelingJob(models.Model):
+
     name = models.CharField(max_length=200, verbose_name="標記工作名稱")
     description = models.TextField(verbose_name="定義與說明")
     is_multi_label = models.BooleanField(default=False, verbose_name="是否屬於多標籤")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
     created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-
     class Meta:
         verbose_name = "資料標記工作"
         verbose_name_plural = "資料標記工作列表"
@@ -21,6 +21,7 @@ class LabelingJob(models.Model):
         return self.name
 
     def get_absolute_url(self):
+
         return reverse('labeling_jobs:labeling-job-create', kwargs={'pk': self.pk})
 
     def show_labels(self):
@@ -36,8 +37,10 @@ class LabelingJob(models.Model):
     def show_document_amount(self):
         return len(self.document_set.all())
 
+
     show_document_amount.boolean = False
     show_document_amount.short_description = '文章數量'
+
 
 
 class Label(models.Model):

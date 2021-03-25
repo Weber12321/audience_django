@@ -1,8 +1,234 @@
 {% extends 'base.html' %}
 {% block nav_title %} 模型訓練任務 {% endblock %}
 {% block page_title %}
-施工中
+Model List
 {% endblock %}
 {% block content %}
+<div style="text-align: right;">
+    <button class="btn btn-primary btn-rounded btn-sm my-0" data-toggle="modal" data-target="#createBtn">建立任務</button>
+</div>
+<script>
+    job_id = 0;
+    function setJobId(id){
+        job_id = id;
+        console.log(job_id);
+    }
 
+    function createJob(){
+        model_name = document.getElementById("model_name").value;
+        model_type = document.getElementById("model_type").value;
+        description = document.getElementById("description").value;
+        is_multi_label = document.getElementById("is_multi_label").value;
+        ref_job = document.getElementById("ref_job").value;
+
+        var aj = $.ajax({
+            url : 'createTask',
+            data :
+            {
+                model_name : model_name,
+                model_type : model_type,
+                description : description,
+                is_multi_label : is_multi_label,
+                ref_job , ref_job
+            },
+            type : 'post',
+            success : function (result)
+            {
+                swal("Done!", result, "success").then(() =>
+                {
+                    location.reload()
+                })
+            }
+        })
+    }
+
+    function getPreviousInfoToModal(id,model_name,model_type_id,description,is_multi_label,jobRef_id){
+        job_id = id;
+        document.getElementById("modify_model_name").value = model_name;
+        document.getElementById("modify_model_type").value = model_type_id;
+        document.getElementById("modify_description").value = description;
+        document.getElementById("modify_is_multi_label").value = is_multi_label;
+        document.getElementById("modify_ref_job").value = jobRef_id;
+    }
+
+    function modifyJob(){
+        model_name = document.getElementById("modify_model_name").value;
+        model_type = document.getElementById("modify_model_type").value;
+        description = document.getElementById("modify_description").value;
+        is_multi_labe = document.getElementById("modify_is_multi_label").value;
+        ref_job = document.getElementById("modify_ref_job").value;
+
+        var aj = $.ajax({
+            url : `updateTask`,
+            data :
+            {
+                id : job_id,
+                model_name : model_name,
+                model_type : model_type,
+                description : description,
+                is_multi_labe : is_multi_labe,
+                ref_job : ref_job,
+            },
+            type : 'post',
+            success : function (result)
+            {
+                swal("檔案已更新", result, "success").then(() =>
+                {
+                    location.reload()
+                })
+            }
+        })
+    }
+
+</script>
+
+<!--create modal-->
+<div class="modal fade" id="createBtn" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Edit</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group" id="title_div">
+                        <label for="model_name" class="col-form-label">模型名稱</label>
+                        <input class="form-control" id="model_name">
+                    </div>
+                    <div class="form-group" id="content_div">
+                        <label for="model_type" class="col-form-label">模型類型</label>
+                        <select class="form-control" id="model_type" name="model" required>
+                            {% for model in ml_model_list %}
+                            <option value={{ model.id }}>{{ model }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" id="author_div">
+                        <label for="description" class="col-form-label">模型敘述</label>
+                        <input class="form-control" id="description">
+                    </div>
+                    <div class="form-group" id="s_area_id_div">
+                        <label for="is_multi_label" class="col-form-label">是否為多標籤</label>
+                        <select class="form-control" id="is_multi_label" name="model" required>
+                            <option value="True">True</option>
+                            <option value="False">False</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="ref_job_div">
+                        <label for="ref_job" class="col-form-label">reference job</label>
+                        <select class="form-control" id="ref_job" name="model" required>
+                            {% for job in job_list %}
+                            <option value="{{job.id}}">{{job}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="createJob()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--modify modal-->
+<div class="modal fade" id="modifyModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">編輯</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group" id="modify_model_name_div">
+                        <label for="modify_model_name" class="col-form-label">模型名稱</label>
+                        <input class="form-control" id="modify_model_name">
+                    </div>
+                    <div class="form-group" id="modify_model_type_div">
+                        <label for="modify_model_type" class="col-form-label">模型類型</label>
+                        <select class="form-control" id="modify_model_type" name="model" required disabled>
+                            {% for model in ml_model_list %}
+                            <option value={{ model.id }}>{{ model }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" id="modify_description_div">
+                        <label for="modify_description" class="col-form-label">模型敘述</label>
+                        <input class="form-control" id="modify_description">
+                    </div>
+                    <div class="form-group" id="modify_is_multi_label_div">
+                        <label for="modify_is_multi_label" class="col-form-label">是否為多標籤</label>
+                        <select class="form-control" id="modify_is_multi_label" name="model" required>
+                            <option value="True">True</option>
+                            <option value="False">False</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="modify_ref_job_div">
+                        <label for="modify_ref_job" class="col-form-label">reference job</label>
+                        <select class="form-control" id="modify_ref_job" name="model" required>
+                            {% for job in job_list %}
+                            <option value="{{job.id}}">{{job}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="modifyJob()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container">
+    <div class="row">
+        <div class="accordion" id="accordionExample" style="width: 100%">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th scope="col">模型名稱</th>
+                     <th scope="col">模型類型</th>
+                    <th scope="col">模型敘述</th>
+                    <th scope="col">是否為多標籤</th>
+                    <th scope="col">reference job id</th>
+                    <th scope="col">編輯</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for job in modeling_jobs %}
+                <tr>
+                    <td>{{job.name}}</td>
+                    <td>{{job.model.name}}</td>
+                    <td>{{job.description}}</td>
+                    <td>{{job.is_multi_label}}</td>
+                    <td>{{job.jobRef_id}}</td>
+                    <td>
+                        <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle btn-sm" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            編輯
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                            <a class="dropdown-item modify_btn" data-toggle="modal"
+                               data-target="#modifyModal" onclick="getPreviousInfoToModal('{{job.id}}','{{job.name}}','{{job.model.id}}','{{job.description}}','{{job.is_multi_label}}','{{job.jobRef_id}}')"> 修改模型
+                            </a>
+                            <a class="dropdown-item delete_btn" onclick="setJobId('{{job.id}}')">刪除</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}

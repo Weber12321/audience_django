@@ -46,6 +46,7 @@ class LabelingJobDelete(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
+            print(request.POST)
             return HttpResponseRedirect(self.success_url)
         else:
             return super(LabelingJobDelete, self).post(request, *args, **kwargs)
