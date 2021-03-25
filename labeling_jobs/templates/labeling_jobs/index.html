@@ -6,7 +6,7 @@
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <a class="ml-auto" href="{% url 'labeling_jobs:job-create' %}">建立新任務</a>
+            <a class="ml-auto" href="{% url 'labeling_jobs:labeling-job-create' %}">建立新任務</a>
         </div>
     {% endif %}
 {% endblock %}
@@ -16,26 +16,26 @@
 
     <div class="row">
         <div class="col">
-            {% if jobs %}
+            {% if labeling_jobs %}
                 <div class="card-columns">
-                    {% for job in jobs %}
+                    {% for labeling_job in labeling_jobs %}
 
                         <div class="card mb-4">
                             <!-- Card Body -->
                             <div class="card-body">
                                 <div class="card-title font-weight-bold text-dark">
-                                    <small>#{{ job.id }}</small> {{ job.name }}
-                                    {% if job.is_multi_label %}
+                                    <small>#{{ labeling_job.id }}</small> {{ labeling_job.name }}
+                                    {% if labeling_job.is_multi_label %}
                                         <span class="badge badge-success float-right">多標籤</span>
                                     {% else %}
                                         <span class="badge badge-primary float-right">單標籤</span>
                                     {% endif %}
                                 </div>
                                 <h6 class="card-subtitle mb-2 text-muted"><small class="text-muted">
-                                    <strong>由 {{ job.created_by.username }}</strong> 於 {{ job.created_at }} 建立。</small>
+                                    <strong>由 {{ labeling_job.created_by.username }}</strong> 於 {{ labeling_job.created_at }} 建立。</small>
                                 </h6>
                                 <p class="card-text">
-                                    {% for label in  job.label_set.all %}
+                                    {% for label in  labeling_job.label_set.all %}
                                         <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
                                               data-toggle="tooltip" data-placement="top"
                                               title="{{ label.description }}">
@@ -44,12 +44,12 @@
                                     {% endfor %}
                                     {% resetcycle %}
                                 </p>
-                                <p class="card-text">{{ job.description }}</p>
+                                <p class="card-text">{{ labeling_job.description }}</p>
 
-                                <a href="{% url 'labeling_jobs:job-detail' job.id %}" class="card-link">檢視任務細節</a>
-                                {#                                <a href="{% url 'labeling_jobs:job-update' job.id %}?next={{ request.path }}"#}
+                                <a href="{% url 'labeling_jobs:labeling-job-detail' labeling_job.id %}" class="card-link">檢視任務細節</a>
+                                {#                                <a href="{% url 'labeling_jobs:job-update' labeling_job.id %}?next={{ request.path }}"#}
                                 {#                                   class="card-link">編輯任務</a>#}
-                                {#                                <a href="{% url 'labeling_jobs:job-delete' job.id %}"#}
+                                {#                                <a href="{% url 'labeling_jobs:job-delete' labeling_job.id %}"#}
                                 {#                                   class="card-link text-danger">刪除任務</a>#}
 
                             </div>
