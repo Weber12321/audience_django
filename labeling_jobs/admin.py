@@ -48,8 +48,8 @@ class LabelingJobAdmin(admin.ModelAdmin):
 class DocumentAdmin(admin.ModelAdmin):
     model = Document
     list_display = ['title', 's_area_id', 'author', 'post_time', 'labeling_job']
-    search_fields = ['title', 's_area_id']
-    list_filter = ['post_time']
+    search_fields = ['title', 's_area_id', 'labeling_jobs']
+    list_filter = ['post_time', 'labeling_job']
     form = DocumentForm
 
 

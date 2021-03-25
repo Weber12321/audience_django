@@ -21,7 +21,7 @@ class LabelingJob(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('labeling_jobs:job_detail', kwargs={'pk': self.pk})
+        return reverse('labeling_jobs:labeling-job-create', kwargs={'pk': self.pk})
 
     def show_labels(self):
         return [f"'{label.name}' ({label.target_amount})" for label in self.label_set.all()]
@@ -63,7 +63,7 @@ class Label(models.Model):
 
 
 class Document(models.Model):
-    job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
+    labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     title = models.CharField(max_length=512, verbose_name="標題")
     author = models.CharField(max_length=200, verbose_name="作者")
     s_area_id = models.CharField(max_length=100, verbose_name="頻道id")

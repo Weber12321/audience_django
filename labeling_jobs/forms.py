@@ -7,7 +7,7 @@ class CsvUploadForm(forms.Form):
     csv_file = forms.FileField()
 
 
-class JobForm(forms.ModelForm):
+class LabelingJobForm(forms.ModelForm):
     class Meta:
         model = LabelingJob
         fields = ["name", "description", "is_multi_label"]
@@ -44,6 +44,6 @@ class LabelForm(forms.ModelForm):
 class DocumentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(DocumentForm, self).__init__(*args, **kwargs)
-        if self.instance.job_id:
+        if self.instance.labeling_job_id:
             self.fields['labels'].queryset = Label.objects.filter(
                 job_id=self.instance.job_id)
