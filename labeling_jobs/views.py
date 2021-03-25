@@ -5,12 +5,12 @@ from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
 
 from .forms import JobForm, LabelForm
-from .models import Job, Label
+from .models import LabelingJob, Label
 
 
 # Create your views here.
 class IndexView(LoginRequiredMixin, generic.ListView):
-    queryset = Job.objects.order_by('-created_at')
+    queryset = LabelingJob.objects.order_by('-created_at')
     # generic.ListView use default template_name = '<app name>/<model name>_list.html'
     template_name = 'labeling_jobs/index.html'
     context_object_name = 'jobs'
@@ -19,7 +19,7 @@ class IndexView(LoginRequiredMixin, generic.ListView):
 
 
 class JobDetailView(LoginRequiredMixin, generic.DetailView):
-    model = Job
+    model = LabelingJob
     # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
     # template_name = 'labeling_jobs/job_detail.html'
 
@@ -34,13 +34,13 @@ class JobCreate(LoginRequiredMixin, generic.CreateView):
 
 
 class JobUpdate(LoginRequiredMixin, generic.UpdateView):
-    model = Job
+    model = LabelingJob
     form_class = JobForm
     template_name = 'labeling_jobs/job_form.html'
 
 
 class JobDelete(LoginRequiredMixin, generic.DeleteView):
-    model = Job
+    model = LabelingJob
     success_url = reverse_lazy('labeling_jobs:index')
 
     def post(self, request, *args, **kwargs):
@@ -52,13 +52,13 @@ class JobDelete(LoginRequiredMixin, generic.DeleteView):
 
 class JobDocumentsView(SingleObjectMixin, generic.ListView):
     paginate_by = 2
-    model = Job
+    model = LabelingJob
 
     # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
     # template_name = 'labeling_jobs/job_detail.html'
 
     def get(self, request, *args, **kwargs):
-        self.object = self.get_object(queryset=Job.objects.all())
+        self.object = self.get_object(queryset=LabelingJob.objects.all())
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

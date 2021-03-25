@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from labeling_jobs.forms import DocumentForm
-from labeling_jobs.models import Job, Label, Document
+from labeling_jobs.models import LabelingJob, Label, Document
 
 
 class LabelInline(admin.TabularInline):
@@ -17,7 +17,7 @@ class DocumentInline(admin.StackedInline):
     fields = ['title', 's_area_id', 'author', 'content', 'post_time']
 
 
-class JobAdmin(admin.ModelAdmin):
+class LabelingJobAdmin(admin.ModelAdmin):
     fieldsets = [
         (
             None, {
@@ -36,7 +36,7 @@ class JobAdmin(admin.ModelAdmin):
         obj.save()
 
     def save_formset(self, request, form, formset, change):
-        if formset.model == Job:
+        if formset.model == LabelingJob:
             instances = formset.save(commit=False)
             for instance in instances:
                 instance.created_by = request.user
@@ -47,7 +47,7 @@ class JobAdmin(admin.ModelAdmin):
 
 class DocumentAdmin(admin.ModelAdmin):
     model = Document
-    list_display = ['title', 's_area_id', 'author', 'post_time', 'job']
+    list_display = ['title', 's_area_id', 'author', 'post_time', 'labeling_job']
     search_fields = ['title', 's_area_id']
     list_filter = ['post_time']
     form = DocumentForm
@@ -55,11 +55,11 @@ class DocumentAdmin(admin.ModelAdmin):
 
 class LabelAdmin(admin.ModelAdmin):
     model = Label
-    list_display = ('name', 'job', 'show_document_amount', 'target_amount', 'created_at', 'updated_at')
-    list_filter = ['created_at', "updated_at", 'job']
-    search_fields = ['name', 'description', 'job']
+    list_display = ('name', 'labeling_job', 'show_document_amount', 'target_amount', 'created_at', 'updated_at')
+    list_filter = ['created_at', "updated_at", 'labeling_job']
+    search_fields = ['name', 'description', 'labeling_job']
 
 
-admin.site.register(Job, JobAdmin)
+admin.site.register(LabelingJob, LabelingJobAdmin)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(Label, LabelAdmin)

@@ -5,7 +5,7 @@ from django.db import models
 from django.urls import reverse
 
 
-class Job(models.Model):
+class LabelingJob(models.Model):
     name = models.CharField(max_length=200, verbose_name="標記工作名稱")
     description = models.TextField(verbose_name="定義與說明")
     is_multi_label = models.BooleanField(default=False, verbose_name="是否屬於多標籤")
@@ -41,7 +41,7 @@ class Job(models.Model):
 
 
 class Label(models.Model):
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, verbose_name="所屬任務")
+    labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     name = models.CharField(max_length=100, verbose_name="標籤名稱")
     description = models.TextField(verbose_name="標籤定義")
     target_amount = models.IntegerField(verbose_name="目標數量", default=200)
@@ -63,7 +63,7 @@ class Label(models.Model):
 
 
 class Document(models.Model):
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, verbose_name="所屬任務")
+    job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     title = models.CharField(max_length=512, verbose_name="標題")
     author = models.CharField(max_length=200, verbose_name="作者")
     s_area_id = models.CharField(max_length=100, verbose_name="頻道id")
