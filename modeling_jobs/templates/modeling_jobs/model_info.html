@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block nav_title %} 模型訓練任務 {% endblock %}
+{% block page_title %}
+
+{% endblock %}
+{% block content %}
+<script>
+
+    doc_id = 0
+    function docDelete(model_id,doc_id){
+        var aj = $.ajax({
+            url : `delete`,
+            data :
+            {
+                doc_id : doc_id
+            },
+            type : 'post',
+            success : function (result)
+            {
+                swal("檔案已刪除", result, "success").then(() =>
+                {
+                    location.reload()
+                })
+            }
+        })
+    }
+
+    function setModal(id,title,author,s_area_id,content){
+        document.getElementById("title").value = title;
+        document.getElementById("author").value = author;
+        document.getElementById("s_area_id").value = s_area_id;
+        document.getElementById("content_info").value = content;
+        doc_id = id;
+    }
+
+    function modifyDoc(){
+        id = doc_id
+        title = document.getElementById("title").value
+        author = document.getElementById("author").value
+        s_area_id = document.getElementById("s_area_id").value
+        content = document.getElementById("content_info").value
+        var aj = $.ajax({
+            url : `update`,
+            data :
+            {
+                id : id,
+                title : title,
+                author : author,
+                s_area_id : s_area_id,
+                content : content,
+            },
+            type : 'post',
+            success : function (result)
+            {
+                swal("檔案已更新", result, "success").then(() =>
+                {
+                    location.reload()
+                })
+            }
+        })
+
+    }
+
+
+
+</script>
+<div class="container">
+    <div class="row">
+        <div class="accordion" id="accordionExample" style="width: 100%">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th scope="col">id</th>
+                    <th scope="col">標題</th>
+                    <th scope="col">作者</th>
+                    <th scope="col">頻道id</th>
+                    <th scope="col">內文</th>
+                    <th scope="col">發布時間</th>
+                    <th scope="col">刪除</th>
+                    <th scope="col">修改</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for info in job.document_set.all %}
+                <tr>
+                    <td>{{info.id}}</td>
+                    <td>{{info.title}}</td>
+                    <td>{{info.author}}</td>
+                    <td>{{info.s_area_id}}</td>
+                    <td>{{info.content}}</td>
+                    <td>{{info.post_time}}</td>
+                    <td>
+                        <button class="btn btn-danger btn-rounded btn-sm my-0 delete_btn"
+                                onclick="docDelete({{info.job_id}},{{info.id}})">刪除
+                        </button>
+                    </td>
+                    <td><a type="button" class="btn btn-primary btn-rounded btn-sm my-0" data-toggle="modal"
+                           data-target="#modifyBtn" onclick="setModal('{{info.id}}','{{info.title}}','{{info.author}}','{{info.s_area_id}}','{{info.content}}')">修改</a></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="modifyBtn" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Edit</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group" id="title_div">
+                        <label for="title" class="col-form-label">標題</label>
+                        <input class="form-control" id="title">
+                    </div>
+                    <div class="form-group" id="author_div">
+                        <label for="author" class="col-form-label">作者</label>
+                        <input class="form-control" id="author">
+                    </div>
+                    <div class="form-group" id="s_area_id_div">
+                        <label for="s_area_id" class="col-form-label">頻道id</label>
+                        <input class="form-control" id="s_area_id">
+                    </div>
+                    <div class="form-group" id="content_div">
+                        <label for="content_info" class="col-form-label">內文</label>
+                        <input class="form-control" id="content_info">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="modifyDoc()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
