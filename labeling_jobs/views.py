@@ -50,6 +50,7 @@ class LabelingJobUpdate(LoginRequiredMixin, generic.UpdateView):
 class LabelingJobDelete(LoginRequiredMixin, generic.DeleteView):
     model = LabelingJob
     success_url = reverse_lazy('labeling_jobs:index')
+    template_name = 'labeling_jobs/labeling_job_confirm_delete.html'
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
