@@ -12,7 +12,9 @@ class LabelingJob(models.Model):
     is_multi_label = models.BooleanField(default=False, verbose_name="是否屬於多標籤")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
-    created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
     class Meta:
         verbose_name = "資料標記工作"
         verbose_name_plural = "資料標記工作列表"
