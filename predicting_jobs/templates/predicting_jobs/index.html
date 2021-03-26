@@ -1,8 +1,45 @@
 {% extends 'base.html' %}
-{% block nav_title %} 標籤預測任務 {% endblock %}
+{% block nav_title %} 族群貼標任務 {% endblock %}
 {% block page_title %}
-任務列表
+    任務列表
+{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <a class="ml-auto" href="{% url 'predicting_jobs:job-create' %}">建立新任務</a>
+        </div>
+    {% endif %}
 {% endblock %}
 {% block content %}
-
+    <!-- predicting jobs -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">任務名稱</th>
+                        <th scope="col">任務描述</th>
+                        <th scope="col">建立者</th>
+                        <th scope="col">建立時間</th>
+                        <th scope="col"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for predicting_job in predicting_jobs %}
+                        <tr>
+                            <th scope="row">{{ predicting_job.id }}</th>
+                            <td>{{ predicting_job.name }}</td>
+                            <td>{{ predicting_job.description }}</td>
+                            <td>{{ predicting_job.created_by }}</td>
+                            <td>{{ predicting_job.created_at }}</td>
+                            <td><a href="{% url 'predicting_jobs:job-detail' predicting_job.id %}" class="btn btn-link">檢視細節</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 {% endblock %}

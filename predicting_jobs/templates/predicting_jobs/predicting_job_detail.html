@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}{{ predicting_job.name }} | 族群貼標任務{% endblock %}
+{% block nav_title %}族群貼標任務{% endblock %}
+{% block page_title %}{{ predicting_job.name }}{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+        <div class="dropdown mb-4">
+            <button class="btn btn-primary dropdown-toggle" type="button"
+                    id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false">
+                操作
+            </button>
+            <div class="dropdown-menu animated--fade-in"
+                 aria-labelledby="dropdownMenuButton">
+
+                <a class="dropdown-item"
+                   href="{% url 'predicting_jobs:job-update' predicting_job.id %}?next={{ request.path }}">修改</a>
+                <a class="dropdown-item" href="{% url 'predicting_jobs:job-delete' predicting_job.id %}">刪除</a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+{% block page_info %}
+    <div class="mb-2">
+        <small><strong>{{ predicting_job.created_by }}</strong> created this job at
+            <strong>{{ predicting_job.created_at }}</strong></small>
+    </div>
+{% endblock %}
+{% block page_description %}<p class="mb-4">{{ predicting_job.description }}</p>{% endblock %}
+{% block content %}
+    <!-- Content Row -->
+    <div class="row">
+        <!-- label summary card -->
+        {% for label in predicting_job.label_set.all %}
+            <div class="col-md-12 mb-4">
+                <div class="card border-left-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %} shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col-auto">
+                                <i class="fas fa-tag fa-2x text-{{ tag_color }}"></i>
+                            </div>
+                            <div class="col ml-3">
+                                <div class="h5 font-weight-bold text-{{ tag_color }} text-uppercase mb-1">
+                                    <a href="#">{{ label.name }}</a>
+                                </div>
+                                <div class="mb-0 text-gray-800">{{ label.description }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}
