@@ -33,11 +33,18 @@ class LabelingJobCreate(LoginRequiredMixin, generic.CreateView):
         form.instance.created_by = self.request.user
         return super().form_valid(form)
 
+    def get_success_url(self):
+        return reverse_lazy('labeling_jobs:index')
+
 
 class LabelingJobUpdate(LoginRequiredMixin, generic.UpdateView):
     model = LabelingJob
     form_class = LabelingJobForm
     template_name = 'labeling_jobs/labeling_job_form.html'
+
+    def get_success_url(self):
+        _pk = self.kwargs['pk']
+        return reverse_lazy('labeling_jobs:labeling-job-detail', kwargs={'pk': _pk})
 
 
 class LabelingJobDelete(LoginRequiredMixin, generic.DeleteView):
@@ -46,6 +53,7 @@ class LabelingJobDelete(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
+            print(request.POST)
             return HttpResponseRedirect(self.success_url)
         else:
             return super(LabelingJobDelete, self).post(request, *args, **kwargs)
@@ -68,4 +76,4 @@ class LabelingJobDocumentsView(SingleObjectMixin, generic.ListView):
         return context
 
     def get_queryset(self):
-        return self.object.document_set.all()
+        return self.object.document_set.order_by('-created_at')
