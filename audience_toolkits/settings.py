@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 from pathlib import Path
+import pymysql
+pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +28,6 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 # Application definition
-
 INSTALLED_APPS = [
     'home.apps.HomeConfig',
     'labeling_jobs.apps.LabelingJobsConfig',
@@ -82,6 +83,21 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         # 'ENGINE': 'django.db.backends.sqlite3',
+#         # 'NAME': BASE_DIR / 'db.sqlite3',
+#
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'audience-toolkit-dango', # 目標資料庫的名稱
+#         'USER': 'root', # 資料庫帳號
+#         'PASSWORD': 'pohjohn88990928', # 資料庫密碼
+#         'HOST': 'localhost', # 主機位置，可以先測本地localhost
+#         'PORT': '3306',
+#     }
+# }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

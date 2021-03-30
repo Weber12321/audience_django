@@ -6,7 +6,7 @@ from django.urls import reverse
 
 
 class LabelingJob(models.Model):
-    name = models.CharField(max_length=200, verbose_name="標記工作名稱")
+    name = models.CharField(max_length=100, verbose_name="標記工作名稱")
     description = models.TextField(verbose_name="定義與說明")
     is_multi_label = models.BooleanField(default=False, verbose_name="是否屬於多標籤")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
@@ -64,11 +64,11 @@ class Label(models.Model):
 
 class Document(models.Model):
     labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
-    title = models.CharField(max_length=512, verbose_name="標題")
-    author = models.CharField(max_length=200, verbose_name="作者")
-    s_area_id = models.CharField(max_length=100, verbose_name="頻道id")
-    content = models.TextField(verbose_name="內文")
-    post_time = models.DateTimeField(verbose_name="發布時間")
+    title = models.CharField(max_length=512, verbose_name="標題", blank=True)
+    author = models.CharField(max_length=200, verbose_name="作者", blank=True)
+    s_area_id = models.CharField(max_length=100, verbose_name="頻道id", blank=True)
+    content = models.TextField(verbose_name="內文", blank=True)
+    post_time = models.DateTimeField(verbose_name="發布時間", blank=True)
     labels = models.ManyToManyField(Label, verbose_name="被標記標籤", blank=True)
 
     class Meta:
