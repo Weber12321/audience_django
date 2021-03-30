@@ -19,12 +19,12 @@ class IndexView(LoginRequiredMixin, ListView):
         return context
 
 
-class modelInfoView(LoginRequiredMixin, DetailView):
+class ModelInfoView(LoginRequiredMixin, DetailView):
     model = LabelingJob
     template_name = "modeling_jobs/model_info.html"
 
 
-class docDeleteView(LoginRequiredMixin, DetailView):
+class DocDeleteView(LoginRequiredMixin, DetailView):
     model = LabelingJob
 
     def post(self, request):
@@ -32,7 +32,7 @@ class docDeleteView(LoginRequiredMixin, DetailView):
 
 
 @csrf_exempt
-def docDelete(request, model_id):
+def doc_delete(request, model_id):
     doc_id = request.POST["doc_id"]
     doc = Document.objects.filter(id=doc_id)
     doc.delete()
@@ -40,7 +40,7 @@ def docDelete(request, model_id):
 
 
 @csrf_exempt
-def docUpdate(request, model_id):
+def doc_update(request, model_id):
     doc_id = request.POST["id"]
     doc = Document.objects.get(id=doc_id)
     doc.title = request.POST["title"]
@@ -52,7 +52,7 @@ def docUpdate(request, model_id):
 
 
 @csrf_exempt
-def createTask(request):
+def create_task(request):
     modelingJob = ModelingJob()
     modelingJob.name = request.POST['model_name']
     modelingJob.description = request.POST['description']
@@ -64,8 +64,8 @@ def createTask(request):
 
 
 @csrf_exempt
-def updateTask(request):
-    m = ModelingJob.objects.get(id = request.POST['id'])
+def update_task(request):
+    m = ModelingJob.objects.get(id=request.POST['id'])
     m.name = request.POST['model_name']
     m.model_id = request.POST['model_type']
     m.description = request.POST['description']

@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import LabelingJob, Label, Document
+from .models import LabelingJob, Label
 
 
 class CsvUploadForm(forms.Form):
