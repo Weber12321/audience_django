@@ -1,11 +1,13 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.forms import formset_factory, inlineformset_factory, modelformset_factory
 from django.http import HttpResponseRedirect
 # Create your views here.
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse_lazy
 from django.views import generic
 
-from predicting_jobs.forms import PredictingJobForm
-from predicting_jobs.models import PredictingJob
+from predicting_jobs.forms import PredictingJobForm, TargetFormSet, PredictingTargetForm
+from predicting_jobs.models import PredictingJob, PredictingTarget
 
 
 class IndexView(LoginRequiredMixin, generic.ListView):
@@ -46,3 +48,18 @@ class PredictingJobDelete(LoginRequiredMixin, generic.DeleteView):
             return HttpResponseRedirect(self.success_url)
         else:
             return super(PredictingJobDelete, self).post(request, *args, **kwargs)
+
+
+class PredictingTargetUpdate(LoginRequiredMixin, generic.UpdateView):
+    model = PredictingTarget
+    form_class = PredictingTargetForm
+    template_name = 'predicting_jobs/target_update.html'
+
+
+class PredictingTargetCreate(LoginRequiredMixin, generic.CreateView):
+    form_class = PredictingTargetForm
+    template_name = 'predicting_jobs/target_add.html'
+
+    def form_valid(self, form):
+        form.instance.predicting_job_id = self.kwargs.get('job_id')
+        return super(PredictingTargetCreate, self).form_valid(form)

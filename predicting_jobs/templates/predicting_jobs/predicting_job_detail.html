@@ -13,7 +13,8 @@
             </button>
             <div class="dropdown-menu animated--fade-in"
                  aria-labelledby="dropdownMenuButton">
-
+                <a class="dropdown-item"
+                   href="{% url 'predicting_jobs:job-target-add' predicting_job.id %}?next={{ request.path }}">新增預測資料源</a>
                 <a class="dropdown-item"
                    href="{% url 'predicting_jobs:job-update' predicting_job.id %}?next={{ request.path }}">修改</a>
                 <a class="dropdown-item" href="{% url 'predicting_jobs:job-delete' predicting_job.id %}">刪除</a>
@@ -32,7 +33,7 @@
     <!-- Content Row -->
     <div class="row">
         <!-- label summary card -->
-        {% for label in predicting_job.label_set.all %}
+        {% for target in predicting_job.predictingtarget_set.all %}
             <div class="col-md-12 mb-4">
                 <div class="card border-left-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %} shadow h-100 py-2">
                     <div class="card-body">
@@ -42,9 +43,9 @@
                             </div>
                             <div class="col ml-3">
                                 <div class="h5 font-weight-bold text-{{ tag_color }} text-uppercase mb-1">
-                                    <a href="#">{{ label.name }}</a>
+                                    <a href="{% url 'predicting_jobs:job-target-update' predicting_job.id target.id %}">{{ target.name }}</a>
                                 </div>
-                                <div class="mb-0 text-gray-800">{{ label.description }}</div>
+                                <div class="mb-0 text-gray-800">{{ target.description }}</div>
                             </div>
                         </div>
                     </div>
