@@ -1,11 +1,12 @@
 from labeling_jobs.models import LabelingJob, Document
 from .models import ModelingJob, MLModel
-from django.views.generic import TemplateView, ListView, DetailView
+from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from modeling_jobs.helpers.data_helpers import DataHelper
-from modeling_jobs.helpers.model_helpers import RuleModel,KeywordModel,ProbModel,RFModel,SvmModel,XgboostModel
+from core.helpers.data_helpers import DataHelper
+from core.helpers.model_helpers import RuleModel, KeywordModel, ProbModel, RFModel, SvmModel, XgboostModel
+
 
 class IndexView(LoginRequiredMixin, ListView):
     model = ModelingJob
@@ -74,26 +75,29 @@ def update_task(request):
     m.save()
     return HttpResponse("Successfully update the task")
 
+
 @csrf_exempt
-def deleteTask(request):
-    m = ModelingJob.objects.get(id = request.POST['id'])
+def delete_task(request):
+    m = ModelingJob.objects.get(id=request.POST['id'])
     m.delete()
     return HttpResponse("Successfully delete!")
+
 
 @csrf_exempt
 def insert_csv(request):
     file = request.FILES['file']
     job_id = request.POST['job_id']
     dataHelper = DataHelper()
-    result = dataHelper.insert_csv_to_db(file,job_id)
+    result = dataHelper.insert_csv_to_db(file, job_id)
     return HttpResponse(result)
+
 
 @csrf_exempt
 def training_model(request):
     jobRef_id = request.POST['jobRef_id']
     model_type = request.POST['model']
     dataHelper = DataHelper()
-    content,labels = dataHelper.get_training_data(jobRef_id)
+    content, labels = dataHelper.get_training_data(jobRef_id)
 
     if model_type == 'RULE_MODEL':
         ruleModel = RuleModel()

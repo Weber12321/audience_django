@@ -8,6 +8,10 @@ class MLModel(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = "機器學習模型"
+        verbose_name_plural = "機器學習模型列表"
+
 
 class ModelingJob(models.Model):
     name = models.CharField(max_length=100, verbose_name="模型名稱")
@@ -18,3 +22,7 @@ class ModelingJob(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "模型訓練任務"
+        verbose_name_plural = "模型訓練任務列表"

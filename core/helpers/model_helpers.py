@@ -1,4 +1,3 @@
-from modeling_jobs.helpers.data_helpers import DataHelper
 from abc import ABC, abstractmethod
 
 class AudienceModel(ABC):
