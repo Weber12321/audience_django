@@ -19,13 +19,13 @@ class PredictingJobAdmin(admin.ModelAdmin):
     fieldsets = [
         (
             None, {
-                "fields": ['name', 'description']
+                "fields": ['name', "job_status", 'description']
             }),
     ]
     inlines = [ApplyingModelAdminInline, PredictingTargetAdminInline]
     list_display = (
-        'name', 'updated_at', 'created_by')
-    list_filter = ['created_at', "updated_at", 'created_by']
+        'name', "job_status", 'updated_at', 'created_by')
+    list_filter = ['created_at', "job_status", "updated_at", 'created_by']
     search_fields = ['name', 'description', 'created_by']
 
     def save_model(self, request, obj, form, change):
@@ -71,8 +71,19 @@ class SourceAdmin(admin.ModelAdmin):
 
 class PredictingTargetAdmin(admin.ModelAdmin):
     model = PredictingTarget
+    list_display = ('name', 'predicting_job', 'source', 'begin_post_time', 'end_post_time')
+    search_fields = ['predicting_job', 'source', 'name', 'begin_post_time', 'end_post_time']
+    list_filter = ['predicting_job', 'source', 'begin_post_time', 'end_post_time']
 
 
+class ApplyingModelAdmin(admin.ModelAdmin):
+    model = ApplyingModel
+    list_display = ('modeling_job', 'predicting_job', 'priority')
+    search_fields = ['predicting_job', 'modeling_job']
+    list_filter = ['predicting_job', 'modeling_job']
+
+
+admin.site.register(ApplyingModel, ApplyingModelAdmin)
 admin.site.register(PredictingJob, PredictingJobAdmin)
 admin.site.register(PredictingTarget, PredictingTargetAdmin)
 admin.site.register(Source, SourceAdmin)
