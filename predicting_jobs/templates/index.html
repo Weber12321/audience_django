@@ -21,8 +21,11 @@
                         <th scope="col">#</th>
                         <th scope="col">任務名稱</th>
                         <th scope="col">任務描述</th>
+                        <th scope="col">應用模型數</th>
+                        <th scope="col">預測範圍數</th>
                         <th scope="col">建立者</th>
                         <th scope="col">建立時間</th>
+                        <th scope="col">狀態</th>
                         <th scope="col"></th>
                     </tr>
                     </thead>
@@ -32,8 +35,11 @@
                             <th scope="row">{{ predicting_job.id }}</th>
                             <td>{{ predicting_job.name }}</td>
                             <td>{{ predicting_job.description }}</td>
+                            <td>{{ predicting_job.applyingmodel_set.count }}</td>
+                            <td>{{ predicting_job.predictingtarget_set.count }}</td>
                             <td>{{ predicting_job.created_by }}</td>
                             <td>{{ predicting_job.created_at }}</td>
+                            <td>{{ predicting_job.job_status }}</td>
                             <td><a href="{% url 'predicting_jobs:job-detail' predicting_job.id %}" class="btn btn-link">檢視細節</a></td>
                         </tr>
                     {% endfor %}

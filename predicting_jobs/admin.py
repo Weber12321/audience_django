@@ -1,11 +1,16 @@
 from django.contrib import admin
 
 # Register your models here.
-from predicting_jobs.models import PredictingJob, Source, PredictingTarget
+from predicting_jobs.models import PredictingJob, Source, PredictingTarget, ApplyingModel
 
 
 class PredictingTargetAdminInline(admin.TabularInline):
     model = PredictingTarget
+    extra = 0
+
+
+class ApplyingModelAdminInline(admin.TabularInline):
+    model = ApplyingModel
     extra = 0
 
 
@@ -14,10 +19,10 @@ class PredictingJobAdmin(admin.ModelAdmin):
     fieldsets = [
         (
             None, {
-                "fields": ['name', 'description', 'apply_models']
+                "fields": ['name', 'description']
             }),
     ]
-    inlines = [PredictingTargetAdminInline]
+    inlines = [ApplyingModelAdminInline, PredictingTargetAdminInline]
     list_display = (
         'name', 'updated_at', 'created_by')
     list_filter = ['created_at', "updated_at", 'created_by']

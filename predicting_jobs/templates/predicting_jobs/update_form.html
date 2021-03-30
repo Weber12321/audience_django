@@ -3,7 +3,7 @@
 {% block title %}族群貼標任務{% endblock %}
 {% block nav_title %}族群貼標任務{% endblock %}
 {% block page_title %}
-    新增/編輯族群貼標任務
+    編輯族群貼標任務
 {% endblock %}
 {% block page_description %}
 <p>請盡量描述任務的定義與細節。</p>
@@ -17,21 +17,8 @@
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="p-5">
-                                <form method="post" class="">{% csrf_token %}
-                                    <div class="form-group">
-                                        {{ form.name.label_tag }}
-                                        {{ form.name }}
-                                        {{ form.name.error }}
-                                    </div>
-                                    <div class="form-group">
-                                        {{ form.description.label_tag }}
-                                        {{ form.description }}
-                                        {{ form.description.error }}
-                                    </div>
-                                    <div class="form-group">
-                                        {% csrf_token %}
-                                    </div>
-                                    <input type="hidden" name="next" value="{{ next }}">
+                                <form method="post">{% csrf_token %}
+                                    {{ form.as_p }}
                                     <input type="submit" class="btn btn-primary" value="送出">
                                 </form>
                             </div>

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}{{ predicting_job.name }} | 族群貼標任務{% endblock %}
+{% block nav_title %}族群貼標任務{% endblock %}
+{% block page_title %}{{ predicting_job.name }}{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+        <div class="dropdown mb-4">
+            <button class="btn btn-primary dropdown-toggle" type="button"
+                    id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false">
+                操作
+            </button>
+            <div class="dropdown-menu animated--fade-in"
+                 aria-labelledby="dropdownMenuButton">
+                <a class="dropdown-item"
+                   href="{% url 'predicting_jobs:job-update' predicting_job.id %}?next={{ request.path }}">修改</a>
+                <a class="dropdown-item" href="{% url 'predicting_jobs:job-delete' predicting_job.id %}">刪除</a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+{% block page_info %}
+    <div class="mb-2">
+        <small><strong>{{ predicting_job.created_by }}</strong> created this job at
+            <strong>{{ predicting_job.created_at }}</strong></small>
+    </div>
+{% endblock %}
+{% block page_description %}<p class="mb-4">{{ predicting_job.description }}</p>{% endblock %}
+{% block content %}
+    <!-- Content Row -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">應用模型列表</div>
+                <div class="card-body">
+                    <div class="card-link mb-4"><a href="{% url 'predicting_jobs:job-applying-model-add' predicting_job.id %}">新增模型</a></div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">模型名稱</th>
+                                <th scope="col">模型類型</th>
+                                <th scope="col">優先度</th>
+                                <th scope="col"></th>
+                                <th scope="col"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for applying_model in predicting_job.applyingmodel_set.all %}
+                                <tr>
+                                <th scope="row">{{ applying_model.id }}</th>
+                                <td>{{ applying_model.modeling_job.name }}</td>
+                                <td>{{ applying_model.modeling_job.model.name }}</td>
+                                <td>{{ applying_model.priority }}</td>
+                                <td><a href="{% url 'predicting_jobs:job-applying-model-update' predicting_job.id applying_model.id %}"
+                                       class="btn btn-warning">修改</a></td>
+                                <td><a href="{% url 'predicting_jobs:job-applying-model-delete' predicting_job.id applying_model.id %}"
+                                       class="btn btn-danger">刪除</a></td>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">預測資料範圍列表</div>
+                <div class="card-body">
+                    <div class="card-link mb-4">
+                        <a href="{% url 'predicting_jobs:job-target-add' predicting_job.id %}?next={{ request.path }}">新增資料範圍</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">資料範圍名稱</th>
+                                <th scope="col">描述</th>
+                                <th scope="col">資料源</th>
+                                <th scope="col">時間範圍</th>
+                                <th scope="col"></th>
+                                <th scope="col"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for target in predicting_job.predictingtarget_set.all %}
+                                <tr>
+                                <th scope="row">{{ target.id }}</th>
+                                <td>{{ target.name }}</td>
+                                <td>{{ target.description }}</td>
+                                <td>{{ target.source.name }}</td>
+                                <td>{{ target.begin_post_time }}<br>~<br>{{ target.end_post_time }}</td>
+                                <td><a href="{% url 'predicting_jobs:job-target-update' predicting_job.id target.id %}"
+                                       class="btn btn-warning">修改</a></td>
+                                <td><a href="{% url 'predicting_jobs:job-target-delete' predicting_job.id target.id %}"
+                                       class="btn btn-danger">刪除</a></td>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- label summary card -->
+
+    </div>
+
+{% endblock %}

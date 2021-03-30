@@ -11,7 +11,6 @@ class PredictingJob(models.Model):
     name = models.CharField(max_length=100, verbose_name="預測工作名稱")
     description = models.TextField(verbose_name="定義與說明")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
-    apply_models = models.ManyToManyField(ModelingJob, blank=True, verbose_name="使用模型列表")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
     created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="建立者", null=True)
     job_status = models.CharField(max_length=20, verbose_name="任務狀態", default="wait")
@@ -25,6 +24,24 @@ class PredictingJob(models.Model):
 
     def get_absolute_url(self):
         return reverse('predicting_jobs:job-detail', kwargs={'pk': self.pk})
+
+
+class ApplyingModel(models.Model):
+    predicting_job = models.ForeignKey(PredictingJob, on_delete=models.CASCADE, blank=True, null=True)
+    modeling_job = models.ForeignKey(ModelingJob, verbose_name="應用模型任務", on_delete=models.CASCADE, blank=True,
+                                     null=True)
+    priority = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.modeling_job.name
+
+    class Meta:
+        unique_together = ('predicting_job', 'modeling_job',)
+        verbose_name = "應用模型"
+        verbose_name_plural = "應用模型列表"
+
+    def get_absolute_url(self):
+        return reverse('predicting_jobs:job-detail', kwargs={'pk': self.predicting_job_id})
 
 
 class Source(models.Model):
