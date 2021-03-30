@@ -6,7 +6,6 @@ from django.urls import reverse
 
 
 class LabelingJob(models.Model):
-
     name = models.CharField(max_length=200, verbose_name="標記工作名稱")
     description = models.TextField(verbose_name="定義與說明")
     is_multi_label = models.BooleanField(default=False, verbose_name="是否屬於多標籤")
@@ -23,7 +22,6 @@ class LabelingJob(models.Model):
         return self.name
 
     def get_absolute_url(self):
-
         return reverse('labeling_jobs:labeling-job-create', kwargs={'pk': self.pk})
 
     def show_labels(self):
@@ -39,16 +37,14 @@ class LabelingJob(models.Model):
     def show_document_amount(self):
         return len(self.document_set.all())
 
-
     show_document_amount.boolean = False
     show_document_amount.short_description = '文章數量'
-
 
 
 class Label(models.Model):
     labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     name = models.CharField(max_length=100, verbose_name="標籤名稱")
-    description = models.TextField(verbose_name="標籤定義")
+    description = models.TextField(verbose_name="標籤定義", blank=True)
     target_amount = models.IntegerField(verbose_name="目標數量", default=200)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
@@ -68,13 +64,14 @@ class Label(models.Model):
 
 
 class Document(models.Model):
-    labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
-    title = models.CharField(max_length=512, verbose_name="標題")
-    author = models.CharField(max_length=200, verbose_name="作者")
-    s_area_id = models.CharField(max_length=100, verbose_name="頻道id")
-    content = models.TextField(verbose_name="內文")
-    post_time = models.DateTimeField(verbose_name="發布時間")
+    labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務", blank=True)
+    title = models.CharField(max_length=512, verbose_name="標題", blank=True)
+    author = models.CharField(max_length=200, verbose_name="作者", blank=True)
+    s_area_id = models.CharField(max_length=100, verbose_name="頻道id", blank=True)
+    content = models.TextField(verbose_name="內文", blank=True)
+    post_time = models.DateTimeField(verbose_name="發布時間", blank=True, null=True)
     labels = models.ManyToManyField(Label, verbose_name="被標記標籤", blank=True)
+    hash_num = models.CharField(max_length=50,verbose_name='雜湊值',blank=True)
 
     class Meta:
         verbose_name = "文件"
