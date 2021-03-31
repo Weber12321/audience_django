@@ -3,7 +3,53 @@
     DashBoard
 {% endblock %}
 {% block page_title %}
-    施工中
+    Audience Toolkits 族群訓練工具包
+{% endblock %}
+{% block page_description %}
+    藉由此工具，您可以從0開始訓練一個屬於你的機器學習模型，並且進一步應用至OpView的族群標籤。
 {% endblock %}
 {% block content %}
+    <div class="row">
+        <div class="col-12 mt-5">
+            <div class="h5">此工具包包含以下任務工具：</div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card bg-primary text-white shadow">
+                <div class="card-body">
+                    <a class="h5 text-white card-title" href="{% url 'labeling_jobs:index' %}">
+                        資料標記任務
+                    </a>
+                    <div class="text-white-50 mt-2">
+                        在這裡您可以建立、描述，並管理您想進行的資料標記任務，完成的標記任務可以在「模型訓練任務」中使用。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card bg-dark text-white shadow">
+                <div class="card-body">
+                    <a class="h5 text-white card-title" href="{% url 'modeling_jobs:index' %}">
+                    模型訓練任務
+                    </a>
+                    <div class="text-white-50 mt-2">
+                        在這裡您可以使用「資料標記任務」中完成的資料來建立、訓練，並驗證您的機器學習模型。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card bg-danger text-white shadow">
+                <div class="card-body">
+                    <a class="h5 text-white card-title" href="{% url 'predicting_jobs:index' %}">
+                    族群貼標任務
+                    </a>
+                    <div class="text-white-50 mt-2">
+                        在這裡您可以藉由選擇「模型訓練任務」中您的模型，並挑選應用的資料範圍，建立族群貼標任務。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
