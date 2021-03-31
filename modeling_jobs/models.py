@@ -8,13 +8,21 @@ class MLModel(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = "機器學習模型"
+        verbose_name_plural = "機器學習模型列表"
+
 
 class ModelingJob(models.Model):
     name = models.CharField(max_length=100, verbose_name="模型名稱")
     description = models.CharField(max_length=100, verbose_name="模型敘述")
     is_multi_label = models.BooleanField(verbose_name="是否為多標籤")
-    model = models.ForeignKey(MLModel, on_delete=models.DO_NOTHING, blank=True, null=True)
+    model = models.ForeignKey(MLModel, on_delete=models.SET_NULL, blank=True, null=True)
     jobRef = models.ForeignKey(LabelingJob, on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "模型訓練任務"
+        verbose_name_plural = "模型訓練任務列表"

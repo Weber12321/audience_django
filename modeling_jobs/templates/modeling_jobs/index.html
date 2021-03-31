@@ -6,14 +6,10 @@ Model List
 {% block content %}
 <div style="text-align: right;">
     <button class="btn btn-primary btn-rounded btn-sm my-0" data-toggle="modal" data-target="#createBtn">建立任務</button>
+    <button class="btn btn-primary btn-rounded btn-sm my-0" data-toggle="modal" data-target="#insertCSV">匯入檔案</button>
 </div>
 <script>
     job_id = 0;
-    function setJobId(id){
-        job_id = id;
-        console.log(job_id);
-    }
-
     function createJob(){
         model_name = document.getElementById("model_name").value;
         model_type = document.getElementById("model_type").value;
@@ -34,7 +30,7 @@ Model List
             type : 'post',
             success : function (result)
             {
-                swal("Done!", result, "success").then(() =>
+                Swal.fire("Done!", result, "success").then(() =>
                 {
                     location.reload()
                 })
@@ -55,7 +51,7 @@ Model List
         model_name = document.getElementById("modify_model_name").value;
         model_type = document.getElementById("modify_model_type").value;
         description = document.getElementById("modify_description").value;
-        is_multi_labe = document.getElementById("modify_is_multi_label").value;
+        is_multi_label = document.getElementById("modify_is_multi_label").value;
         ref_job = document.getElementById("modify_ref_job").value;
 
         var aj = $.ajax({
@@ -66,15 +62,99 @@ Model List
                 model_name : model_name,
                 model_type : model_type,
                 description : description,
-                is_multi_labe : is_multi_labe,
+                is_multi_label : is_multi_label,
                 ref_job : ref_job,
             },
             type : 'post',
             success : function (result)
             {
-                swal("檔案已更新", result, "success").then(() =>
+                console.log(123);
+                Swal.fire("檔案已更新", result, "success").then(() =>
                 {
                     location.reload()
+                })
+            }
+        })
+    }
+
+    function deleteJob(id){
+        job_id = id;
+        var aj = $.ajax({
+            url : `deleteTask`,
+            data :
+            {
+                id : job_id
+            },
+            type : 'post',
+            success : function (result)
+            {
+                Swal.fire("檔案已刪除", result, "success").then(() =>
+                {
+                    location.reload()
+                })
+            }
+        })
+    }
+
+    function insertCSVData(){
+        file = $('#csv_file')[0].files[0];
+        if(file){
+            var formdata = new FormData();
+            formdata.append('file', file);
+            formdata.append('job_id', document.getElementById("csv_file_job").value);
+            var aj = $.ajax({
+                url : 'insert_csv',
+                processData : false,
+                contentType : false,
+                catch : false,
+                data : formdata,
+                type : 'post',
+                success : function (result)
+                {
+                    if(result == 'True'){
+                        Swal.fire("已匯入資料", 'success', "success").then(() =>
+                        {
+                            location.reload()
+                        })
+                    }
+                    else{
+                        swal("Error", 'Col Not Match', "error");
+                    }
+                }
+            })
+        }
+        else{
+            swal("Error", '未選取', "error")
+        }
+    }
+
+    function trainModel(jobRef_id,model){
+        Swal.fire({
+            title:"確定要訓練此模組?",
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes!'
+        }).then((result) =>{
+            if(result.value){
+                var aj = $.ajax
+                ({
+                    url : 'training_model',
+                    data : {
+                        jobRef_id : jobRef_id,
+                        model : model
+                    },
+                    type : 'post',
+                    success : function (result)
+                    {
+                        Swal.fire({
+                            title: '訓練完成',
+                            icon: 'success'
+                        }).then(() => {
+                            location.reload()
+                        })
+                    }
                 })
             }
         })
@@ -190,7 +270,45 @@ Model List
     </div>
 </div>
 
+<!--Test CSV Modal-->
+<div class="modal fade" id="insertCSV" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">編輯</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label class="col-form-label" for="csv_file">輸入檔案(.csv) : </label>
+                        <input type="file" id="csv_file" name="convert_file_format" accept=".csv" multiple
+                               class="csv_file" required>
+                    </div>
+                        <label class="col-form-label" for="csv_file_job">Reference Job : </label>
+                        <select class="form-control" id="csv_file_job" name="model" required>
+                            {% for job in job_list %}
+                            <option value="{{job.id}}">{{job}}</option>
+                            {% endfor %}
+                        </select>
+                    <div class="form-group">
 
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="insertCSVData()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--main-->
 <div class="container">
     <div class="row">
         <div class="accordion" id="accordionExample" style="width: 100%">
@@ -198,11 +316,13 @@ Model List
                 <thead>
                 <tr>
                     <th scope="col">模型名稱</th>
-                     <th scope="col">模型類型</th>
+                    <th scope="col">模型類型</th>
                     <th scope="col">模型敘述</th>
                     <th scope="col">是否為多標籤</th>
                     <th scope="col">reference job id</th>
                     <th scope="col">編輯</th>
+                    <th scope="col">訓練模型</th>
+                    <th scope="col">測試模型</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -214,15 +334,24 @@ Model List
                     <td>{{job.is_multi_label}}</td>
                     <td>{{job.jobRef_id}}</td>
                     <td>
-                        <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle btn-sm" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle btn-sm"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             編輯
                         </button>
                         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                             <a class="dropdown-item modify_btn" data-toggle="modal"
-                               data-target="#modifyModal" onclick="getPreviousInfoToModal('{{job.id}}','{{job.name}}','{{job.model.id}}','{{job.description}}','{{job.is_multi_label}}','{{job.jobRef_id}}')"> 修改模型
+                               data-target="#modifyModal"
+                               onclick="getPreviousInfoToModal('{{job.id}}','{{job.name}}','{{job.model.id}}','{{job.description}}','{{job.is_multi_label}}','{{job.jobRef_id}}')">
+                                修改模型
                             </a>
-                            <a class="dropdown-item delete_btn" onclick="setJobId('{{job.id}}')">刪除</a>
+                            <a class="dropdown-item delete_btn" onclick="deleteJob('{{job.id}}')">刪除</a>
                         </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-info train_btn btn-sm" onclick="trainModel('{{job.jobRef_id}}','{{job.model}}')">執行訓練</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-secondary test_btn btn-sm">測試</button>
                     </td>
                 </tr>
                 {% endfor %}

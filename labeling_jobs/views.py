@@ -65,7 +65,7 @@ class LabelingJobDocumentsView(SingleObjectMixin, generic.ListView):
     model = LabelingJob
 
     # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
-    # template_name = 'labeling_jobs/labeling_job_detail.html'
+    template_name = 'labeling_jobs/labeling_job_detail.html'
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(queryset=LabelingJob.objects.all())
