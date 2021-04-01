@@ -2,8 +2,10 @@ import cchardet
 import csv
 import codecs
 from labeling_jobs.models import LabelingJob, Document, Label
+from modeling_jobs.models import ModelingJob,Report
 import hashlib
 from datetime import datetime
+import json
 
 class DataHelper:
     def __init__(self):
@@ -64,3 +66,54 @@ class DataHelper:
             content.append(doc.content)
             labels.append([label.name for label in doc.labels.all()])
         return content,labels
+
+    def get_test_data(self,file):
+        encoding = cchardet.detect(file.read())['encoding']
+        file.seek(0)
+        csv_file = csv.DictReader(codecs.iterdecode(file, encoding))
+        title = csv_file.fieldnames
+        result = True
+        content = []
+        labels = []
+        required_fields = ['title', 'author', 's_area_id', 'content', 'label']
+        if set(title) != set(required_fields):
+            return content,labels
+        else:
+            for item in csv_file:
+                content.append(item.get('content',''))
+                labels.append(item.get('label',''))
+            return content,labels
+
+    def save_report(self,modeling_job_id,report):
+        data = Report.objects.filter(models_ref_id = modeling_job_id)
+        job = ModelingJob.objects.filter(id = modeling_job_id)
+        accuracy = report.get('accuracy', '')
+        if len(data) == 0:
+            r = Report(accuracy = accuracy , report = str(report), models_ref_id = modeling_job_id)
+            r.save()
+        else:
+            data.update(accuracy = accuracy,report = report)
+        job.update(status = True)
+
+    def get_report(self,modeling_job_id):
+        modeling_job_id = int(modeling_job_id)
+        report = Report.objects.get(models_ref_id = modeling_job_id)
+        report = report.report
+        report = report.replace("\'", "\"")
+        report = json.loads(report)
+        result_dic = {"labels":{}}
+        labels = self.get_labels(modeling_job_id)
+        for label in labels:
+            result_dic.get('labels')[label] = report.get(label)
+        result_dic['macro avg'] = report.get('macro avg')
+        result_dic['weighted avg'] = report.get('weighted avg')
+        return result_dic
+
+    def get_labels(self,modeling_job_id):
+        job = ModelingJob.objects.get(id = modeling_job_id)
+        labeling_job_id = job.jobRef_id
+        label_set = Label.objects.filter(labeling_job_id = labeling_job_id)
+        labels = []
+        for label in label_set:
+            labels.append(label.name)
+        return labels
