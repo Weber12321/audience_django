@@ -1,11 +1,11 @@
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
 
-from .forms import LabelingJobForm, LabelForm
-from .models import LabelingJob, Label
+from .forms import LabelingJobForm, UploadFileJobForm
+from .models import LabelingJob, UploadFileJob
 
 
 # Create your views here.
@@ -44,7 +44,7 @@ class LabelingJobUpdate(LoginRequiredMixin, generic.UpdateView):
 
     def get_success_url(self):
         _pk = self.kwargs['pk']
-        return reverse_lazy('labeling_jobs:labeling-job-detail', kwargs={'pk': _pk})
+        return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': _pk})
 
 
 class LabelingJobDelete(LoginRequiredMixin, generic.DeleteView):
@@ -77,4 +77,36 @@ class LabelingJobDocumentsView(SingleObjectMixin, generic.ListView):
         return context
 
     def get_queryset(self):
-        return self.object.document_set.order_by('-created_at')
+        return self.object.document_set.order_by('pk')
+
+
+class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
+    model = UploadFileJob
+    form_class = UploadFileJobForm
+    template_name = 'labeling_jobs/file_upload_form.html'
+
+    def get_success_url(self):
+        job_id = self.kwargs['job_id']
+        return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': job_id})
+
+    def form_valid(self, form):
+        form.instance.labeling_job_id = self.kwargs.get('job_id')
+        form.instance.created_by = self.request.user
+        return super(UploadFileJobCreate, self).form_valid(form)
+
+
+class UploadFileJobDelete(LoginRequiredMixin, generic.DeleteView):
+    model = UploadFileJob
+    success_url = reverse_lazy('predicting_jobs:index')
+    template_name = 'labeling_jobs/confirm_delete_form.html'
+
+    def post(self, request, *args, **kwargs):
+        if "cancel" in request.POST:
+            print(request.POST)
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return super(UploadFileJobDelete, self).post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        job_id = self.kwargs.get('job_id')
+        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})

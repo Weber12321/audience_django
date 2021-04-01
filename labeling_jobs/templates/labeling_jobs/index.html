@@ -6,7 +6,7 @@
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <a class="ml-auto" href="{% url 'labeling_jobs:labeling-job-create' %}">建立新任務</a>
+            <a class="ml-auto" href="{% url 'labeling_jobs:job-create' %}">建立新任務</a>
         </div>
     {% endif %}
 {% endblock %}
@@ -45,7 +45,7 @@
                                 </p>
                                 <p class="card-text">{{ labeling_job.description }}</p>
 
-                                <a href="{% url 'labeling_jobs:labeling-job-detail' labeling_job.id %}" class="card-link">檢視任務細節</a>
+                                <a href="{% url 'labeling_jobs:job-detail' labeling_job.id %}" class="card-link">檢視任務細節</a>
                                 {#                                <a href="{% url 'labeling_jobs:job-update' labeling_job.id %}?next={{ request.path }}"#}
                                 {#                                   class="card-link">編輯任務</a>#}
                                 {#                                <a href="{% url 'labeling_jobs:job-delete' labeling_job.id %}"#}

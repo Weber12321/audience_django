@@ -14,12 +14,14 @@
             <div class="dropdown-menu animated--fade-in"
                  aria-labelledby="dropdownMenuButton">
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:labeling-job-docs' labeling_job.id %}?next={{ request.path }}">文章列表</a>
+                   href="{% url 'labeling_jobs:upload-job-create' labeling_job.id %}?next={{ request.path }}">上傳檔案</a>
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:labeling-job-docs' labeling_job.id %}?next={{ request.path }}">開始貼標</a>
+                   href="{% url 'labeling_jobs:job-docs' labeling_job.id %}?next={{ request.path }}">文章列表</a>
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:labeling-job-update' labeling_job.id %}?next={{ request.path }}">修改</a>
-                <a class="dropdown-item" href="{% url 'labeling_jobs:labeling-job-delete' labeling_job.id %}">刪除</a>
+                   href="{% url 'labeling_jobs:job-docs' labeling_job.id %}?next={{ request.path }}">開始貼標</a>
+                <a class="dropdown-item"
+                   href="{% url 'labeling_jobs:job-update' labeling_job.id %}?next={{ request.path }}">修改</a>
+                <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' labeling_job.id %}">刪除</a>
             </div>
         </div>
     {% endif %}
@@ -54,6 +56,35 @@
                                 </div>
                                 <div class="mb-0 text-gray-800">{{ label.description }}</div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="row">
+        {% for upload_job in labeling_job.uploadfilejob_set.all %}
+            <div class="col-lg-3 mb-4">
+                <div class="card bg-light shadow">
+                    <div class="card-body">
+                        <div class="card-title">{{ upload_job.file.name }}</div>
+                        <div class="text-gray small">
+                            {{ upload_job.created_by }} uploaded at {{ upload_job.created_at }}
+                        </div>
+                        <div class="mt-2">
+                            {% if upload_job.job_status == 'success' %}
+                                <span class="badge badge-success">完成</span>
+                            {% elif upload_job.job_status == 'processing' %}
+                                <span class="badge badge-warning">處理中</span>
+                            {% elif upload_job.job_status == 'wait' %}
+                                <span class="badge badge-warning">等待中</span>
+                            {% else %}
+                                <span class="badge badge-danger">其他（{{ upload_job.job_status }}）</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-link mt-2">
+                            <a href="{% url 'labeling_jobs:upload-job-delete' labeling_job.id upload_job.id %}">
+                                刪除檔案</a>
                         </div>
                     </div>
                 </div>

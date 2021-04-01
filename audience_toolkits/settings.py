@@ -86,6 +86,7 @@ DATABASES = {
     }
 }
 
+FILE_PATH_FIELD_DIRECTORY ='upload_files'
 # DATABASES = {
 #     'default': {
 #         # 'ENGINE': 'django.db.backends.sqlite3',

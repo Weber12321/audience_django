@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from labeling_jobs.forms import DocumentForm
-from labeling_jobs.models import LabelingJob, Label, Document
+from labeling_jobs.models import LabelingJob, Label, Document, UploadFileJob
 
 
 class LabelInline(admin.TabularInline):
@@ -17,6 +17,12 @@ class DocumentInline(admin.StackedInline):
     fields = ['title', 's_area_id', 'author', 'content', 'post_time']
 
 
+class UploadFileJobInline(admin.StackedInline):
+    model = UploadFileJob
+    extra = 0
+    fields = ['name', 'description', 'file']
+
+
 class LabelingJobAdmin(admin.ModelAdmin):
     fieldsets = [
         (
@@ -24,7 +30,7 @@ class LabelingJobAdmin(admin.ModelAdmin):
                 "fields": ['name', 'description', 'is_multi_label']
             }),
     ]
-    inlines = [LabelInline, DocumentInline]
+    inlines = [LabelInline, DocumentInline, UploadFileJobInline]
     list_display = (
         'name', 'is_multi_label', 'show_target_amount', 'show_document_amount', 'show_labels', 'created_at',
         'updated_at', 'created_by')
