@@ -72,10 +72,10 @@
                             {{ upload_job.created_by }} uploaded at {{ upload_job.created_at }}
                         </div>
                         <div class="mt-2">
-                            {% if upload_job.job_status == 'success' %}
+                            {% if upload_job.job_status == 'done' %}
                                 <span class="badge badge-success">完成</span>
                             {% elif upload_job.job_status == 'processing' %}
-                                <span class="badge badge-warning">處理中</span>
+                                <span class="badge badge-primary">處理中</span>
                             {% elif upload_job.job_status == 'wait' %}
                                 <span class="badge badge-warning">等待中</span>
                             {% else %}

@@ -3,6 +3,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
+from django_q.tasks import AsyncTask
 
 from .forms import LabelingJobForm, UploadFileJobForm
 from .models import LabelingJob, UploadFileJob
@@ -86,6 +87,9 @@ class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
     template_name = 'labeling_jobs/file_upload_form.html'
 
     def get_success_url(self):
+        from labeling_jobs.tasks import sample_task
+        a = AsyncTask(sample_task, self.object, 15, group='upload_job')
+        a.run()
         job_id = self.kwargs['job_id']
         return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': job_id})
 
