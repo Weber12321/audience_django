@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block nav_title %} 模型訓練任務 {% endblock %}
+{% block page_title %}
+Result
+{% endblock %}
+{% block content %}
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th scope="col">classification</th>
+        <th scope="col">precision</th>
+        <th scope="col">recall</th>
+        <th scope="col">f1_score</th>
+        <th scope="col">support</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for label in labels %}
+    <tr>
+        <td>{{label.label}}</td>
+
+        {% if label.precision > 0.7 %}
+        <td style="color : green">{{label.precision}}</td>
+        {% else %}
+        <td style="color : red">{{label.precision}}</td>
+        {% endif %}
+
+        {% if label.recall > 0.7 %}
+        <td style="color : green">{{label.recall}}</td>
+        {% else %}
+        <td style="color : red">{{label.recall}}</td>
+        {% endif %}
+
+        {% if label.f1_score > 0.7 %}
+        <td style="color : green">{{label.f1_score}}</td>
+        {% else %}
+        <td style="color : red">{{label.f1_score}}</td>
+        {% endif %}
+
+        <td>{{label.support}}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td>macro avg</td>
+        {% if macro_avg.precision > 0.7 %}
+        <td style="color : green">{{macro_avg.precision}}</td>
+        {% else %}
+        <td style="color : red">{{macro_avg.precision}}</td>
+        {% endif %}
+
+        {% if macro_avg.recall > 0.7 %}
+        <td style="color : green">{{macro_avg.recall}}</td>
+        {% else %}
+        <td style="color : red">{{macro_avg.recall}}</td>
+        {% endif %}
+
+        {% if macro_avg.f1_score > 0.7 %}
+        <td style="color : green">{{macro_avg.f1_score}}</td>
+        {% else %}
+        <td style="color : red">{{macro_avg.f1_score}}</td>
+        {% endif %}
+
+        <td>{{macro_avg.support}}</td>
+    </tr>
+    <tr>
+        <td>weighted avg</td>
+        {% if weighted_avg.precision > 0.7 %}
+        <td style="color : green">{{weighted_avg.precision}}</td>
+        {% else %}
+        <td style="color : red">{{weighted_avg.precision}}</td>
+        {% endif %}
+
+        {% if weighted_avg.recall > 0.7 %}
+        <td style="color : green">{{weighted_avg.recall}}</td>
+        {% else %}
+        <td style="color : red">{{weighted_avg.recall}}</td>
+        {% endif %}
+
+        {% if weighted_avg.f1_score > 0.7 %}
+        <td style="color : green">{{weighted_avg.f1_score}}</td>
+        {% else %}
+        <td style="color : red">{{weighted_avg.f1_score}}</td>
+        {% endif %}
+
+        <td>{{weighted_avg.support}}</td>
+    </tr>
+    </tbody>
+</table>
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th scope="col"></th>
+        <th scope="col">score</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr>
+        <td>accuracy</td>
+        {% if accuracy > 0.7 %}
+        <td style="color : green">{{accuracy}}</td>
+        {% else %}
+        <td style="color : red">{{accuracy}}</td>
+        {% endif %}
+    </tr>
+    </tbody>
+</table>
+{% endblock %}

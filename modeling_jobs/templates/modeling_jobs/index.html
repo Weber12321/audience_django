@@ -10,6 +10,8 @@ Model List
 </div>
 <script>
     job_id = 0;
+    model_type = '';
+    multi_label = 'false';
     function createJob(){
         model_name = document.getElementById("model_name").value;
         model_type = document.getElementById("model_type").value;
@@ -118,17 +120,17 @@ Model List
                         })
                     }
                     else{
-                        swal("Error", 'Col Not Match', "error");
+                        Swal.fire("Error", 'Col Not Match', "error");
                     }
                 }
             })
         }
         else{
-            swal("Error", '未選取', "error")
+            Swal.fire("Error", '未選取', "error")
         }
     }
 
-    function trainModel(jobRef_id,model){
+    function trainModel(jobRef_id,model,is_multi_label,modeling_job_id){
         Swal.fire({
             title:"確定要訓練此模組?",
             icon: 'info',
@@ -143,7 +145,9 @@ Model List
                     url : 'training_model',
                     data : {
                         jobRef_id : jobRef_id,
-                        model : model
+                        model : model,
+                        is_multi_label:is_multi_label,
+                        modeling_job_id : modeling_job_id
                     },
                     type : 'post',
                     success : function (result)
@@ -160,6 +164,62 @@ Model List
         })
     }
 
+    function getModelJobInfo(id,model,is_multi_label){
+        job_id = id;
+        model_type = model;
+        multi_label = is_multi_label;
+    }
+
+    function testModel(){
+        file = $('#test_csv_file')[0].files[0];
+        if(file){
+            var formdata = new FormData();
+            formdata.append('file', file);
+            formdata.append('job_id',job_id);
+            formdata.append('model_type',model_type);
+            formdata.append('is_multi_label',multi_label);
+            var aj = $.ajax({
+                url : 'testing_model',
+                processData : false,
+                contentType : false,
+                catch : false,
+                data : formdata,
+                type : 'post',
+                success : function (result)
+                {
+                    if(result == '欄位不符'){
+                        Swal.fire("Error", '欄位不符合', "error");
+                    }
+                    if(result == '請先訓練模型'){
+                        Swal.fire("Error", '請先訓練模型', "error");
+                    }
+                    else{
+                        Swal.fire("訓練完成", 'success', "success").then(() =>
+                        {
+                            location.reload()
+                        })
+                    }
+                }
+            })
+        }
+        else{
+            Swal.fire("Error", '未選取', "error")
+        }
+    }
+
+    function showResult(modeling_job_id){
+        var aj = $.ajax({
+            url : 'show_result',
+            data : {
+                modeling_job_id : modeling_job_id,
+            },
+            type : 'post',
+            success : function (result)
+            {
+                console.log("Done")
+            }
+        })
+    }
 </script>
 
 <!--create modal-->
@@ -270,7 +330,7 @@ Model List
     </div>
 </div>
 
-<!--Test CSV Modal-->
+<!--insert CSV Modal-->
 <div class="modal fade" id="insertCSV" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -288,12 +348,12 @@ Model List
                         <input type="file" id="csv_file" name="convert_file_format" accept=".csv" multiple
                                class="csv_file" required>
                     </div>
-                        <label class="col-form-label" for="csv_file_job">Reference Job : </label>
-                        <select class="form-control" id="csv_file_job" name="model" required>
-                            {% for job in job_list %}
-                            <option value="{{job.id}}">{{job}}</option>
-                            {% endfor %}
-                        </select>
+                    <label class="col-form-label" for="csv_file_job">Reference Job : </label>
+                    <select class="form-control" id="csv_file_job" name="model" required>
+                        {% for job in job_list %}
+                        <option value="{{job.id}}">{{job}}</option>
+                        {% endfor %}
+                    </select>
                     <div class="form-group">
 
                     </div>
@@ -307,6 +367,33 @@ Model List
     </div>
 </div>
 
+<!--test model CSV Modal-->
+<div class="modal fade" id="testModelCSV" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">編輯</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label class="col-form-label" for="test_csv_file">輸入檔案(.csv) : </label>
+                        <input type="file" id="test_csv_file" name="convert_file_format" accept=".csv" multiple
+                               class="csv_file" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="testModel()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!--main-->
 <div class="container">
@@ -323,6 +410,7 @@ Model List
                     <th scope="col">編輯</th>
                     <th scope="col">訓練模型</th>
                     <th scope="col">測試模型</th>
+                    <th scope="col">檢視結果</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -348,11 +436,22 @@ Model List
                         </div>
                     </td>
                     <td>
-                        <button class="btn btn-info train_btn btn-sm" onclick="trainModel('{{job.jobRef_id}}','{{job.model}}')">執行訓練</button>
+                        <button class="btn btn-info train_btn btn-sm"
+                                onclick="trainModel('{{job.jobRef_id}}','{{job.model}}','{{job.is_multi_label}}','{{job.id}}')">
+                            執行訓練
+                        </button>
                     </td>
                     <td>
-                        <button class="btn btn-secondary test_btn btn-sm">測試</button>
+                        <button type="button" class="btn btn-secondary test_btn btn-sm" data-toggle="modal" data-target="#testModelCSV" onclick="getModelJobInfo('{{job.id}}','{{job.model}}','{{job.is_multi_label}}')">
+                            測試
+                        </button>
                     </td>
+                    {% if job.status %}
+                    <td>
+                        <a type="button" href="{{prefix}}/modeling_jobs/{{job.id}}/result_page">檢視混淆矩陣</a>
+<!--                        onclick="showResult('{{job.id}}')"-->
+                    </td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
                 </tbody>
