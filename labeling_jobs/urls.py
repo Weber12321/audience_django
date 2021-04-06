@@ -10,6 +10,8 @@ urlpatterns = [
     path('<int:pk>/update/', views.LabelingJobUpdate.as_view(), name='job-update'),
     path('<int:pk>/delete/', views.LabelingJobDelete.as_view(), name='job-delete'),
     path('<int:pk>/documents', views.LabelingJobDocumentsView.as_view(), name="job-docs"),
+    path('<int:pk>/labeling', views.LabelingRandomDocumentView.as_view(), name="job-labeling"),
+    path('<int:job_id>/labeling/set_labels', views.doc_label_update, name="set-labels"),
     path('<int:job_id>/file/upload/', views.UploadFileJobCreate.as_view(), name='upload-job-create'),
     path('<int:job_id>/file/<int:pk>/delete/', views.UploadFileJobDelete.as_view(), name='upload-job-delete'),
 ]

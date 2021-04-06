@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}任務{% endblock %}
+{% block nav_title %}
+    資料標記任務
+{% endblock %}
+{% block page_title %}{{ labeling_job.name }}{% endblock %}
+{% block page_functions %}
+    <a href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">上一頁</a>
+{% endblock %}
+{% block page_info %}
+    {% for label in labeling_job.label_set.all %}
+        <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
+              data-toggle="tooltip" data-placement="top"
+              title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>
+    {% endfor %}
+{% endblock %}
+{% block page_description %}
+    <p>{{ labeling_job.description }}</p>
+{% endblock %}
+{% block content %}
+    {% if page_obj %}
+        <ul>
+            {% for doc in page_obj %}
+                <li><a href="">{{ doc.title }}</a>, <p>{{ doc.content }}</p>
+                    <form action="{% url 'labeling_jobs:set-labels' labeling_job.id %}" method="post">
+                        <label>
+                            <input type="text" name="doc-id" value="{{ doc.id }}" hidden>
+                        </label>
+                        {% for label in labeling_job.label_set.all %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="{{ label.id }}" name="label-ids"
+                                       id="{{ label.id }}" {% if label in doc.labels.all %}checked{% endif %}>
+                                <label class="form-check-label" for="{{ label.id }}">
+                                    <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
+                                          data-toggle="tooltip" data-placement="top"
+                                          title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>
+                                </label>
+                            </div>
+
+                        {% endfor %}
+                        <input type="submit" value="送出">
+                    </form>
+                    {% resetcycle %}
+                </li>
+            {% endfor %}
+        </ul>
+        <div class="pagination">
+        <span class="step-links">
+{#            {% if page_obj.has_previous %}#}
+{#                <a href="?page={{ page_obj.previous_page_number }}">previous</a>#}
+{#            {% endif %}#}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">跳過</a>
+            {% endif %}
+        </span>
+        </div>
+    {% else %}
+        <p>沒有文件</p>
+    {% endif %}
+    <!-- label progress -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">標記進度</h6>
+        </div>
+        <div class="card-body">
+            {% for label in labeling_job.label_set.all %}
+                <h4 class="small font-weight-bold">{{ label.name }}
+                    <span class="float-right"><small> {{ label.show_document_amount }}/{{ label.target_amount }}</small> {{ label.show_progress_percentage }}%</span>
+                </h4>
+                <div class="progress mb-4">
+                    <div class="progress-bar bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}"
+                         role="progressbar" style="width: {{ label.show_progress_percentage }}%"
+                         aria-valuenow="label.show_progress_percentage"
+                         aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            {% empty %}
+                沒有設定標籤
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

@@ -1,12 +1,15 @@
+from random import shuffle
+
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect
-from django.urls import reverse_lazy
+from django.http import HttpResponseRedirect, HttpResponse
+from django.urls import reverse_lazy, reverse
 from django.views import generic
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
 
 from .forms import LabelingJobForm, UploadFileJobForm
-from .models import LabelingJob, UploadFileJob
+from .models import LabelingJob, UploadFileJob, Document, Label
 
 # Create your views here.
 from .tasks import import_csv_data_task
@@ -64,7 +67,7 @@ class LabelingJobDelete(LoginRequiredMixin, generic.DeleteView):
 
 
 class LabelingJobDocumentsView(SingleObjectMixin, generic.ListView):
-    paginate_by = 2
+    paginate_by = 10
     model = LabelingJob
 
     # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
@@ -81,6 +84,39 @@ class LabelingJobDocumentsView(SingleObjectMixin, generic.ListView):
 
     def get_queryset(self):
         return self.object.document_set.order_by('pk')
+
+
+class LabelingRandomDocumentView(SingleObjectMixin, generic.ListView):
+    paginate_by = 1
+    model = LabelingJob
+    template_name = 'labeling_jobs/labeling_from.html'
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object(queryset=LabelingJob.objects.all())
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['labeling_job'] = self.object
+        return context
+
+    def get_queryset(self):
+        query_set = list(self.object.document_set.filter(labels=None))
+        shuffle(query_set)
+        return query_set if query_set else []
+
+
+@csrf_exempt
+def doc_label_update(request, job_id):
+    doc_id = request.POST["doc-id"]
+    label_ids = request.POST.getlist("label-ids")
+    labels = [Label.objects.get(pk=label_id) for label_id in label_ids]
+    doc = Document.objects.get(id=doc_id)
+    doc.labels.clear()
+    for label in labels:
+        doc.labels.add(label)
+    doc.save()
+    return HttpResponseRedirect(reverse('labeling_jobs:job-labeling', kwargs={'pk': job_id}))
 
 
 class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):

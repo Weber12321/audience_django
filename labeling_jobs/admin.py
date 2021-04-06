@@ -20,7 +20,7 @@ class DocumentInline(admin.StackedInline):
 class UploadFileJobInline(admin.StackedInline):
     model = UploadFileJob
     extra = 0
-    fields = ['name', 'description', 'file']
+    fields = ['file']
 
 
 class LabelingJobAdmin(admin.ModelAdmin):
@@ -30,7 +30,7 @@ class LabelingJobAdmin(admin.ModelAdmin):
                 "fields": ['name', 'description', 'is_multi_label']
             }),
     ]
-    inlines = [LabelInline, DocumentInline, UploadFileJobInline]
+    inlines = [LabelInline, UploadFileJobInline]
     list_display = (
         'name', 'is_multi_label', 'show_target_amount', 'show_document_amount', 'show_labels', 'created_at',
         'updated_at', 'created_by')

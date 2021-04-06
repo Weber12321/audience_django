@@ -16,9 +16,9 @@
                 <a class="dropdown-item"
                    href="{% url 'labeling_jobs:upload-job-create' labeling_job.id %}?next={{ request.path }}">上傳檔案</a>
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:job-docs' labeling_job.id %}?next={{ request.path }}">文章列表</a>
+                   href="{% url 'labeling_jobs:job-docs' labeling_job.id %}">文章列表</a>
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:job-docs' labeling_job.id %}?next={{ request.path }}">開始貼標</a>
+                   href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
                 <a class="dropdown-item"
                    href="{% url 'labeling_jobs:job-update' labeling_job.id %}?next={{ request.path }}">修改</a>
                 <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' labeling_job.id %}">刪除</a>
