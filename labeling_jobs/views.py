@@ -8,8 +8,10 @@ from django_q.tasks import AsyncTask
 from .forms import LabelingJobForm, UploadFileJobForm
 from .models import LabelingJob, UploadFileJob
 
-
 # Create your views here.
+from .tasks import import_csv_data_task
+
+
 class IndexView(LoginRequiredMixin, generic.ListView):
     queryset = LabelingJob.objects.order_by('-created_at')
     # generic.ListView use default template_name = '<app name>/<model name>_list.html'
@@ -66,7 +68,7 @@ class LabelingJobDocumentsView(SingleObjectMixin, generic.ListView):
     model = LabelingJob
 
     # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
-    template_name = 'labeling_jobs/labeling_job_detail.html'
+    template_name = 'labeling_jobs/document_list.html'
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(queryset=LabelingJob.objects.all())
@@ -88,7 +90,8 @@ class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_success_url(self):
         from labeling_jobs.tasks import sample_task
-        a = AsyncTask(sample_task, self.object, 15, group='upload_job')
+        # 利用django-q實作非同步上傳
+        a = AsyncTask(import_csv_data_task, self.object, group='upload_documents')
         a.run()
         job_id = self.kwargs['job_id']
         return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': job_id})

@@ -60,6 +60,9 @@ class Label(models.Model):
     def show_document_amount(self):
         return len(self.document_set.all())
 
+    def show_progress_percentage(self):
+        return round(len(self.document_set.all()) / self.target_amount * 100, 2)
+
     show_document_amount.boolean = False
     show_document_amount.short_description = '已標記文章數量'
 

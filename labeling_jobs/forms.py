@@ -49,4 +49,4 @@ class DocumentForm(forms.ModelForm):
         super(DocumentForm, self).__init__(*args, **kwargs)
         if self.instance.labeling_job_id:
             self.fields['labels'].queryset = Label.objects.filter(
-                job_id=self.instance.job_id)
+                labeling_job_id=self.instance.labeling_job_id)
