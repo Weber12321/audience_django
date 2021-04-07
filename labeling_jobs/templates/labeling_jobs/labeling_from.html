@@ -68,7 +68,10 @@
                         </div>
                     </div>
                 </div>
-
+                {% empty %}
+                <div class="card shadow mb-4">
+                    <div class="card-body">沒有文章或是所有文章都標記完成了，您可以再上傳新的文章。</div>
+                </div>
             {% endfor %}
 
         </div>
