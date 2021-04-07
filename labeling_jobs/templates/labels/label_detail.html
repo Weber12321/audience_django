@@ -36,7 +36,7 @@
             {% for doc in page_obj %}
                 <div class="card shadow mb-4 {% if doc.labels.all %}border-left-primary{% else %}border-left-warning{% endif %}">
                     <div class="card-body">
-                        <div class="h5"><a href="">{{ doc.title }}</a></div>
+                        <div class="h5"><a href="{% url 'labeling_jobs:doc-detail' doc.labeling_job.id doc.id %}">{{ doc.title }}</a></div>
                         <p>{{ doc.content }}</p>
                         {% for label in label.labeling_job.label_set.all %}
                             <span class="mt-2 badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
