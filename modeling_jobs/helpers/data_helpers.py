@@ -87,11 +87,7 @@ class DataHelper:
     def save_report(self,modeling_job_id,report):
         data = Report.objects.filter(models_ref_id = modeling_job_id)
         job = ModelingJob.objects.filter(id = modeling_job_id)
-<<<<<<< HEAD
         accuracy = report.get('accuracy', -1)
-=======
-        accuracy = report.get('accuracy', '')
->>>>>>> a6b29cb37fc37a21c0a03d75814e067dffc00563
         if len(data) == 0:
             r = Report(accuracy = accuracy , report = str(report), models_ref_id = modeling_job_id)
             r.save()
@@ -105,20 +101,13 @@ class DataHelper:
         report = report.report
         report = report.replace("\'", "\"")
         report = json.loads(report)
-<<<<<<< HEAD
+
         for key in report.keys():
             if key != 'accuracy':
                 for i in report[key]:
                     report[key][i] = round(report[key][i],3)
+
         return report
-=======
-        result_dic = {"labels":{}}
-        labels = self.get_labels(modeling_job_id)
-        for label in labels:
-            result_dic.get('labels')[label] = report.get(label)
-        result_dic['macro avg'] = report.get('macro avg')
-        result_dic['weighted avg'] = report.get('weighted avg')
-        return result_dic
 
     def get_labels(self,modeling_job_id):
         job = ModelingJob.objects.get(id = modeling_job_id)
@@ -128,4 +117,4 @@ class DataHelper:
         for label in label_set:
             labels.append(label.name)
         return labels
->>>>>>> a6b29cb37fc37a21c0a03d75814e067dffc00563
+

@@ -118,6 +118,10 @@ def training_model(request):
             svmModel.multi_fit(content, labels,modeling_job_id)
     elif model_type == 'XGBOOST_MODEL':
         xgboostModel = XgboostModel()
+        if is_multi_label == "False":
+            xgboostModel.fit(content, labels, modeling_job_id)
+        else:
+            xgboostModel.multi_fit(content, labels, modeling_job_id)
     return HttpResponse("Done")
 
 @csrf_exempt
@@ -147,6 +151,10 @@ def testing_model(request):
                 svmModel.predict_multi_label(content,labels,modeling_job_id)
         elif model_type == 'XGBOOST_MODEL':
             xgboostModel = XgboostModel()
+            if is_multi_label == 'False':
+                result = xgboostModel.predict(content, labels, modeling_job_id)
+            else:
+                xgboostModel.predict_multi_label(content, labels, modeling_job_id)
         return HttpResponse('Done')
 
 @csrf_exempt
