@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import svm
-from sklearn.metrics import classification_report,accuracy_score
+from sklearn.metrics import classification_report, accuracy_score
 import os
 import joblib
 import jieba
@@ -81,9 +81,9 @@ class SvmModel(AudienceModel):
         classifier = svm.SVC(kernel='linear')
         multi_target_model = OneVsRestClassifier(classifier)
         multi_svm_model = multi_target_model.fit(x_train_features, y_train)
-        self.save(modeling_job_id,multi_svm_model,vectorizer)
+        self.save(modeling_job_id, multi_svm_model, vectorizer)
 
-    def multiToBinarizerLabels(self,labels):
+    def multiToBinarizerLabels(self, labels):
 
         label_list = []
         for label in labels:
@@ -99,7 +99,6 @@ class SvmModel(AudienceModel):
             trans_labels.append(mlb.transform([l])[0])
 
         return np.array(trans_labels)
-
 
     def save(self, modeling_job_id, SVCModel, vectorizer):
         path = os.path.join(self.dirname, f'..\\models\\modeling_job_id_{modeling_job_id}')
@@ -146,7 +145,7 @@ class SvmModel(AudienceModel):
                 data = vectorizer.transform([x])
                 y_pre.append(model.predict(data)[0])
 
-            acc = get_multi_accuracy(labels,y_pre)
+            acc = get_multi_accuracy(labels, y_pre)
             report = classification_report(labels, y_pre, output_dict=True)
             report['accuracy'] = acc
             dataHelper = DataHelper()
@@ -155,7 +154,8 @@ class SvmModel(AudienceModel):
         except:
             return False
 
-def get_multi_accuracy(y_true,y_pre):
+
+def get_multi_accuracy(y_true, y_pre):
     right = 0
     wrong = 0
     for i in range(len(y_true)):
@@ -165,6 +165,7 @@ def get_multi_accuracy(y_true,y_pre):
             else:
                 wrong += 1
     return right / (right + wrong)
+
 
 class XgboostModel(AudienceModel):
     def __init__(self):
