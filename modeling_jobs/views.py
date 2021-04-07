@@ -4,7 +4,7 @@ from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from modeling_jobs.helpers.data_helpers import DataHelper
+from core.helpers.data_helpers import DataHelper
 from core.helpers.model_helpers import RuleModel, KeywordModel, ProbModel, RFModel, SvmModel, XgboostModel
 from django.template.response import TemplateResponse
 from django.shortcuts import render, redirect

@@ -6,7 +6,7 @@ import os
 import joblib
 import jieba
 from pathlib import Path
-from modeling_jobs.helpers.data_helpers import DataHelper
+from core.helpers.data_helpers import DataHelper
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.model_selection import train_test_split
