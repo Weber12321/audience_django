@@ -1,6 +1,8 @@
 # Created by https://www.gitignore.io
 ### project ###
 upload_files
+modeling_jobs/models
+*.pkl
 
 ### OSX ###
 .DS_Store

@@ -32,7 +32,7 @@ class LabelingJobForm(forms.ModelForm):
 class LabelForm(forms.ModelForm):
     class Meta:
         model = Label
-        fields = ["name", "description"]
+        fields = ["name", "description", "target_amount"]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),

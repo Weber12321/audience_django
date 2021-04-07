@@ -19,10 +19,16 @@ class ModelingJob(models.Model):
     is_multi_label = models.BooleanField(verbose_name="是否為多標籤")
     model = models.ForeignKey(MLModel, on_delete=models.SET_NULL, blank=True, null=True)
     jobRef = models.ForeignKey(LabelingJob, on_delete=models.SET_NULL, blank=True, null=True)
+    status = models.BooleanField(verbose_name="是否已被訓練過", default=False, blank=True)
 
     def __str__(self):
         return self.name
 
-    class Meta:
-        verbose_name = "模型訓練任務"
-        verbose_name_plural = "模型訓練任務列表"
+
+class Report(models.Model):
+    accuracy = models.FloatField(max_length=10, verbose_name='準確率', blank=True)
+    report = models.CharField(max_length=1000, verbose_name='報告')
+    models_ref = models.ForeignKey(ModelingJob, on_delete=models.CASCADE, blank=True)
+
+    def __str__(self):
+        return self.report

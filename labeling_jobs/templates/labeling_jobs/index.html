@@ -31,7 +31,8 @@
                                     {% endif %}
                                 </div>
                                 <h6 class="card-subtitle mb-2 text-muted"><small class="text-muted">
-                                    <strong>由 {{ labeling_job.created_by.username }}</strong> 於 {{ labeling_job.created_at }} 建立。</small>
+                                    <strong>由 {{ labeling_job.created_by.username }}</strong>
+                                    於 {{ labeling_job.created_at }} 建立。</small>
                                 </h6>
                                 <p class="card-text">
                                     {% for label in  labeling_job.label_set.all %}
@@ -46,7 +47,10 @@
                                 <p class="card-text">{{ labeling_job.description }}</p>
 
                                 <a class="mr-1 card-link" href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">檢視任務細節</a>
-                                <a class="mr-1 card-link text-success" href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
+                                {% if labeling_job.document_set.all and labeling_job.label_set.all %}
+                                    <a class="mr-1 card-link text-success"
+                                       href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
+                                {% endif %}
 
                             </div>
                         </div>

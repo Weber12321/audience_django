@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
 
-from .forms import LabelingJobForm, UploadFileJobForm
+from .forms import LabelingJobForm, UploadFileJobForm, LabelForm
 from .models import LabelingJob, UploadFileJob, Document, Label
 
 # Create your views here.
@@ -153,3 +153,60 @@ class UploadFileJobDelete(LoginRequiredMixin, generic.DeleteView):
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
         return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+
+
+class LabelUpdate(LoginRequiredMixin, generic.UpdateView):
+    model = Label
+    form_class = LabelForm
+    template_name = 'labels/update_form.html'
+
+
+class LabelCreate(LoginRequiredMixin, generic.CreateView):
+    # model = PredictingTarget
+    form_class = LabelForm
+    template_name = 'labels/add_form.html'
+
+    def form_valid(self, form):
+        form.instance.labeling_job_id = self.kwargs.get('job_id')
+        return super(LabelCreate, self).form_valid(form)
+
+    def get_success_url(self):
+        job_id = self.kwargs.get('job_id')
+        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+
+
+class LabelDelete(LoginRequiredMixin, generic.DeleteView):
+    model = Label
+    success_url = reverse_lazy('predicting_jobs:index')
+    template_name = 'labels/confirm_delete_form.html'
+
+    def post(self, request, *args, **kwargs):
+        if "cancel" in request.POST:
+            print(request.POST)
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return super(LabelDelete, self).post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        job_id = self.kwargs.get('job_id')
+        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+
+
+class LabelDetail(SingleObjectMixin, generic.ListView):
+    paginate_by = 10
+    model = LabelingJob
+
+    # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
+    template_name = 'labels/label_detail.html'
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object(queryset=Label.objects.all())
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['label'] = self.object
+        return context
+
+    def get_queryset(self):
+        return self.object.document_set.order_by('pk')
