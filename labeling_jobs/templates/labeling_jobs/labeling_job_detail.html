@@ -6,6 +6,8 @@
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="dropdown mb-4">
+            <a class="btn btn-success"
+               href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
             <button class="btn btn-primary dropdown-toggle" type="button"
                     id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
                     aria-expanded="false">
@@ -17,8 +19,6 @@
                    href="{% url 'labeling_jobs:upload-job-create' labeling_job.id %}?next={{ request.path }}">上傳檔案</a>
                 <a class="dropdown-item"
                    href="{% url 'labeling_jobs:job-docs' labeling_job.id %}">文章列表</a>
-                <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
                 <a class="dropdown-item"
                    href="{% url 'labeling_jobs:job-update' labeling_job.id %}?next={{ request.path }}">修改</a>
                 <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' labeling_job.id %}">刪除</a>
@@ -57,9 +57,9 @@
                                 {% endif %}
                             </div>
                         </div>
-{#                        <div class="col-auto">#}
-{#                            <i class="fas fa-calendar fa-2x text-gray-300"></i>#}
-{#                        </div>#}
+                        {#                        <div class="col-auto">#}
+                        {#                            <i class="fas fa-calendar fa-2x text-gray-300"></i>#}
+                        {#                        </div>#}
                     </div>
                 </div>
             </div>
@@ -76,9 +76,9 @@
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ labeling_job.label_set.count }}</div>
                         </div>
-{#                        <div class="col-auto">#}
-{#                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>#}
-{#                        </div>#}
+                        {#                        <div class="col-auto">#}
+                        {#                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>#}
+                        {#                        </div>#}
                     </div>
                 </div>
             </div>
@@ -95,25 +95,26 @@
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ labeling_job.show_document_amount }}</div>
                         </div>
-{#                        <div class="col-auto">#}
-{#                            <i class="fas fa-comments fa-2x text-gray-300"></i>#}
-{#                        </div>#}
+                        {#                        <div class="col-auto">#}
+                        {#                            <i class="fas fa-comments fa-2x text-gray-300"></i>#}
+                        {#                        </div>#}
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
     <div class="row">
 
         <!-- Content Column -->
-        <div class="col-lg-8 mb-4">
-            <div class="col-lg-12">
-                <div class="h5">標籤列表</div>
-                <hr>
-            </div>
+        <div class="col-lg-7 mb-4">
 
             <!-- label list -->
             <div class="row">
+                <div class="col-lg-12">
+                    <div class="h5">標籤列表</div>
+                    <hr>
+                </div>
                 {% for label in labeling_job.label_set.all %}
                     <div class="col-lg-6 mb-4">
                         <div class="card bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %} text-white shadow">
@@ -124,7 +125,9 @@
                         </div>
                     </div>
                 {% empty %}
-                    沒有設定標籤
+                    <div class="col-lg-6 mb-4">
+                        沒有設定標籤
+                    </div>
                 {% endfor %}
             </div>
             <!-- label progress -->
@@ -150,14 +153,14 @@
             </div>
         </div>
 
-        <div class="col-lg-4 mb-4">
-            <div class="col-lg-12">
-                <div class="h5">檔案上傳紀錄</div>
-                <hr>
-            </div>
-            {% for upload_job in labeling_job.uploadfilejob_set.all %}
-                <div class="row">
-                    <div class="col-lg-12 mb-4">
+        <div class="col-lg-5 mb-4">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="h5">檔案上傳紀錄</div>
+                    <hr>
+                </div>
+                {% for upload_job in labeling_job.uploadfilejob_set.all %}
+                    <div class="col-lg-6 mb-4">
                         <div class="card bg-light shadow">
                             <div class="card-body">
                                 <div class="card-title">{{ upload_job.file.name }}</div>
@@ -182,12 +185,12 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            {% empty %}
-                <div class="col-lg-12">
-                    沒有上傳紀錄
-                </div>
-            {% endfor %}
+                {% empty %}
+                    <div class="col-lg-12">
+                        沒有上傳紀錄
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
     <!-- Content Row -->
