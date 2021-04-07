@@ -14,4 +14,9 @@ urlpatterns = [
     path('<int:job_id>/labeling/set_labels', views.doc_label_update, name="set-labels"),
     path('<int:job_id>/file/upload/', views.UploadFileJobCreate.as_view(), name='upload-job-create'),
     path('<int:job_id>/file/<int:pk>/delete/', views.UploadFileJobDelete.as_view(), name='upload-job-delete'),
+    # label curd
+    path('<int:job_id>/label/add', views.LabelCreate.as_view(), name="label-add"),
+    path('<int:job_id>/label/<int:pk>', views.LabelDetail.as_view(), name="label-detail"),
+    path('<int:job_id>/label/<int:pk>/update', views.LabelUpdate.as_view(), name="label-update"),
+    path('<int:job_id>/label/<int:pk>/delete', views.LabelDelete.as_view(), name="label-delete"),
 ]
