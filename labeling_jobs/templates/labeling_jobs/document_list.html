@@ -2,11 +2,16 @@
 
 {% block title %}任務{% endblock %}
 {% block nav_title %}
-資料標記任務
+    資料標記任務
 {% endblock %}
 {% block page_title %}{{ labeling_job.name }}{% endblock %}
 {% block page_functions %}
-    <a href="{% url 'labeling_jobs:labeling-job-detail' labeling_job.id %}">上一頁</a>
+    {% if user.is_staff %}
+        <div class="dropdown mb-4">
+            <a class="btn btn-success" href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
+            <a class="btn btn-primary" href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">上一頁</a>
+        </div>
+    {% endif %}
 {% endblock %}
 {% block page_info %}
     {% for label in labeling_job.label_set.all %}
@@ -16,37 +21,92 @@
     {% endfor %}
 {% endblock %}
 {% block page_description %}
-<p>{{ labeling_job.description }}</p>
+    <p>{{ labeling_job.description }}</p>
 {% endblock %}
 {% block content %}
-    {% if page_obj %}
-        <ul>
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+
             {% for doc in page_obj %}
-                <li><a href="">{{ doc.title }}</a>, <p>{{ doc.content }}</p>
-                    {% for label in labeling_job.label_set.all %}
-                    <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
-                          data-toggle="tooltip" data-placement="top"  {% if label not in doc.labels.all %}hidden{% endif %}
-                          title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>
-                    {% endfor %}
-                </li>
+                <div class="card shadow mb-4 {% if doc.labels.all %}border-left-primary{% else %}border-left-warning{% endif %}">
+                    <div class="card-body">
+                        <div class="h5"><a href="">{{ doc.title }}</a></div>
+                        <p>{{ doc.content }}</p>
+                        {% for label in labeling_job.label_set.all %}
+                            <span class="mt-2 badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
+                                  data-toggle="tooltip" data-placement="top"
+                                  {% if label not in doc.labels.all %}hidden{% endif %}
+                                  title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>
+                        {% endfor %}
+                        {% resetcycle %}
+                    </div>
+                </div>
+
+            {% empty %}
+                <p>沒有文件</p>
             {% endfor %}
-        </ul>
-        <div class="pagination">
-        <span class="step-links">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
-            {% endif %}
 
-            <span class="current">
-                Page {{ page_obj.number }} of {{ paginator.num_pages }}.
-            </span>
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}">next</a>
-            {% endif %}
-        </span>
         </div>
-    {% else %}
-        <p>沒有文件</p>
-    {% endif %}
+
+        <div class="col-lg-4 mb-4">
+
+            <!-- Pending Requests Card Example -->
+            <div class="col-lg-12 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    資料數量
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ labeling_job.show_document_amount }}</div>
+                            </div>
+                            {#                        <div class="col-auto">#}
+                            {#                            <i class="fas fa-comments fa-2x text-gray-300"></i>#}
+                            {#                        </div>#}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-12 mb-4">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">標記進度</h6>
+                    </div>
+                    <div class="card-body">
+                        {% for label in labeling_job.label_set.all %}
+                            <h4 class="small font-weight-bold">{{ label.name }}
+                                <span class="float-right"><small> {{ label.show_document_amount }}/{{ label.target_amount }}</small> {{ label.show_progress_percentage }}%</span>
+                            </h4>
+                            <div class="progress mb-4">
+                                <div class="progress-bar bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}"
+                                     role="progressbar" style="width: {{ label.show_progress_percentage }}%"
+                                     aria-valuenow="label.show_progress_percentage"
+                                     aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        {% empty %}
+                            沒有設定標籤
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="col-12 pagination text-center">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}">上一頁</a>
+                {% endif %}
+
+                <span class="current">
+                     {{ page_obj.number }} / {{ paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">下一頁</a>
+                {% endif %}
+            </span>
+    </div>
 {% endblock %}

@@ -4,6 +4,8 @@ from django.db import models
 # Create your models here.
 from django.urls import reverse
 
+from audience_toolkits import settings
+
 
 class LabelingJob(models.Model):
     name = models.CharField(max_length=100, verbose_name="標記工作名稱")
@@ -58,6 +60,9 @@ class Label(models.Model):
     def show_document_amount(self):
         return len(self.document_set.all())
 
+    def show_progress_percentage(self):
+        return round(len(self.document_set.all()) / self.target_amount * 100, 2)
+
     show_document_amount.boolean = False
     show_document_amount.short_description = '已標記文章數量'
 
@@ -70,7 +75,7 @@ class Document(models.Model):
     content = models.TextField(verbose_name="內文", blank=True)
     post_time = models.DateTimeField(verbose_name="發布時間", blank=True, null=True)
     labels = models.ManyToManyField(Label, verbose_name="被標記標籤", blank=True)
-    hash_num = models.CharField(max_length=50,verbose_name='雜湊值',blank=True)
+    hash_num = models.CharField(max_length=50, verbose_name='雜湊值', blank=True)
 
     class Meta:
         verbose_name = "文件"
@@ -85,3 +90,21 @@ class Document(models.Model):
     show_labels.admin_order_field = 'updated_at'
     show_labels.boolean = False
     show_labels.short_description = '被標記標籤'
+
+
+class UploadFileJob(models.Model):
+    class JobStatus(models.TextChoices):
+        WAIT = ('wait', '等待中')
+        PROCESSING = ('processing', '處理中')
+        BREAK = ('break', '中斷')
+        ERROR = ('error', '錯誤')
+        DONE = ('done', '完成')
+
+    labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
+    file = models.FileField(upload_to=settings.FILE_PATH_FIELD_DIRECTORY, verbose_name="檔案")
+    job_status = models.CharField(max_length=20, verbose_name="任務狀態", default=JobStatus.WAIT, choices=JobStatus.choices)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.file.name

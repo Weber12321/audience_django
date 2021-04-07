@@ -14,7 +14,7 @@
                                     <h1 class="h4 text-gray-900 mb-4">確認刪除</h1>
                                 </div>
                                 <form method="post" class="text-center">{% csrf_token %}
-                                    <p>確定要刪除 <strong>"{{ object }}"</strong> 嗎?</p>
+                                    <p>確定要刪除標記任務 <strong>"{{ object }}"</strong> 嗎?</p>
                                     <input type="submit" class="btn btn-danger btn-user" value="確認">
                                     <input type="submit" name="cancel" class="btn btn-link btn-user" value="取消"/>
                                 </form>

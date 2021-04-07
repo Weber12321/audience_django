@@ -1,10 +1,13 @@
 from django import forms
 
-from .models import LabelingJob, Label
+from .models import LabelingJob, Label, UploadFileJob
 
 
-class CsvUploadForm(forms.Form):
-    csv_file = forms.FileField()
+class UploadFileJobForm(forms.ModelForm):
+    class Meta:
+        model = UploadFileJob
+        fields = '__all__'
+        exclude = ['labeling_job', 'job_status', 'created_by']
 
 
 class LabelingJobForm(forms.ModelForm):
@@ -46,4 +49,4 @@ class DocumentForm(forms.ModelForm):
         super(DocumentForm, self).__init__(*args, **kwargs)
         if self.instance.labeling_job_id:
             self.fields['labels'].queryset = Label.objects.filter(
-                job_id=self.instance.job_id)
+                labeling_job_id=self.instance.labeling_job_id)
