@@ -4,8 +4,11 @@ from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from core.helpers.data_helpers import DataHelper
+from modeling_jobs.helpers.data_helpers import DataHelper
 from core.helpers.model_helpers import RuleModel, KeywordModel, ProbModel, RFModel, SvmModel, XgboostModel
+from django.template.response import TemplateResponse
+from django.shortcuts import render, redirect
+from collections import namedtuple
 
 
 class IndexView(LoginRequiredMixin, ListView):
@@ -96,9 +99,10 @@ def insert_csv(request):
 def training_model(request):
     jobRef_id = request.POST['jobRef_id']
     model_type = request.POST['model']
+    is_multi_label = request.POST['is_multi_label']
+    modeling_job_id = request.POST['modeling_job_id']
     dataHelper = DataHelper()
     content, labels = dataHelper.get_training_data(jobRef_id)
-
     if model_type == 'RULE_MODEL':
         ruleModel = RuleModel()
     elif model_type == 'KEYWORD_MODEL':
@@ -109,7 +113,61 @@ def training_model(request):
         rfModel = RFModel()
     elif model_type == 'SVM_MODEL':
         svmModel = SvmModel()
+        if is_multi_label == "False":
+            svmModel.fit(content, labels, modeling_job_id)
+        else:
+            svmModel.multi_fit(content, labels, modeling_job_id)
     elif model_type == 'XGBOOST_MODEL':
         xgboostModel = XgboostModel()
+    return HttpResponse("Done")
 
-    return HttpResponse("123")
+
+@csrf_exempt
+def testing_model(request):
+    file = request.FILES['file']
+    modeling_job_id = request.POST['job_id']
+    model_type = request.POST['model_type']
+    is_multi_label = request.POST['is_multi_label']
+    dataHelper = DataHelper()
+    content, labels = dataHelper.get_test_data(file)
+    if content == [] and labels == []:
+        return HttpResponse("False")
+    else:
+        if model_type == 'RULE_MODEL':
+            ruleModel = RuleModel()
+        elif model_type == 'KEYWORD_MODEL':
+            keywordModel = KeywordModel()
+        elif model_type == 'PROB_MODEL':
+            probModel = ProbModel()
+        elif model_type == 'RF_MODEL':
+            rfModel = RFModel()
+        elif model_type == 'SVM_MODEL':
+            svmModel = SvmModel()
+            if is_multi_label == 'False':
+                result = svmModel.predict(content, labels, modeling_job_id)
+            else:
+                svmModel.predict_multi_label(content, labels, modeling_job_id)
+        elif model_type == 'XGBOOST_MODEL':
+            xgboostModel = XgboostModel()
+        return HttpResponse('Done')
+
+
+@csrf_exempt
+def result_page(request, modeling_job_id):
+    dataHelper = DataHelper()
+    reports: dict = dataHelper.get_report(modeling_job_id)
+    accuracy = reports.pop('accuracy')
+    macro_avg = reports.pop('macro avg')
+    macro_avg['f1_score'] = macro_avg['f1-score']
+    weighted_avg = reports.pop('weighted avg')
+    weighted_avg['f1_score'] = weighted_avg['f1-score']
+    label_info = namedtuple('label_info', ['label', 'precision', 'recall', 'f1_score', 'support'])
+    labels = []
+    for key in reports.keys():
+        label = reports.get(key)
+        s = label_info(key, label.get('precision'), label.get('recall'), label.get('f1-score'), label.get('support'))
+        labels.append(s)
+    return render(request, 'modeling_jobs/result.html', {"accuracy": accuracy,
+                                                         "macro_avg": macro_avg,
+                                                         "weighted_avg": weighted_avg,
+                                                         "labels": labels})
