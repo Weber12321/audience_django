@@ -6,8 +6,11 @@
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="dropdown mb-4">
-            <a class="btn btn-success"
-               href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
+
+            {% if labeling_job.document_set.all and labeling_job.label_set.all %}
+                <a class="btn btn-success"
+                   href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
+            {% endif %}
             <button class="btn btn-primary dropdown-toggle" type="button"
                     id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
                     aria-expanded="false">
