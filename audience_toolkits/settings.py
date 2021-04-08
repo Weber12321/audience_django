@@ -88,9 +88,6 @@ DATABASES = {
 
 # DATABASES = {
 #     'default': {
-#         # 'ENGINE': 'django.db.backends.sqlite3',
-#         # 'NAME': BASE_DIR / 'db.sqlite3',
-#
 #         'ENGINE': 'django.db.backends.mysql',
 #         'NAME': 'audience-toolkit-dango', # 目標資料庫的名稱
 #         'USER': 'root', # 資料庫帳號
@@ -181,3 +178,21 @@ TEMP_DIR = BASE_DIR / 'tmp'
 
 # predicting_result
 FETCH_COUNT = -1
+PREDICT_DATABASE = {
+    'source': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'audience-source',  # 目標資料庫的名稱
+        'USER': 'root',  # 資料庫帳號
+        'PASSWORD': 'password',  # 資料庫密碼
+        'HOST': 'localhost',  # 主機位置，可以先測本地localhost
+        'PORT': '3306',
+    },
+    'result': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'audience-result',  # 目標資料庫的名稱
+        'USER': 'root',  # 資料庫帳號
+        'PASSWORD': 'password',  # 資料庫密碼
+        'HOST': 'localhost',  # 主機位置，可以先測本地localhost
+        'PORT': '3306',
+    }
+}
