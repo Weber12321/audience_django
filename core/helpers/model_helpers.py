@@ -1,16 +1,17 @@
-from abc import ABC, abstractmethod
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn import svm
-from sklearn.metrics import classification_report, accuracy_score
 import os
-import joblib
-import jieba
+from abc import ABC, abstractmethod
 from pathlib import Path
-from core.helpers.data_helpers import DataHelper
-from sklearn.preprocessing import MultiLabelBinarizer
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.model_selection import train_test_split
+
+import jieba
+import joblib
 import numpy as np
+from sklearn import svm
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import classification_report
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.preprocessing import MultiLabelBinarizer
+
+from core.helpers.data_helpers import DataHelper
 
 
 class AudienceModel(ABC):

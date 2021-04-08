@@ -1,11 +1,13 @@
-import cchardet
-import csv
 import codecs
-from labeling_jobs.models import LabelingJob, Document, Label
-from modeling_jobs.models import ModelingJob, Report
+import csv
 import hashlib
-from datetime import datetime
 import json
+from datetime import datetime
+
+import cchardet
+
+from labeling_jobs.models import LabelingJob, Document
+from modeling_jobs.models import ModelingJob, Report
 
 
 class DataHelper:

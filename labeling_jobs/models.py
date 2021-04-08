@@ -104,7 +104,7 @@ class UploadFileJob(models.Model):
         DONE = ('done', '完成')
 
     labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
-    file = models.FileField(upload_to=settings.FILE_PATH_FIELD_DIRECTORY, verbose_name="檔案")
+    file = models.FileField(upload_to=settings.UPLOAD_FILE_DIRECTORY, verbose_name="檔案")
     job_status = models.CharField(max_length=20, verbose_name="任務狀態", default=JobStatus.WAIT, choices=JobStatus.choices)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)

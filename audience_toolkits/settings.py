@@ -86,7 +86,6 @@ DATABASES = {
     }
 }
 
-FILE_PATH_FIELD_DIRECTORY ='upload_files'
 # DATABASES = {
 #     'default': {
 #         # 'ENGINE': 'django.db.backends.sqlite3',
@@ -144,7 +143,12 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-# django-Q settings
+# tmp files
+UPLOAD_FILE_DIRECTORY = BASE_DIR / 'upload_files'
+
+# ======================================
+#           django-Q settings
+# ======================================
 Q_CLUSTER = {
     'name': 'audience_toolkits',
     'workers': 4,
@@ -154,3 +158,26 @@ Q_CLUSTER = {
     'bulk': 10,
     'orm': 'default'
 }
+
+# ======================================
+#     Audience Labeler Task settings
+# ======================================
+# logger
+VERBOSE_DEBUG_MESSAGE = True
+LOG_FILE_DIRECTORY = BASE_DIR / 'logs'
+LOG_BACKUP_COUNT = 30  # days
+LOGGING_FORMAT = "[%(asctime)s][{_context}][%(levelname)s]: %(message)s"
+LOGGING_ERROR_FORMAT = "[%(asctime)s][{_context}][%(funcName)s()][%(levelname)s]: %(message)s"
+
+# content processing
+STOP_WORD_DIR = []
+
+# DEEPNLP APIs
+DEEPNLP_POS_API = "http://rd2demo.eland.com.tw/segment"
+DEEPNLP_POS_API_TOKEN = ""
+
+# other
+TEMP_DIR = BASE_DIR / 'tmp'
+
+# predicting_result
+FETCH_COUNT = -1
