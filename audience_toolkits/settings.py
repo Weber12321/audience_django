@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 from pathlib import Path
 import pymysql
+
 pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_q',
 ]
 
 MIDDLEWARE = [
@@ -84,6 +86,8 @@ WSGI_APPLICATION = 'audience_toolkits.wsgi.application'
 #     }
 # }
 
+FILE_PATH_FIELD_DIRECTORY = 'upload_files'
+MODEL_PATH_FIELD_DIRECTORY = 'model_files'
 DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.sqlite3',
@@ -140,3 +144,14 @@ LOGOUT_REDIRECT_URL = '/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+# django-Q settings
+Q_CLUSTER = {
+    'name': 'audience_toolkits',
+    'workers': 4,
+    'timeout': 90,
+    'retry': 120,
+    'queue_limit': 50,
+    'bulk': 10,
+    'orm': 'default'
+}

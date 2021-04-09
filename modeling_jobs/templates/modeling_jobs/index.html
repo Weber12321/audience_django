@@ -140,26 +140,31 @@ Model List
             confirmButtonText: 'Yes!'
         }).then((result) =>{
             if(result.value){
-                var aj = $.ajax
-                ({
-                    url : 'training_model',
-                    data : {
-                        jobRef_id : jobRef_id,
-                        model : model,
-                        is_multi_label:is_multi_label,
-                        modeling_job_id : modeling_job_id
-                    },
-                    type : 'post',
-                    success : function (result)
-                    {
-                        Swal.fire({
-                            title: '訓練完成',
-                            icon: 'success'
-                        }).then(() => {
-                            location.reload()
-                        })
-                    }
-                })
+
+                if(jobRef_id == 'None'){
+                    Swal.fire("Error", '請加入標記任務', "error");
+                }
+                else{
+                     var aj = $.ajax({
+                        url : 'training_model',
+                        data : {
+                            jobRef_id : jobRef_id,
+                            model : model,
+                            is_multi_label:is_multi_label,
+                            modeling_job_id : modeling_job_id
+                        },
+                        type : 'post',
+                        success : function (result)
+                        {
+                            Swal.fire({
+                                title: '訓練完成',
+                                icon: 'success'
+                            }).then(() => {
+                                location.reload()
+                            })
+                        }
+                    })
+                }
             }
         })
     }
@@ -187,10 +192,11 @@ Model List
                 type : 'post',
                 success : function (result)
                 {
-                    if(result == '欄位不符'){
+                    console.log(result)
+                    if(result == '欄位不符合'){
                         Swal.fire("Error", '欄位不符合', "error");
                     }
-                    if(result == '請先訓練模型'){
+                    else if(result == '請先訓練模型'){
                         Swal.fire("Error", '請先訓練模型', "error");
                     }
                     else{
@@ -402,6 +408,7 @@ Model List
             <table class="table table-striped">
                 <thead>
                 <tr>
+                    <th>id</th>
                     <th scope="col">模型名稱</th>
                     <th scope="col">模型類型</th>
                     <th scope="col">模型敘述</th>
@@ -410,17 +417,22 @@ Model List
                     <th scope="col">編輯</th>
                     <th scope="col">訓練模型</th>
                     <th scope="col">測試模型</th>
+                    <th>訓練狀態</th>
+                    <th>測試狀態</th>
                     <th scope="col">檢視結果</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for job in modeling_jobs %}
                 <tr>
+                    <td>{{job.id}}</td>
                     <td>{{job.name}}</td>
                     <td>{{job.model.name}}</td>
                     <td>{{job.description}}</td>
                     <td>{{job.is_multi_label}}</td>
                     <td>{{job.jobRef_id}}</td>
+
+
                     <td>
                         <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle btn-sm"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -446,12 +458,15 @@ Model List
                             測試
                         </button>
                     </td>
-                    {% if job.status %}
+                    <td>{{job.job_train_status}}</td>
+                    <td>{{job.job_test_status}}</td>
+                    {% if job.job_test_status == 'done' %}
                     <td>
                         <a type="button" href="{{prefix}}/modeling_jobs/{{job.id}}/result_page">檢視混淆矩陣</a>
 <!--                        onclick="showResult('{{job.id}}')"-->
                     </td>
                     {% endif %}
+
                 </tr>
                 {% endfor %}
                 </tbody>

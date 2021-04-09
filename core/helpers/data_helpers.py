@@ -72,7 +72,6 @@ class DataHelper:
         file.seek(0)
         csv_file = csv.DictReader(codecs.iterdecode(file, encoding))
         title = csv_file.fieldnames
-        result = True
         content = []
         labels = []
         required_fields = ['title', 'author', 's_area_id', 'content', 'label']
@@ -86,17 +85,16 @@ class DataHelper:
 
     def save_report(self,modeling_job_id,report):
         data = Report.objects.filter(models_ref_id = modeling_job_id)
-        job = ModelingJob.objects.filter(id = modeling_job_id)
         accuracy = report.get('accuracy', -1)
         if len(data) == 0:
             r = Report(accuracy = accuracy , report = str(report), models_ref_id = modeling_job_id)
             r.save()
         else:
             data.update(accuracy = accuracy,report = report)
-        job.update(status = True)
 
     def get_report(self,modeling_job_id):
         modeling_job_id = int(modeling_job_id)
+        print(modeling_job_id)
         report = Report.objects.get(models_ref_id = modeling_job_id)
         report = report.report
         report = report.replace("\'", "\"")
@@ -108,6 +106,7 @@ class DataHelper:
                     report[key][i] = round(report[key][i],3)
 
         return report
+
 
     def get_labels(self,modeling_job_id):
         job = ModelingJob.objects.get(id = modeling_job_id)

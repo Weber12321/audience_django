@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import svm
-from sklearn.metrics import classification_report,accuracy_score
+from sklearn.metrics import classification_report, accuracy_score
 import os
 import joblib
 import jieba
 from pathlib import Path
-from modeling_jobs.helpers.data_helpers import DataHelper
+
+from audience_toolkits import settings
+from .data_helpers import DataHelper
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from sklearn.multiclass import OneVsRestClassifier
@@ -14,6 +16,7 @@ from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 
 import numpy as np
+from modeling_jobs.models import ModelingJob
 
 
 class AudienceModel(ABC):
@@ -27,14 +30,18 @@ class AudienceModel(ABC):
     def val(self, test_x, y_true):
         print("val")
 
-    def save(self, modeling_job_id, SVCModel, vectorizer):
-        path = os.path.join(self.dirname, f'..\\models\\modeling_job_id_{modeling_job_id}')
+    def save(self, modeling_job_id, model, vectorizer):
+        if not os.path.exists(settings.MODEL_PATH_FIELD_DIRECTORY):
+            os.mkdir(settings.MODEL_PATH_FIELD_DIRECTORY)
+        path = os.path.join(settings.MODEL_PATH_FIELD_DIRECTORY, f'modeling_job_id_{modeling_job_id}')
         if not os.path.exists(path):
             os.mkdir(path)
         SVCModelPath = os.path.join(path, 'model.pkl')
         vectorizerSVMPath = os.path.join(path, 'vectorize.pkl')
-        joblib.dump(SVCModel, SVCModelPath)
+        joblib.dump(model, SVCModelPath)
+
         joblib.dump(vectorizer, vectorizerSVMPath)
+        return os.path.join(settings.MODEL_PATH_FIELD_DIRECTORY, f'modeling_job_id_{modeling_job_id}')
 
 
 class RuleModel(AudienceModel):
@@ -65,7 +72,6 @@ class SvmModel(AudienceModel):
         self.dirname = os.path.dirname(__file__)
 
     def fit(self, content, labels, modeling_job_id):
-
         train_labels = []
         for y in labels:
             train_labels.append(y[0])
@@ -78,7 +84,7 @@ class SvmModel(AudienceModel):
         x_train_features = vectorizer.fit_transform(x_train)
         SVCModel = svm.SVC(kernel='linear')
         SVCModel.fit(x_train_features, y_train)
-        self.save(modeling_job_id, SVCModel, vectorizer)
+        return self.save(modeling_job_id, SVCModel, vectorizer)
 
     def multi_fit(self, content, labels, modeling_job_id):
         x_train = []
@@ -88,14 +94,14 @@ class SvmModel(AudienceModel):
         vectorizer = TfidfVectorizer(stop_words='english', max_features=5000, min_df=2)
 
         x_train_features = vectorizer.fit_transform(x_train)
-        y_train = self.multiToBinarizerLabels(labels)
+        y_train = multiToBinarizerLabels(labels)
 
         classifier = svm.SVC(kernel='linear')
         multi_target_model = OneVsRestClassifier(classifier)
         multi_svm_model = multi_target_model.fit(x_train_features, y_train)
-        self.save(modeling_job_id,multi_svm_model,vectorizer)
+        return self.save(modeling_job_id, multi_svm_model, vectorizer)
 
-    def multiToBinarizerLabels(self,labels):
+    def multiToBinarizerLabels(self, labels):
 
         label_list = []
         for label in labels:
@@ -113,7 +119,7 @@ class SvmModel(AudienceModel):
         return np.array(trans_labels)
 
     def predict(self, content, labels, modeling_job_id):
-        path = Path(__file__).parent.parent / 'models' / f'modeling_job_id_{modeling_job_id}'
+        path = ModelingJob.objects.get(pk=modeling_job_id).model_path
         try:
             model = joblib.load(os.path.join(path, "model.pkl"))
             vectorizer = joblib.load(os.path.join(path, "vectorize.pkl"))
@@ -129,11 +135,11 @@ class SvmModel(AudienceModel):
             dataHelper = DataHelper()
             dataHelper.save_report(modeling_job_id, report)
             return True
-        except:
-            return False
+        except Exception as e:
+            return e
 
     def predict_multi_label(self, content, labels, modeling_job_id):
-        path = Path(__file__).parent.parent / 'models' / f'modeling_job_id_{modeling_job_id}'
+        path = ModelingJob.objects.get(pk=modeling_job_id).model_path
         try:
             model = joblib.load(os.path.join(path, "model.pkl"))
             vectorizer = joblib.load(os.path.join(path, "vectorize.pkl"))
@@ -142,22 +148,23 @@ class SvmModel(AudienceModel):
                 data = ' '.join(jieba.lcut(c))
                 x_pre.append(data)
 
-            labels = self.multiToBinarizerLabels(labels)
+            labels = multiToBinarizerLabels(labels)
             y_pre = []
             for x in x_pre:
                 data = vectorizer.transform([x])
                 y_pre.append(model.predict(data)[0])
 
-            acc = get_multi_accuracy(labels,y_pre)
+            acc = get_multi_accuracy(labels, y_pre)
             report = classification_report(labels, y_pre, output_dict=True)
             report['accuracy'] = acc
             dataHelper = DataHelper()
             dataHelper.save_report(modeling_job_id, report)
             return True
         except:
-            return False
+            return '請先訓練模型'
 
-def get_multi_accuracy(y_true,y_pre):
+
+def get_multi_accuracy(y_true, y_pre):
     right = 0
     wrong = 0
     for i in range(len(y_true)):
@@ -167,6 +174,7 @@ def get_multi_accuracy(y_true,y_pre):
             else:
                 wrong += 1
     return right / (right + wrong)
+
 
 def multiToBinarizerLabels(labels):
     label_list = []
@@ -181,6 +189,7 @@ def multiToBinarizerLabels(labels):
         l = label[0].split(',')
         trans_labels.append(mlb.transform([l])[0])
     return np.array(trans_labels)
+
 
 class XgboostModel(AudienceModel):
     def __init__(self):
@@ -199,10 +208,11 @@ class XgboostModel(AudienceModel):
         x_train_features = vectorizer.fit_transform(x_train)
         xgboostModel = XGBClassifier(n_estimators=100, learning_rate=0.1)
         xgboostModel.fit(x_train_features, y_train)
-        self.save(modeling_job_id, xgboostModel, vectorizer)
+        return self.save(modeling_job_id, xgboostModel, vectorizer)
 
     def predict(self, content, labels, modeling_job_id):
-        path = Path(__file__).parent.parent / 'models' / f'modeling_job_id_{modeling_job_id}'
+        path = ModelingJob.objects.get(pk=modeling_job_id).model_path
+        print(path)
         try:
             model = joblib.load(os.path.join(path, "model.pkl"))
             vectorizer = joblib.load(os.path.join(path, "vectorize.pkl"))
@@ -219,7 +229,7 @@ class XgboostModel(AudienceModel):
             dataHelper.save_report(modeling_job_id, report)
             return True
         except:
-            return False
+            return '請先訓練模型'
 
     def multi_fit(self, content, labels, modeling_job_id):
         x_train = []
@@ -234,10 +244,10 @@ class XgboostModel(AudienceModel):
         classifier = XGBClassifier(n_estimators=100, learning_rate=0.1)
         multi_target_model = OneVsRestClassifier(classifier)
         multi_xgboost_model = multi_target_model.fit(x_train_features, y_train)
-        self.save(modeling_job_id, multi_xgboost_model, vectorizer)
+        return self.save(modeling_job_id, multi_xgboost_model, vectorizer)
 
     def predict_multi_label(self, content, labels, modeling_job_id):
-        path = Path(__file__).parent.parent / 'models' / f'modeling_job_id_{modeling_job_id}'
+        path = ModelingJob.objects.get(pk=modeling_job_id).model_path
         try:
             model = joblib.load(os.path.join(path, "model.pkl"))
             vectorizer = joblib.load(os.path.join(path, "vectorize.pkl"))
@@ -260,4 +270,4 @@ class XgboostModel(AudienceModel):
             dataHelper.save_report(modeling_job_id, report)
             return True
         except:
-            return False
+            return '請先訓練模型'

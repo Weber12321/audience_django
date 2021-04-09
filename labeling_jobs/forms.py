@@ -1,10 +1,13 @@
 from django import forms
 
-from .models import LabelingJob, Label, Document
+from .models import LabelingJob, Label, UploadFileJob
 
 
-class CsvUploadForm(forms.Form):
-    csv_file = forms.FileField()
+class UploadFileJobForm(forms.ModelForm):
+    class Meta:
+        model = UploadFileJob
+        fields = '__all__'
+        exclude = ['labeling_job', 'job_status', 'created_by']
 
 
 class LabelingJobForm(forms.ModelForm):
@@ -29,7 +32,7 @@ class LabelingJobForm(forms.ModelForm):
 class LabelForm(forms.ModelForm):
     class Meta:
         model = Label
-        fields = ["name", "description"]
+        fields = ["name", "description", "target_amount"]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
@@ -46,4 +49,4 @@ class DocumentForm(forms.ModelForm):
         super(DocumentForm, self).__init__(*args, **kwargs)
         if self.instance.labeling_job_id:
             self.fields['labels'].queryset = Label.objects.filter(
-                job_id=self.instance.job_id)
+                labeling_job_id=self.instance.labeling_job_id)

@@ -13,6 +13,9 @@ python manage.py migrate
 
 ### run service
 ```shell
+# 啟動任務管理器
+python manage.py qcluster
+# 啟動伺服器
 python manage.py runserver
 ```
 

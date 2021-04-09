@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}任務{% endblock %}
+{% block nav_title %}
+    資料標記任務
+{% endblock %}
+{% block page_title %}{{ labeling_job.name }}{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+        <div class="dropdown mb-4">
+            <a class="btn btn-primary" href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">回任務細節</a>
+        </div>
+    {% endif %}
+{% endblock %}
+{% block page_info %}
+    {% for label in labeling_job.label_set.all %}
+        <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
+              data-toggle="tooltip" data-placement="top"
+              title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>
+    {% endfor %}
+{% endblock %}
+{% block page_description %}
+    <p>{{ labeling_job.description }}</p>
+
+{% endblock %}
+{% block content %}
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            {% for doc in page_obj %}
+
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-lg-10">
+                                <a href="">#{{ doc.id }}</a> <strong>{{ doc.title }}</strong>
+                                <p>{{ doc.content }}</p>
+                            </div>
+                            <div class="col-lg-2">
+                                <form action="{% url 'labeling_jobs:set-labels' labeling_job.id %}" method="post">
+                                    <label hidden>
+                                        <input type="text" name="doc-id" value="{{ doc.id }}">
+                                    </label>
+                                    <div class="form-group">
+                                        {% for label in labeling_job.label_set.all %}
+                                            <div class="form-check mb-1">
+                                                <input class="form-check-input" type="checkbox" value="{{ label.id }}"
+                                                       name="label-ids"
+                                                       id="{{ label.id }}"
+                                                       {% if label in doc.labels.all %}checked{% endif %}>
+                                                <label class="form-check-label" for="{{ label.id }}">
+                                    <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
+                                          data-toggle="tooltip" data-placement="top"
+                                          title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>
+                                                </label>
+                                            </div>
+
+                                        {% endfor %}
+                                    </div>
+                                    <input class="btn btn-primary mr-1" type="submit" value="送出">
+                                    {% if page_obj.has_next %}
+                                        <a class="btn btn-link" href="?page={{ page_obj.next_page_number }}">跳過</a>
+                                {% endif %}
+                                </form>
+
+                            </div>
+                            {% resetcycle %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="card shadow mb-4">
+                    <div class="card-body">沒有文章或是所有文章都標記完成了，您可以再上傳新的文章。</div>
+                </div>
+            {% endfor %}
+
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <!-- label progress -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">標記進度</h6>
+                </div>
+                <div class="card-body">
+                    {% for label in labeling_job.label_set.all %}
+                        <h4 class="small font-weight-bold">{{ label.name }}
+                            <span class="float-right"><small> {{ label.show_document_amount }}/{{ label.target_amount }}</small> {{ label.show_progress_percentage }}%</span>
+                        </h4>
+                        <div class="progress mb-4">
+                            <div class="progress-bar bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}"
+                                 role="progressbar" style="width: {{ label.show_progress_percentage }}%"
+                                 aria-valuenow="label.show_progress_percentage"
+                                 aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    {% empty %}
+                        沒有設定標籤
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
