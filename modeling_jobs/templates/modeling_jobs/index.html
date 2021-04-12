@@ -157,7 +157,7 @@ Model List
                         success : function (result)
                         {
                             Swal.fire({
-                                title: '訓練完成',
+                                title: '訓練中....',
                                 icon: 'success'
                             }).then(() => {
                                 location.reload()
@@ -192,7 +192,6 @@ Model List
                 type : 'post',
                 success : function (result)
                 {
-                    console.log(result)
                     if(result == '欄位不符合'){
                         Swal.fire("Error", '欄位不符合', "error");
                     }
@@ -200,7 +199,7 @@ Model List
                         Swal.fire("Error", '請先訓練模型', "error");
                     }
                     else{
-                        Swal.fire("訓練完成", 'success', "success").then(() =>
+                        Swal.fire("訓練中.....", 'success', "success").then(() =>
                         {
                             location.reload()
                         })

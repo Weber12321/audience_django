@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import svm
-from sklearn.metrics import classification_report, accuracy_score
+from sklearn.metrics import classification_report
 import os
 import joblib
 import jieba
@@ -12,7 +12,6 @@ from .data_helpers import DataHelper
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 
 import numpy as np
@@ -212,7 +211,6 @@ class XgboostModel(AudienceModel):
 
     def predict(self, content, labels, modeling_job_id):
         path = ModelingJob.objects.get(pk=modeling_job_id).model_path
-        print(path)
         try:
             model = joblib.load(os.path.join(path, "model.pkl"))
             vectorizer = joblib.load(os.path.join(path, "vectorize.pkl"))

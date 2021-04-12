@@ -1,16 +1,14 @@
 from labeling_jobs.models import LabelingJob, Document
 from .models import ModelingJob, MLModel
-from django.views.generic import TemplateView, ListView, DetailView
+from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from core.helpers.data_helpers import DataHelper
-from core.helpers.model_helpers import RuleModel, KeywordModel, ProbModel, RFModel, SvmModel, XgboostModel
-from django.template.response import TemplateResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from collections import namedtuple
-from .task import train_model,test_model
+from .task import train_model, test_model
 from django_q.tasks import AsyncTask
 
 
@@ -122,14 +120,20 @@ def testing_model(request):
     is_multi_label = request.POST['is_multi_label']
     dataHelper = DataHelper()
     content, labels = dataHelper.get_test_data(file)
-    if content == [] and labels == []:
+    job_train_status = ModelingJob.objects.get(pk=modeling_job_id).job_train_status
+
+    if job_train_status != 'done':
+        return HttpResponse('請先訓練模型')
+
+    elif content == [] and labels == []:
         return HttpResponse('欄位不符合')
+
     else:
         job = ModelingJob.objects.get(pk=modeling_job_id)
         a = AsyncTask(test_model, model_type=model_type, content=content, labels=labels, is_multi_label=is_multi_label,
-                  modeling_job_id=modeling_job_id, job=job, group='test_model')
+                      modeling_job_id=modeling_job_id, job=job, group='test_model')
         a.run()
-        return HttpResponse("1111")
+        return HttpResponse("Done")
 
 
 @csrf_exempt

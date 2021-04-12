@@ -1,6 +1,5 @@
 from modeling_jobs.models import ModelingJob
 from core.helpers.model_helpers import RuleModel, KeywordModel, ProbModel, RFModel, SvmModel, XgboostModel
-from time import sleep
 
 
 def train_model(model_type, content, labels, is_multi_label, modeling_job_id, job: ModelingJob):

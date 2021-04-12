@@ -63,6 +63,7 @@ def import_csv_data_task(upload_job: UploadFileJob, required_fields=None):
         for index, doc in enumerate(documents):
             label = labels[index]
             if label:
+                label = ",".join(set(label.split(',')))
                 if len(ls := labeling_job.label_set.filter(name=label)) > 0:
                     l = ls.first()
                     doc.labels.add(l)
