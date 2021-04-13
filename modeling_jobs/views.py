@@ -1,3 +1,5 @@
+from django_q.tasks import AsyncTask
+
 from labeling_jobs.models import LabelingJob, Document
 from .models import ModelingJob, MLModel
 from django.views.generic import ListView, DetailView
@@ -49,7 +51,7 @@ def doc_update(request, model_id):
     doc = Document.objects.get(id=doc_id)
     doc.title = request.POST["title"]
     doc.author = request.POST["author"]
-    doc.s_area_id = request.POST["s_area_id"]
+    doc.schema = request.POST["s_area_id"]
     doc.content = request.POST["content"]
     doc.save()
     return HttpResponse("You're updating on id %s." % doc_id)

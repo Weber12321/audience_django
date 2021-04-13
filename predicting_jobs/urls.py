@@ -9,6 +9,7 @@ urlpatterns = [
     path('create/', views.PredictingJobCreate.as_view(), name='job-create'),
     path('<int:pk>/update/', views.PredictingJobUpdate.as_view(), name='job-update'),
     path('<int:pk>/delete/', views.PredictingJobDelete.as_view(), name='job-delete'),
+    path('<int:pk>/run/', views.start_job, name='job_start'),
     path('<int:job_id>/target/add', views.PredictingTargetCreate.as_view(), name='job-target-add'),
     path('<int:job_id>/target/<int:pk>/update', views.PredictingTargetUpdate.as_view(), name='job-target-update'),
     path('<int:job_id>/target/<int:pk>/delete', views.PredictingTargetDelete.as_view(), name='job-target-delete'),

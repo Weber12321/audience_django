@@ -14,7 +14,9 @@ def sample_task(job: UploadFileJob, sleep_time=5):
     print(f'start doing job {job.file}')
     job.job_status = UploadFileJob.JobStatus.PROCESSING
     job.save()
+    # your code here
     sleep(sleep_time)
+
     job.save()
     print('job done')
     # return datetime.now() - st

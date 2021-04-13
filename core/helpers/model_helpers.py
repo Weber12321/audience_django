@@ -1,28 +1,18 @@
-from abc import ABC, abstractmethod
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn import svm
-from sklearn.metrics import classification_report, accuracy_score
 import os
-import joblib
-import jieba
+from abc import ABC, abstractmethod
 from pathlib import Path
-from core.helpers.data_helpers import DataHelper
-from sklearn.preprocessing import MultiLabelBinarizer
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.model_selection import train_test_split
+
+import jieba
+import joblib
 import numpy as np
+from sklearn import svm
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import classification_report
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.preprocessing import MultiLabelBinarizer
 
-
-class AudienceModel(ABC):
-    def __init__(self, model_type):
-        pass
-
-    @abstractmethod
-    def predict(self, content):
-        pass
-
-    def val(self, test_x, y_true):
-        print("val")
+from core.audience.ML.base_model import AudienceModel
+from core.helpers.data_helpers import DataHelper
 
 
 class RuleModel(AudienceModel):
@@ -52,7 +42,7 @@ class SvmModel(AudienceModel):
     def __init__(self):
         self.dirname = os.path.dirname(__file__)
 
-    def fit(self, content, labels, modeling_job_id):
+    def fit(self, content, labels, model_file_name):
 
         train_labels = []
         for y in labels:
@@ -66,7 +56,7 @@ class SvmModel(AudienceModel):
         x_train_features = vectorizer.fit_transform(x_train)
         SVCModel = svm.SVC(kernel='linear')
         SVCModel.fit(x_train_features, y_train)
-        self.save(modeling_job_id, SVCModel, vectorizer)
+        self.save(model_file_name, SVCModel, vectorizer)
 
     def multi_fit(self, content, labels, modeling_job_id):
         x_train = []
