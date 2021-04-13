@@ -31,7 +31,8 @@ def import_csv_data_task(upload_job: UploadFileJob, required_fields=None):
         file = upload_job.file
         encoding = cchardet.detect(file.read())['encoding']
         file.seek(0)
-        csv_file = csv.DictReader(codecs.iterdecode(file, encoding), skipinitialspace=True, delimiter=',',
+        csv_file = csv.DictReader(codecs.iterdecode(file, encoding), skipinitialspace=True,
+                                  delimiter=upload_job.delimiter,
                                   quoting=csv.QUOTE_ALL)
         title = csv_file.fieldnames
         if diff := set(title).difference(required_fields):

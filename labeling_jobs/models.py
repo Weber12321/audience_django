@@ -96,6 +96,10 @@ class Document(models.Model):
 
 
 class UploadFileJob(models.Model):
+    class Delimiter(models.TextChoices):
+        COMMA = ','
+        TAB = '\t'
+
     class JobStatus(models.TextChoices):
         WAIT = ('wait', '等待中')
         PROCESSING = ('processing', '處理中')
@@ -105,6 +109,7 @@ class UploadFileJob(models.Model):
 
     labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     file = models.FileField(upload_to=settings.UPLOAD_FILE_DIRECTORY, verbose_name="檔案")
+    delimiter = models.CharField(max_length=1, verbose_name="分隔符號", default=Delimiter.COMMA, choices=Delimiter.choices)
     job_status = models.CharField(max_length=20, verbose_name="任務狀態", default=JobStatus.WAIT, choices=JobStatus.choices)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
