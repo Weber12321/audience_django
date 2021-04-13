@@ -1,3 +1,4 @@
+import re
 from random import shuffle
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -89,7 +90,7 @@ class LabelingJobDocumentsView(SingleObjectMixin, generic.ListView):
 class LabelingRandomDocumentView(SingleObjectMixin, generic.ListView):
     paginate_by = 1
     model = LabelingJob
-    template_name = 'labeling_jobs/labeling_from.html'
+    template_name = 'labeling_jobs/labeling_form.html'
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(queryset=LabelingJob.objects.all())
@@ -110,13 +111,17 @@ class LabelingRandomDocumentView(SingleObjectMixin, generic.ListView):
 def doc_label_update(request, job_id):
     doc_id = request.POST["doc-id"]
     label_ids = request.POST.getlist("label-ids")
+    next_page = request.POST.get("next", None)
     labels = [Label.objects.get(pk=label_id) for label_id in label_ids]
     doc = Document.objects.get(id=doc_id)
     doc.labels.clear()
     for label in labels:
         doc.labels.add(label)
     doc.save()
-    return HttpResponseRedirect(reverse('labeling_jobs:job-labeling', kwargs={'pk': job_id}))
+    if next_page:
+        return HttpResponseRedirect(next_page)
+    else:
+        return HttpResponseRedirect(reverse('labeling_jobs:job-labeling', kwargs={'pk': job_id}))
 
 
 class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
@@ -127,7 +132,7 @@ class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
     def get_success_url(self):
         from labeling_jobs.tasks import sample_task
         # 利用django-q實作非同步上傳
-        a = AsyncTask(import_csv_data_task, self.object, group='upload_documents')
+        a = AsyncTask(import_csv_data_task, upload_job=self.object, group='upload_documents')
         a.run()
         job_id = self.kwargs['job_id']
         return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': job_id})
@@ -210,3 +215,17 @@ class LabelDetail(SingleObjectMixin, generic.ListView):
 
     def get_queryset(self):
         return self.object.document_set.order_by('pk')
+
+
+class DocumentDetailView(LoginRequiredMixin, generic.DetailView):
+    model = Document
+    context_object_name = 'doc'
+    # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
+    template_name = 'documents/document_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        referer = self.request.META.get('HTTP_REFERER')
+        if referer:
+            context['next'] = re.sub('^https?:\/\/[\w.:]+', '', referer)
+        return context

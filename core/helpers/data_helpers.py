@@ -1,16 +1,16 @@
-import cchardet
-import csv
 import codecs
+import csv
+
 from labeling_jobs.models import LabelingJob, Document, Label
-from modeling_jobs.models import ModelingJob,Report
 import hashlib
-from datetime import datetime
 import json
+from datetime import datetime
+import cchardet
+
+from modeling_jobs.models import ModelingJob, Report
+
 
 class DataHelper:
-    def __init__(self):
-        pass
-
     def insert_csv_to_db(self, file, job_id):
         encoding = cchardet.detect(file.read())['encoding']
         file.seek(0)

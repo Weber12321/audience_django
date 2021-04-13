@@ -79,10 +79,21 @@ WSGI_APPLICATION = 'audience_toolkits.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'audience-toolkit-dango', # 目標資料庫的名稱
+#         'USER': 'root', # 資料庫帳號
+#         'PASSWORD': 'pohjohn88990928', # 資料庫密碼
+#         'HOST': 'localhost', # 主機位置，可以先測本地localhost
+#         'PORT': '3306',
 #     }
 # }
 
@@ -145,7 +156,12 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-# django-Q settings
+# tmp files
+UPLOAD_FILE_DIRECTORY = 'upload_files'
+
+# ======================================
+#           django-Q settings
+# ======================================
 Q_CLUSTER = {
     'name': 'audience_toolkits',
     'workers': 4,
@@ -154,4 +170,47 @@ Q_CLUSTER = {
     'queue_limit': 50,
     'bulk': 10,
     'orm': 'default'
+}
+
+# ======================================
+#     Audience Labeler Task settings
+# ======================================
+# logger
+VERBOSE_DEBUG_MESSAGE = True
+LOG_FILE_DIRECTORY = BASE_DIR / 'logs'
+LOG_BACKUP_COUNT = 30  # days
+LOGGING_FORMAT = "[%(asctime)s][{_context}][%(levelname)s]: %(message)s"
+LOGGING_ERROR_FORMAT = "[%(asctime)s][{_context}][%(funcName)s()][%(levelname)s]: %(message)s"
+
+# content processing
+STOP_WORD_DIR = []
+
+# DEEPNLP APIs
+DEEPNLP_POS_API = "http://rd2demo.eland.com.tw/segment"
+DEEPNLP_POS_API_TOKEN = ""
+
+# other
+TEMP_DIR = BASE_DIR / 'tmp'
+
+# predicting_result
+FETCH_COUNT = -1
+PREDICT_DATABASE = {
+    'source': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'audience-source',  # 目標資料庫的名稱
+        'USER': 'root',  # 資料庫帳號
+        'PASSWORD': 'password',  # 資料庫密碼
+        'HOST': 'localhost',  # 主機位置，可以先測本地localhost
+        'PORT': '3306',
+        'SCHEMA': 'wh_bbs_01',
+        'TABLE': 'ts_page_content',
+    },
+    'result': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'audience-result',  # 目標資料庫的名稱
+        'USER': 'root',  # 資料庫帳號
+        'PASSWORD': 'password',  # 資料庫密碼
+        'HOST': 'localhost',  # 主機位置，可以先測本地localhost
+        'PORT': '3306',
+    }
 }
