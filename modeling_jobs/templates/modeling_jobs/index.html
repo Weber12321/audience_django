@@ -6,7 +6,6 @@ Model List
 {% block content %}
 <div style="text-align: right;">
     <button class="btn btn-primary btn-rounded btn-sm my-0" data-toggle="modal" data-target="#createBtn">建立任務</button>
-    <button class="btn btn-primary btn-rounded btn-sm my-0" data-toggle="modal" data-target="#insertCSV">匯入檔案</button>
 </div>
 <script>
     job_id = 0;
@@ -96,38 +95,6 @@ Model List
                 })
             }
         })
-    }
-
-    function insertCSVData(){
-        file = $('#csv_file')[0].files[0];
-        if(file){
-            var formdata = new FormData();
-            formdata.append('file', file);
-            formdata.append('job_id', document.getElementById("csv_file_job").value);
-            var aj = $.ajax({
-                url : 'insert_csv',
-                processData : false,
-                contentType : false,
-                catch : false,
-                data : formdata,
-                type : 'post',
-                success : function (result)
-                {
-                    if(result == 'True'){
-                        Swal.fire("已匯入資料", 'success', "success").then(() =>
-                        {
-                            location.reload()
-                        })
-                    }
-                    else{
-                        Swal.fire("Error", 'Col Not Match', "error");
-                    }
-                }
-            })
-        }
-        else{
-            Swal.fire("Error", '未選取', "error")
-        }
     }
 
     function trainModel(jobRef_id,model,is_multi_label,modeling_job_id){
@@ -335,43 +302,6 @@ Model List
     </div>
 </div>
 
-<!--insert CSV Modal-->
-<div class="modal fade" id="insertCSV" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">編輯</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="form-group">
-                        <label class="col-form-label" for="csv_file">輸入檔案(.csv) : </label>
-                        <input type="file" id="csv_file" name="convert_file_format" accept=".csv" multiple
-                               class="csv_file" required>
-                    </div>
-                    <label class="col-form-label" for="csv_file_job">Reference Job : </label>
-                    <select class="form-control" id="csv_file_job" name="model" required>
-                        {% for job in job_list %}
-                        <option value="{{job.id}}">{{job}}</option>
-                        {% endfor %}
-                    </select>
-                    <div class="form-group">
-
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="insertCSVData()">Save changes</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!--test model CSV Modal-->
 <div class="modal fade" id="testModelCSV" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
      aria-hidden="true">
@@ -457,7 +387,15 @@ Model List
                             測試
                         </button>
                     </td>
+                    {% if job.job_train_status == 'done' %}
+                    <td><progress value="100" max="100" style="width : 50px" >100 %</progress></td>
+                    {% elif job.job_train_status == 'processing' %}
+                    <td><progress value="50" max="100" style="width : 50px">50 %</progress></td>
+                    {% else %}
                     <td>{{job.job_train_status}}</td>
+                    {% endif %}
+
+
                     <td>{{job.job_test_status}}</td>
                     {% if job.job_test_status == 'done' %}
                     <td>
