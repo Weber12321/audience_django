@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from core.helpers.data_helpers import DataHelper
 from django.shortcuts import render
 from collections import namedtuple
-from .task import train_model, test_model
+from .tasks import train_model, test_model
 from django_q.tasks import AsyncTask
 
 

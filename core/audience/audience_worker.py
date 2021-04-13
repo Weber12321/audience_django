@@ -1,9 +1,9 @@
 from collections import namedtuple
-from typing import Iterable, Dict, List
+from typing import Dict, List
 
 from typing import Iterable
 
-from core.audience.ML.base_model import AudienceModel
+from core.audience.models.base_model import AudienceModel
 from core.dao.input_example import InputExample
 from core.helpers.log_helper import get_logger
 

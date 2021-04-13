@@ -99,19 +99,6 @@ DATABASES = {
 
 FILE_PATH_FIELD_DIRECTORY = 'upload_files'
 MODEL_PATH_FIELD_DIRECTORY = 'model_files'
-DATABASES = {
-    'default': {
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': BASE_DIR / 'db.sqlite3',
-
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'audience-toolkit-dango', # 目標資料庫的名稱
-        'USER': 'root', # 資料庫帳號
-        'PASSWORD': 'pohjohn88990928', # 資料庫密碼
-        'HOST': 'localhost', # 主機位置，可以先測本地localhost
-        'PORT': '3306',
-    }
-}
 
 
 # Password validation

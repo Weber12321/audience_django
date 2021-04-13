@@ -1,12 +1,10 @@
-from collections import Iterable, namedtuple
+from collections import namedtuple
 from datetime import datetime
 from typing import List, Dict
 
-from core.audience.ML.base_model import AudienceModel
-from core.audience.ML.dummy_model import DummyModel
+from core.audience.models.base_model import AudienceModel, DummyModel
 from core.audience.audience_worker import AudienceWorker, RESULT
 from core.dao.input_example import InputExample
-from modeling_jobs.models import ModelingJob
 from predicting_jobs.models import PredictingJob, PredictingTarget, JobStatus, ApplyingModel, PredictingResult
 
 
