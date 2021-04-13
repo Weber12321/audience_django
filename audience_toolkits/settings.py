@@ -141,7 +141,7 @@ STATICFILES_DIRS = [
 ]
 
 # tmp files
-UPLOAD_FILE_DIRECTORY = BASE_DIR / 'upload_files'
+UPLOAD_FILE_DIRECTORY = 'upload_files'
 
 # ======================================
 #           django-Q settings
@@ -186,6 +186,8 @@ PREDICT_DATABASE = {
         'PASSWORD': 'password',  # 資料庫密碼
         'HOST': 'localhost',  # 主機位置，可以先測本地localhost
         'PORT': '3306',
+        'SCHEMA': 'wh_bbs_01',
+        'TABLE': 'ts_page_content',
     },
     'result': {
         'ENGINE': 'django.db.backends.mysql',

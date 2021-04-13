@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from predicting_jobs.models import PredictingJob, Source, PredictingTarget, ApplyingModel
+from predicting_jobs.models import PredictingJob, Source, PredictingTarget, ApplyingModel, PredictingResult
 
 
 class PredictingTargetAdminInline(admin.TabularInline):
@@ -44,12 +44,13 @@ class PredictingJobAdmin(admin.ModelAdmin):
 
 class SourceAdmin(admin.ModelAdmin):
     model = Source
-    fieldsets = [
-        (
-            None, {
-                "fields": ['name', 's_area_id', 'description']
-            }),
-    ]
+    # fieldsets = [
+    #     (
+    #         None, {
+    #             "fields": ['name', 'schema', 'description']
+    #         }),
+    # ]
+    exclude = ['created_at', 'updated_at', 'created_by']
     list_display = (
         'name', 'created_at', 'updated_at', 'created_by')
     list_filter = ['created_at', "updated_at", 'created_by']
@@ -83,6 +84,14 @@ class ApplyingModelAdmin(admin.ModelAdmin):
     list_filter = ['predicting_job', 'modeling_job']
 
 
+class PredictingResultAdmin(admin.ModelAdmin):
+    model = PredictingResult
+    list_display = ('data_id', 'label', 'predicting_target')
+    search_fields = ['predicting_target', 'label', 'data_id']
+    list_filter = ['predicting_target', 'label']
+
+
+admin.site.register(PredictingResult, PredictingResultAdmin)
 admin.site.register(ApplyingModel, ApplyingModelAdmin)
 admin.site.register(PredictingJob, PredictingJobAdmin)
 admin.site.register(PredictingTarget, PredictingTargetAdmin)

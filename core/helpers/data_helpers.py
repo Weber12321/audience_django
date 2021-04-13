@@ -11,9 +11,6 @@ from modeling_jobs.models import ModelingJob, Report
 
 
 class DataHelper:
-    def __init__(self):
-        pass
-
     def insert_csv_to_db(self, file, job_id):
         encoding = cchardet.detect(file.read())['encoding']
         file.seek(0)

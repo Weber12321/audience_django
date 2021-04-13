@@ -132,7 +132,7 @@ class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
     def get_success_url(self):
         from labeling_jobs.tasks import sample_task
         # 利用django-q實作非同步上傳
-        a = AsyncTask(import_csv_data_task, self.object, group='upload_documents')
+        a = AsyncTask(import_csv_data_task, upload_job=self.object, group='upload_documents')
         a.run()
         job_id = self.kwargs['job_id']
         return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': job_id})

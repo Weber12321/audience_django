@@ -4,9 +4,11 @@ from django.http import HttpResponseRedirect
 # Create your views here.
 from django.urls import reverse_lazy
 from django.views import generic
+from django_q.tasks import AsyncTask
 
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
 from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel
+from predicting_jobs.tasks import predict_task
 
 
 class IndexView(LoginRequiredMixin, generic.ListView):
@@ -124,3 +126,12 @@ class ApplyingModelDelete(LoginRequiredMixin, generic.DeleteView):
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
         return reverse_lazy('predicting_jobs:job-detail', kwargs={"pk": job_id})
+
+
+def start_job(request, pk):
+    if request.POST:
+        job = PredictingJob.objects.get(pk=pk)
+        a = AsyncTask(predict_task, job, group="predicting_audience")
+        a.run()
+        return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
+    return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))

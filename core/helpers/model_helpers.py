@@ -11,19 +11,8 @@ from sklearn.metrics import classification_report
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
 
+from core.audience.ML.base_model import AudienceModel
 from core.helpers.data_helpers import DataHelper
-
-
-class AudienceModel(ABC):
-    def __init__(self, model_type):
-        pass
-
-    @abstractmethod
-    def predict(self, content):
-        pass
-
-    def val(self, test_x, y_true):
-        print("val")
 
 
 class RuleModel(AudienceModel):
@@ -53,7 +42,7 @@ class SvmModel(AudienceModel):
     def __init__(self):
         self.dirname = os.path.dirname(__file__)
 
-    def fit(self, content, labels, modeling_job_id):
+    def fit(self, content, labels, model_file_name):
 
         train_labels = []
         for y in labels:
@@ -67,7 +56,7 @@ class SvmModel(AudienceModel):
         x_train_features = vectorizer.fit_transform(x_train)
         SVCModel = svm.SVC(kernel='linear')
         SVCModel.fit(x_train_features, y_train)
-        self.save(modeling_job_id, SVCModel, vectorizer)
+        self.save(model_file_name, SVCModel, vectorizer)
 
     def multi_fit(self, content, labels, modeling_job_id):
         x_train = []
