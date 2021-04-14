@@ -1,8 +1,8 @@
-import os
+from pathlib import Path
+from typing import List, Optional
 
 import jieba
 import joblib
-import numpy as np
 from sklearn import svm
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
@@ -11,104 +11,92 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 from core.audience.models.base_model import AudienceModel
 from core.helpers.data_helpers import DataHelper
-from core.helpers.model_helpers import multiToBinarizerLabels, get_multi_accuracy
-from modeling_jobs.models import ModelingJob
+from core.helpers.model_helpers import get_multi_accuracy, load_joblib
 
 
 class SvmModel(AudienceModel):
-    def __init__(self):
-        super().__init__()
-        self.dirname = os.path.dirname(__file__)
+    def __init__(self, model_dir_path, is_multi_label=False):
+        super().__init__(model_dir_path)
+        self.vectorizer = None
+        self.is_multi_label = is_multi_label
+        self.model_path = self.model_dir_path / 'model.pkl'
+        self.vectorizer_path = self.model_dir_path / 'vectorizer.pkl'
+        self.mlb: Optional[MultiLabelBinarizer] = None  # MultiLabelBinarizer, for multi-label task
+        self.mlb_path = self.model_dir_path / 'mlb.pkl'
 
-    def fit(self, content, labels, model_file_name):
+    def convert_feature(self, contents, update_vectorizer=False):
+        seg_contents = [' '.join(jieba.lcut(content)) for content in contents]
+        if update_vectorizer:
+            if self.vectorizer is None:
+                self.vectorizer = TfidfVectorizer(max_features=5000, min_df=2, stop_words='english')
+            x_features = self.vectorizer.fit_transform(seg_contents)
+        else:
+            if self.vectorizer:
+                x_features = self.vectorizer.transform(seg_contents)
+            else:
+                raise ValueError("模型尚未被初始化，或模型尚未被讀取。若模型已被訓練與儲存，請嘗試執行 ' load() ' 方法讀取模型。")
+        return x_features
 
-        train_labels = []
-        for y in labels:
-            train_labels.append(y[0])
-        y_train = train_labels
-        x_train = []
-        for c in content:
-            x_train.append(' '.join(jieba.lcut(c)))
+    def fit(self, contents, y_true: List):
+        """
 
-        vectorizer = TfidfVectorizer(max_features=5000, min_df=2, stop_words='english')
-        x_train_features = vectorizer.fit_transform(x_train)
-        SVCModel = svm.SVC(kernel='linear')
-        SVCModel.fit(x_train_features, y_train)
-        return self.save(model_file_name, SVCModel, vectorizer)
-
-    def multi_fit(self, content, labels, modeling_job_id):
-        x_train = []
-        for c in content:
-            x_train.append(' '.join(jieba.lcut(c)))
-
-        vectorizer = TfidfVectorizer(stop_words='english', max_features=5000, min_df=2)
-
-        x_train_features = vectorizer.fit_transform(x_train)
-        y_train = multiToBinarizerLabels(labels)
-
+        :param contents:
+        :param y_true:
+                - normal classifier: List,
+                    i.e. ['sci-fi', 'thriller', 'comedy']
+                - multi-label classifier: List[Union[List, Set, Tuple]]
+                    i.e. [('sci-fi', 'thriller'), ('comedy',)]
+                    or [{'sci-fi', 'thriller'}, {'comedy'}]
+                    or [['sci-fi', 'thriller'], ['comedy']]
+        :return:
+        """
+        x_train_features = self.convert_feature(contents, update_vectorizer=True)
         classifier = svm.SVC(kernel='linear')
-        multi_target_model = OneVsRestClassifier(classifier)
-        multi_svm_model = multi_target_model.fit(x_train_features, y_train)
-        return self.save(modeling_job_id, multi_svm_model, vectorizer)
+        if self.is_multi_label:
+            self.mlb = MultiLabelBinarizer()
+            y_true = self.mlb.fit(y_true)
+            self.model = OneVsRestClassifier(classifier)
+        else:
+            self.model = classifier
+        self.model.fit(x_train_features, y_true)
+        return self.save()
 
-    def multiToBinarizerLabels(self, labels):
+    def predict(self, contents):
+        x_features = self.convert_feature(contents)
+        return self.model.predict(x_features)
 
-        label_list = []
-        for label in labels:
-            for l in label[0].split(','):
-                if l not in label_list:
-                    label_list.append(l)
+    def eval(self, contents, y_true):
+        if self.model and self.vectorizer:
+            x_features = self.convert_feature(contents)
+            y_pre = self.predict(x_features)
+            if self.mlb:
+                y_true = self.mlb.transform(y_true)
+                acc = get_multi_accuracy(y_true, y_pre)
+                report = classification_report(y_true, y_pre, output_dict=True)
+                report['accuracy'] = acc
+                dataHelper = DataHelper()
+                dataHelper.save_report(self.model_dir_path, report)
+            else:
+                report = classification_report(y_true, y_pre, output_dict=True)
+                dataHelper = DataHelper()
+                dataHelper.save_report(self.model_dir_path, report)
+        else:
+            raise ValueError(f"模型尚未被訓練，或模型尚未被讀取。若模型已被訓練與儲存，請嘗試執行 ' load() ' 方法讀取模型。")
 
-        mlb = MultiLabelBinarizer()
-        mlb.fit([label_list])
-        trans_labels = []
-        for label in labels:
-            l = label[0].split(',')
-            trans_labels.append(mlb.transform([l])[0])
+    def save(self):
+        if not self.model_dir_path.exists():
+            self.model_dir_path.mkdir(parents=True, exist_ok=True)
+        # todo 未來可嘗試加入model版控
+        joblib.dump(self.model, self.model_path)
+        joblib.dump(self.vectorizer, self.vectorizer_path)
+        if self.is_multi_label:
+            joblib.dump(self.mlb, self.mlb_path)
+        return self.model_dir_path
 
-        return np.array(trans_labels)
+    def load(self):
+        # todo 未來可嘗試加入model版控
+        self.model = load_joblib(self.model_path)
+        self.vectorizer = load_joblib(self.vectorizer_path)
+        if self.is_multi_label:
+            self.mlb = load_joblib(self.mlb_path)
 
-    def predict(self, content, labels, modeling_job_id):
-        path = ModelingJob.objects.get(pk=modeling_job_id).model_path
-        try:
-            model = joblib.load(os.path.join(path, "model.pkl"))
-            vectorizer = joblib.load(os.path.join(path, "vectorize.pkl"))
-            x_pre = []
-            for c in content:
-                data = ' '.join(jieba.lcut(c))
-                x_pre.append(data)
-            y_pre = []
-            for x in x_pre:
-                data = vectorizer.transform([x])
-                y_pre.append(model.predict(data)[0])
-            report = classification_report(labels, y_pre, output_dict=True)
-            dataHelper = DataHelper()
-            dataHelper.save_report(modeling_job_id, report)
-            return True
-        except Exception as e:
-            return e
-
-    def predict_multi_label(self, content, labels, modeling_job_id):
-        path = ModelingJob.objects.get(pk=modeling_job_id).model_path
-        try:
-            model = joblib.load(os.path.join(path, "model.pkl"))
-            vectorizer = joblib.load(os.path.join(path, "vectorize.pkl"))
-            x_pre = []
-            for c in content:
-                data = ' '.join(jieba.lcut(c))
-                x_pre.append(data)
-
-            labels = multiToBinarizerLabels(labels)
-            y_pre = []
-            for x in x_pre:
-                data = vectorizer.transform([x])
-                y_pre.append(model.predict(data)[0])
-
-            acc = get_multi_accuracy(labels, y_pre)
-            report = classification_report(labels, y_pre, output_dict=True)
-            report['accuracy'] = acc
-            dataHelper = DataHelper()
-            dataHelper.save_report(modeling_job_id, report)
-            return True
-        except:
-            return '請先訓練模型'

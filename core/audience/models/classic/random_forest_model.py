@@ -2,10 +2,23 @@ from core.audience.models.base_model import AudienceModel
 
 
 class RandomForestModel(AudienceModel):
-    def __init__(self):
-        super().__init__()
-        print("RFModel")
+
+    def __init__(self, model_dir_path):
+        super().__init__(model_dir_path=model_dir_path)
+        print(self.__name__)
         raise NotImplementedError
 
-    def predict(self, content):
+    def fit(self, contents, y_true):
+        pass
+
+    def predict(self, contents):
         raise NotImplementedError
+
+    def eval(self, contents, y_true):
+        pass
+
+    def save(self):
+        pass
+
+    def load(self):
+        pass

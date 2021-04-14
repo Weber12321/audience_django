@@ -36,29 +36,23 @@ def train_model(model_type, content, labels, is_multi_label, modeling_job_id, jo
     print('training done')
 
 
-def test_model(model_type, content, labels, is_multi_label, modeling_job_id, job: ModelingJob):
+def test_model(model_type, content, y_true, job: ModelingJob):
     job.job_test_status = ModelingJob.JobStatus.PROCESSING
     job.save()
     if model_type == 'RULE_MODEL':
-        ruleModel = RegexModel()
+        model = RegexModel(model_dir_path=job.model_path)
     elif model_type == 'KEYWORD_MODEL':
-        keywordModel = KeywordModel()
+        model = KeywordModel(model_dir_path=job.model_path)
     elif model_type == 'PROB_MODEL':
-        probModel = TermWeightModel()
+        model = TermWeightModel(model_dir_path=job.model_path)
     elif model_type == 'RF_MODEL':
-        rfModel = RandomForestModel()
+        model = RandomForestModel(model_dir_path=job.model_path)
     elif model_type == 'SVM_MODEL':
-        svmModel = SvmModel()
-        if is_multi_label == 'False':
-            svmModel.predict(content, labels, modeling_job_id)
-        else:
-            svmModel.predict_multi_label(content, labels, modeling_job_id)
-    # elif model_type == 'XGBOOST_MODEL':
-    #     xgboostModel = XgboostModel()
-    #     if is_multi_label == 'False':
-    #         xgboostModel.predict(content, labels, modeling_job_id)
-    #     else:
-    #         xgboostModel.predict_multi_label(content, labels, modeling_job_id)
+        model = SvmModel(model_dir_path=job.model_path, is_multi_label=job.is_multi_label)
+    else:
+        raise ValueError(f"Unknown model_type: {model_type}")
+    model.eval(content, y_true=y_true)
+
     job.job_test_status = ModelingJob.JobStatus.DONE
     job.save()
     print('test done')
