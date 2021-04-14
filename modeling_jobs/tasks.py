@@ -6,31 +6,24 @@ from core.audience.models.rule_base.keyword_base_model import KeywordModel
 from core.audience.models.rule_base.regex_model import RegexModel
 
 
-def train_model(model_type, content, labels, is_multi_label, modeling_job_id, job: ModelingJob):
+def train_model(model_type, contents, labels, job: ModelingJob):
     job.job_train_status = ModelingJob.JobStatus.PROCESSING
     job.save()
+    model_path = f"{job.id}_{job.name}"
     if model_type == 'RULE_MODEL':
-        ruleModel = RegexModel()
+        model = RegexModel(model_dir_path=model_path)
     elif model_type == 'KEYWORD_MODEL':
-        keywordModel = KeywordModel()
+        model = KeywordModel(model_dir_path=model_path)
     elif model_type == 'PROB_MODEL':
-        probModel = TermWeightModel()
+        model = TermWeightModel(model_dir_path=model_path)
     elif model_type == 'RF_MODEL':
-        rfModel = RandomForestModel()
+        model = RandomForestModel(model_dir_path=model_path)
     elif model_type == 'SVM_MODEL':
-        svmModel = SvmModel()
-        if is_multi_label == "False":
-            model_path = svmModel.fit(content, labels, modeling_job_id)
-        else:
-            model_path = svmModel.multi_fit(content, labels, modeling_job_id)
-    # elif model_type == 'XGBOOST_MODEL':
-    #     xgboostModel = XgboostModel()
-    #     if is_multi_label == "False":
-    #         model_path = xgboostModel.fit(content, labels, modeling_job_id)
-    #     else:
-    #         model_path = xgboostModel.multi_fit(content, labels, modeling_job_id)
+        model = SvmModel(model_dir_path=model_path, is_multi_label=job.is_multi_label)
+    else:
+        raise ValueError(f"Unknown model_type: {model_type}")
+    job.model_path = model.fit(contents=contents, y_true=labels)
 
-    job.model_path = model_path
     job.job_train_status = ModelingJob.JobStatus.DONE
     job.save()
     print('training done')
