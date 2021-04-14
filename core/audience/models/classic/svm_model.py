@@ -54,7 +54,7 @@ class SvmModel(AudienceModel):
         classifier = svm.SVC(kernel='linear')
         if self.is_multi_label:
             self.mlb = MultiLabelBinarizer()
-            y_true = self.mlb.fit(y_true)
+            y_true = self.mlb.fit_transform(y_true)
             self.model = OneVsRestClassifier(classifier)
         else:
             self.model = classifier
