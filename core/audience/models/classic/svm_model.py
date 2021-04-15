@@ -9,23 +9,28 @@ from sklearn.metrics import classification_report
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
 
-from core.audience.models.base_model import AudienceModel
+from core.audience.models.base_model import AudienceModel, MODEL_ROOT
 from core.helpers.data_helpers import DataHelper
 from core.helpers.model_helpers import get_multi_accuracy, load_joblib
 
 
 class SvmModel(AudienceModel):
-    def __init__(self, model_dir_path, is_multi_label=False):
-        super().__init__(model_dir_path)
+    def __init__(self, model_dir_name, is_multi_label=False):
+        super().__init__(model_dir_name)
         self.vectorizer = None
         self.is_multi_label = is_multi_label
-        self.model_path = self.model_dir_path / 'model.pkl'
-        self.vectorizer_path = self.model_dir_path / 'vectorizer.pkl'
+        self.model_path = self.model_dir_name / 'model.pkl'
+
+        self.vectorizer_path = self.model_dir_name / 'vectorizer.pkl'
         self.mlb: Optional[MultiLabelBinarizer] = None  # MultiLabelBinarizer, for multi-label task
-        self.mlb_path = self.model_dir_path / 'mlb.pkl'
+        self.mlb_path = self.model_dir_name / 'mlb.pkl'
 
     def convert_feature(self, contents, update_vectorizer=False):
-        seg_contents = [' '.join(jieba.lcut(content)) for content in contents]
+        # seg_contents = [' '.join(jieba.lcut(content)) for content in contents]
+        seg_contents = []
+        for content in contents:
+            sentence = jieba.lcut(str(content))
+            seg_contents.append(" ".join(sentence))
         if update_vectorizer:
             if self.vectorizer is None:
                 self.vectorizer = TfidfVectorizer(max_features=5000, min_df=2, stop_words='english')
@@ -67,36 +72,33 @@ class SvmModel(AudienceModel):
 
     def eval(self, contents, y_true):
         if self.model and self.vectorizer:
-            x_features = self.convert_feature(contents)
-            y_pre = self.predict(x_features)
+            y_pre = self.predict(contents)
             if self.is_multi_label:
                 y_true = self.mlb.transform(y_true)
                 acc = get_multi_accuracy(y_true, y_pre)
                 report = classification_report(y_true, y_pre, output_dict=True)
                 report['accuracy'] = acc
-                dataHelper = DataHelper()
-                dataHelper.save_report(self.model_dir_path, report)
             else:
                 report = classification_report(y_true, y_pre, output_dict=True)
-                dataHelper = DataHelper()
-                dataHelper.save_report(self.model_dir_path, report)
+            return report
         else:
             raise ValueError(f"模型尚未被訓練，或模型尚未被讀取。若模型已被訓練與儲存，請嘗試執行 ' load() ' 方法讀取模型。")
 
     def save(self):
-        if not self.model_dir_path.exists():
-            self.model_dir_path.mkdir(parents=True, exist_ok=True)
+        tmp_model_dir = MODEL_ROOT / self.model_dir_name
+        if not tmp_model_dir.exists():
+            tmp_model_dir.mkdir(parents=True, exist_ok=True)
         # todo 未來可嘗試加入model版控
-        joblib.dump(self.model, self.model_path)
-        joblib.dump(self.vectorizer, self.vectorizer_path)
+        joblib.dump(self.model, MODEL_ROOT / self.model_path)
+        joblib.dump(self.vectorizer, MODEL_ROOT / self.vectorizer_path)
         if self.is_multi_label:
-            joblib.dump(self.mlb, self.mlb_path)
-        return self.model_dir_path
+            joblib.dump(self.mlb, MODEL_ROOT / self.mlb_path)
+
+        return self.model_dir_name
 
     def load(self):
         # todo 未來可嘗試加入model版控
-        self.model = load_joblib(self.model_path)
-        self.vectorizer = load_joblib(self.vectorizer_path)
+        self.model = load_joblib(MODEL_ROOT / self.model_path)
+        self.vectorizer = load_joblib(MODEL_ROOT / self.vectorizer_path)
         if self.is_multi_label:
-            self.mlb = load_joblib(self.mlb_path)
-
+            self.mlb = load_joblib(MODEL_ROOT / self.mlb_path)

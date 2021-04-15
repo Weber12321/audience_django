@@ -58,14 +58,6 @@ class DataHelper:
                     doc.labels.create(name=label, labeling_job_id=job.id)
         return result
 
-    def get_training_data(self,labeling_job_id):
-        documents = Document.objects.filter(labeling_job_id = labeling_job_id)
-        content = []
-        labels = []
-        for doc in documents:
-            content.append(doc.content)
-            labels.append([label.name for label in doc.labels.all()])
-        return content,labels
 
     def get_test_data(self,file):
         encoding = cchardet.detect(file.read())['encoding']
@@ -94,7 +86,6 @@ class DataHelper:
 
     def get_report(self,modeling_job_id):
         modeling_job_id = int(modeling_job_id)
-        print(modeling_job_id)
         report = Report.objects.get(models_ref_id = modeling_job_id)
         report = report.report
         report = report.replace("\'", "\"")

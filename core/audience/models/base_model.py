@@ -1,11 +1,15 @@
 from abc import abstractmethod, ABC
 from pathlib import Path
 
+from audience_toolkits import settings
+
+MODEL_ROOT = Path(settings.MODEL_PATH_FIELD_DIRECTORY)
+
 
 class AudienceModel(ABC):
-    def __init__(self, model_dir_path: [str, Path]):
+    def __init__(self, model_dir_name: str):
         self.model = None
-        self.model_dir_path: Path = Path(model_dir_path) if isinstance(model_dir_path, str) else model_dir_path
+        self.model_dir_name = Path(model_dir_name)
 
     @abstractmethod
     def fit(self, contents, y_true):
@@ -33,8 +37,8 @@ class DummyModel(AudienceModel):
     用於測試流程的假模型，無需訓練與輸入，直接使用即可。
     """
 
-    def __init__(self, model_dir_path=None, dummy_message="This is a DUMMY model."):
-        super().__init__(model_dir_path)
+    def __init__(self, model_dir_name=None, dummy_message="This is a DUMMY model."):
+        super().__init__(model_dir_name)
         self.dummy_message = dummy_message
 
     def fit(self, contents, labels):
