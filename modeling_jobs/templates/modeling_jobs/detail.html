@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.name }} | 族群貼標任務{% endblock %}
+{% block nav_title %}族群貼標任務{% endblock %}
+{% block page_title %}{{ job.name }}{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+        <div class="dropdown mb-4">
+            <button class="btn btn-primary dropdown-toggle" type="button"
+                    id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false">
+                操作
+            </button>
+            <div class="dropdown-menu animated--fade-in"
+                 aria-labelledby="dropdownMenuButton">
+                <a class="dropdown-item"
+                   href="{% url 'modeling_jobs:job-update' job.id %}?next={{ request.path }}">修改</a>
+                <a class="dropdown-item" href="{% url 'modeling_jobs:job-delete' job.id %}">刪除</a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+{% block page_info %}
+    <div class="mb-2">
+    </div>
+{% endblock %}
+{% block page_description %}<p class="mb-4">{{ job.description }}</p>{% endblock %}
+{% block content %}
+    <!-- Content Row -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+        </div>
+
+    </div>
+
+{% endblock %}

@@ -46,7 +46,6 @@
                             <td>
                                 <form action="{% url 'predicting_jobs:job_start' predicting_job.id %}"
                                       method="post">
-
                                     {% if predicting_job.job_status.upper == 'WAIT' %}
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-success">開始</button>

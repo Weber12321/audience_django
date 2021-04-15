@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List, Optional
 
 import jieba
@@ -10,7 +9,6 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from core.audience.models.base_model import AudienceModel, MODEL_ROOT
-from core.helpers.data_helpers import DataHelper
 from core.helpers.model_helpers import get_multi_accuracy, load_joblib
 
 

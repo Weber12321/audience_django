@@ -1,17 +1,19 @@
-from django_q.tasks import AsyncTask
+from collections import namedtuple
 
-from labeling_jobs.models import LabelingJob, Document
-from .models import ModelingJob, MLModel
-from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import reverse_lazy, reverse
+from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import ListView, DetailView
+from django_q.tasks import AsyncTask
 
 from core.helpers.data_helpers import DataHelper
-from django.shortcuts import render
-from collections import namedtuple
-from .tasks import train_model, test_model, get_training_data
-from django_q.tasks import AsyncTask
+from labeling_jobs.models import LabelingJob, Document
+from .forms import ModelingJobForm
+from .models import ModelingJob
+from .tasks import train_model, test_model
 
 
 class IndexView(LoginRequiredMixin, ListView):
@@ -21,14 +23,48 @@ class IndexView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['ml_model_list'] = MLModel.objects.all()
+        context['ml_model_list'] = [choice[0] for choice in ModelingJob.model_choices]
         context['job_list'] = LabelingJob.objects.all()
         return context
 
 
-class ModelInfoView(LoginRequiredMixin, DetailView):
-    model = LabelingJob
-    template_name = "modeling_jobs/model_info.html"
+class JobDetailView(LoginRequiredMixin, generic.DetailView):
+    model = ModelingJob
+    context_object_name = 'job'
+    # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
+    template_name = 'modeling_jobs/detail.html'
+
+
+class JobCreateView(LoginRequiredMixin, generic.CreateView):
+    form_class = ModelingJobForm
+    template_name = 'modeling_jobs/add_form.html'
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+
+class JobUpdateView(LoginRequiredMixin, generic.UpdateView):
+    model = ModelingJob
+    form_class = ModelingJobForm
+    template_name = 'modeling_jobs/update_form.html'
+
+    def get_success_url(self):
+        pk = self.kwargs.get("pk")
+        return reverse('modeling_jobs:job-detail', kwargs={"pk": pk})
+
+
+class JobDeleteView(LoginRequiredMixin, generic.DeleteView):
+    model = ModelingJob
+    success_url = reverse_lazy('modeling_jobs:index')
+    template_name = 'modeling_jobs/confirm_delete_form.html'
+
+    def post(self, request, *args, **kwargs):
+        if "cancel" in request.POST:
+            print(request.POST)
+            return HttpResponseRedirect(self.success_url)
+        else:
+            return super(JobDeleteView, self).post(request, *args, **kwargs)
 
 
 class DocDeleteView(LoginRequiredMixin, DetailView):
@@ -39,7 +75,7 @@ class DocDeleteView(LoginRequiredMixin, DetailView):
 
 
 @csrf_exempt
-def doc_delete(request, model_id):
+def doc_delete(request):
     doc_id = request.POST["doc_id"]
     doc = Document.objects.filter(id=doc_id)
     doc.delete()
@@ -65,7 +101,7 @@ def create_task(request):
     modelingJob.description = request.POST['description']
     modelingJob.is_multi_label = request.POST['is_multi_label']
     modelingJob.jobRef_id = request.POST['ref_job']
-    modelingJob.model_id = request.POST['model_type']
+    modelingJob.model_type = request.POST['model_type']
     modelingJob.save()
     return HttpResponse("Successfully creating a task")
 
@@ -74,7 +110,7 @@ def create_task(request):
 def update_task(request):
     m = ModelingJob.objects.get(id=request.POST['id'])
     m.name = request.POST['model_name']
-    m.model_id = request.POST['model_type']
+    m.model_type = request.POST['model_type']
     m.description = request.POST['description']
     m.is_multi_label = request.POST['is_multi_label']
     m.jobRef_id = request.POST['ref_job']
@@ -101,11 +137,7 @@ def insert_csv(request):
 @csrf_exempt
 def training_model(request):
     jobRef_id = request.POST['jobRef_id']
-    model_type = request.POST['model']
-    is_multi_label = request.POST['is_multi_label']
     modeling_job_id = request.POST['modeling_job_id']
-    dataHelper = DataHelper()
-    contents, labels = get_training_data(jobRef_id)
 
     job = ModelingJob.objects.get(pk=modeling_job_id)
     a = AsyncTask(train_model, job=job, group='training_model')

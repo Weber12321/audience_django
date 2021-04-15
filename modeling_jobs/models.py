@@ -1,19 +1,13 @@
 from django.db import models
+from django.urls import reverse
+
+from audience_toolkits import settings
 from labeling_jobs.models import LabelingJob
 
 
-class MLModel(models.Model):
-    name = models.CharField(max_length=50, verbose_name="模型種類")
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = "機器學習模型"
-        verbose_name_plural = "機器學習模型列表"
-
-
 class ModelingJob(models.Model):
+    model_choices = [(key, value.get("verbose_name", key)) for key, value in settings.ML_MODELS.items()]
+
     class JobStatus(models.TextChoices):
         WAIT = ('wait', '等待中')
         PROCESSING = ('processing', '處理中')
@@ -24,16 +18,23 @@ class ModelingJob(models.Model):
     name = models.CharField(max_length=100, verbose_name="模型名稱")
     description = models.CharField(max_length=100, verbose_name="模型敘述")
     is_multi_label = models.BooleanField(verbose_name="是否為多標籤")
-    model = models.ForeignKey(MLModel, on_delete=models.SET_NULL, blank=True, null=True)
-    jobRef = models.ForeignKey(LabelingJob, on_delete=models.SET_NULL, blank=True, null=True)
-    job_train_status = models.CharField(max_length=20, verbose_name="任務狀態", default=JobStatus.WAIT,
+    model_type = models.CharField(max_length=50, choices=model_choices)
+    jobRef = models.ForeignKey(LabelingJob, verbose_name="使用資料", on_delete=models.SET_NULL, blank=True, null=True)
+    job_train_status = models.CharField(max_length=20, verbose_name="模型訓練狀態", default=JobStatus.WAIT,
                                         choices=JobStatus.choices, blank=True, null=True)
-    job_test_status = models.CharField(max_length=20, verbose_name="任務狀態", default=JobStatus.WAIT,
+    job_test_status = models.CharField(max_length=20, verbose_name="模型測試狀態", default=JobStatus.WAIT,
                                        choices=JobStatus.choices, blank=True, null=True)
     model_path = models.CharField(max_length=100, verbose_name="模型存放位置", blank=True)
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "模型訓練任務"
+        verbose_name_plural = "模型訓練任務列表"
+
+    def get_absolute_url(self):
+        return reverse('modeling_jobs:index')
 
 
 class Report(models.Model):
