@@ -1,11 +1,15 @@
 from abc import abstractmethod, ABC
 from pathlib import Path
 
+from audience_toolkits import settings
+
+MODEL_ROOT = Path(settings.MODEL_PATH_FIELD_DIRECTORY)
+
 
 class AudienceModel(ABC):
-    def __init__(self, model_dir_name: [str, Path]):
+    def __init__(self, model_dir_name: str):
         self.model = None
-        self.model_dir_path: Path = Path(model_dir_name) if isinstance(model_dir_name, str) else model_dir_name
+        self.model_dir_name = Path(model_dir_name)
 
     @abstractmethod
     def fit(self, contents, y_true):

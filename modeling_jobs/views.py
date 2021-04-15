@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from core.helpers.data_helpers import DataHelper
 from django.shortcuts import render
 from collections import namedtuple
-from .tasks import train_model, test_model
+from .tasks import train_model, test_model, get_training_data
 from django_q.tasks import AsyncTask
 
 
@@ -105,11 +105,10 @@ def training_model(request):
     is_multi_label = request.POST['is_multi_label']
     modeling_job_id = request.POST['modeling_job_id']
     dataHelper = DataHelper()
-    content, labels = dataHelper.get_training_data(jobRef_id)
+    contents, labels = get_training_data(jobRef_id)
 
     job = ModelingJob.objects.get(pk=modeling_job_id)
-    a = AsyncTask(train_model, model_type=model_type, content=content, labels=labels, is_multi_label=is_multi_label,
-                  modeling_job_id=modeling_job_id, job=job, group='training_model')
+    a = AsyncTask(train_model, job=job, group='training_model')
     a.run()
     return HttpResponse("進行中")
 
@@ -118,22 +117,19 @@ def training_model(request):
 def testing_model(request):
     file = request.FILES['file']
     modeling_job_id = request.POST['job_id']
-    model_type = request.POST['model_type']
-    is_multi_label = request.POST['is_multi_label']
     dataHelper = DataHelper()
-    content, labels = dataHelper.get_test_data(file)
+    contents, labels = dataHelper.get_test_data(file)
     job_train_status = ModelingJob.objects.get(pk=modeling_job_id).job_train_status
-
+    # python manage.py qcluster
     if job_train_status != 'done':
         return HttpResponse('請先訓練模型')
 
-    elif content == [] and labels == []:
+    elif contents == [] and labels == []:
         return HttpResponse('欄位不符合')
 
     else:
         job = ModelingJob.objects.get(pk=modeling_job_id)
-        a = AsyncTask(test_model, model_type=model_type, content=content, labels=labels, is_multi_label=is_multi_label,
-                      modeling_job_id=modeling_job_id, job=job, group='test_model')
+        a = AsyncTask(test_model, contents=contents, y_true=labels, job=job, group='test_model')
         a.run()
         return HttpResponse("Done")
 
