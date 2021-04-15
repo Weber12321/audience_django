@@ -117,8 +117,6 @@ def training_model(request):
 def testing_model(request):
     file = request.FILES['file']
     modeling_job_id = request.POST['job_id']
-    model_type = request.POST['model_type']
-    is_multi_label = request.POST['is_multi_label']
     dataHelper = DataHelper()
     contents, labels = dataHelper.get_test_data(file)
     job_train_status = ModelingJob.objects.get(pk=modeling_job_id).job_train_status

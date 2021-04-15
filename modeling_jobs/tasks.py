@@ -12,6 +12,7 @@ def train_model(job: ModelingJob):
     job.job_train_status = ModelingJob.JobStatus.PROCESSING
     job.save()
     contents,labels = get_training_data(job.jobRef.id)
+
     model_type = job.model.name
     model_path = f"{job.id}_{job.name}"
     if model_type == 'RULE_MODEL':

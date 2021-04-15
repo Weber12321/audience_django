@@ -31,6 +31,7 @@ class SvmModel(AudienceModel):
         for content in contents:
             sentence = jieba.lcut(str(content))
             seg_contents.append(" ".join(sentence))
+
         if update_vectorizer:
             if self.vectorizer is None:
                 self.vectorizer = TfidfVectorizer(max_features=5000, min_df=2, stop_words='english')
@@ -57,6 +58,10 @@ class SvmModel(AudienceModel):
         """
         x_train_features = self.convert_feature(contents, update_vectorizer=True)
         classifier = svm.SVC(kernel='linear')
+
+        for index,y in enumerate(y_true):
+            y_true[index] = y_true[index][0].split(',')
+
         if self.is_multi_label:
             self.mlb = MultiLabelBinarizer()
             y_true = self.mlb.fit_transform(y_true)
@@ -71,6 +76,10 @@ class SvmModel(AudienceModel):
         return self.model.predict(x_features)
 
     def eval(self, contents, y_true):
+
+        for index, y in enumerate(y_true):
+            y_true[index] = y.split(',')
+
         if self.model and self.vectorizer:
             y_pre = self.predict(contents)
             if self.is_multi_label:
