@@ -15,8 +15,8 @@ from core.helpers.model_helpers import get_multi_accuracy, load_joblib
 
 
 class SvmModel(AudienceModel):
-    def __init__(self, model_dir_path, is_multi_label=False):
-        super().__init__(model_dir_path)
+    def __init__(self, model_dir_name, is_multi_label=False):
+        super().__init__(model_dir_name)
         self.vectorizer = None
         self.is_multi_label = is_multi_label
         self.model_path = self.model_dir_path / 'model.pkl'

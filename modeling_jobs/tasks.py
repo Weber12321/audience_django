@@ -11,15 +11,15 @@ def train_model(model_type, contents, labels, job: ModelingJob):
     job.save()
     model_path = f"{job.id}_{job.name}"
     if model_type == 'RULE_MODEL':
-        model = RegexModel(model_dir_path=model_path)
+        model = RegexModel(model_dir_name=model_path)
     elif model_type == 'KEYWORD_MODEL':
-        model = KeywordModel(model_dir_path=model_path)
+        model = KeywordModel(model_dir_name=model_path)
     elif model_type == 'PROB_MODEL':
-        model = TermWeightModel(model_dir_path=model_path)
+        model = TermWeightModel(model_dir_name=model_path)
     elif model_type == 'RF_MODEL':
-        model = RandomForestModel(model_dir_path=model_path)
+        model = RandomForestModel(model_dir_name=model_path)
     elif model_type == 'SVM_MODEL':
-        model = SvmModel(model_dir_path=model_path, is_multi_label=job.is_multi_label)
+        model = SvmModel(model_dir_name=model_path, is_multi_label=job.is_multi_label)
     else:
         raise ValueError(f"Unknown model_type: {model_type}")
     job.model_path = model.fit(contents=contents, y_true=labels)
@@ -33,15 +33,15 @@ def test_model(model_type, content, y_true, job: ModelingJob):
     job.job_test_status = ModelingJob.JobStatus.PROCESSING
     job.save()
     if model_type == 'RULE_MODEL':
-        model = RegexModel(model_dir_path=job.model_path)
+        model = RegexModel(model_dir_name=job.model_path)
     elif model_type == 'KEYWORD_MODEL':
-        model = KeywordModel(model_dir_path=job.model_path)
+        model = KeywordModel(model_dir_name=job.model_path)
     elif model_type == 'PROB_MODEL':
-        model = TermWeightModel(model_dir_path=job.model_path)
+        model = TermWeightModel(model_dir_name=job.model_path)
     elif model_type == 'RF_MODEL':
-        model = RandomForestModel(model_dir_path=job.model_path)
+        model = RandomForestModel(model_dir_name=job.model_path)
     elif model_type == 'SVM_MODEL':
-        model = SvmModel(model_dir_path=job.model_path, is_multi_label=job.is_multi_label)
+        model = SvmModel(model_dir_name=job.model_path, is_multi_label=job.is_multi_label)
     else:
         raise ValueError(f"Unknown model_type: {model_type}")
     model.eval(content, y_true=y_true)

@@ -3,8 +3,8 @@ from core.audience.models.base_model import AudienceModel
 
 class RandomForestModel(AudienceModel):
 
-    def __init__(self, model_dir_path):
-        super().__init__(model_dir_path=model_dir_path)
+    def __init__(self, model_dir_name):
+        super().__init__(model_dir_name=model_dir_name)
         print(self.__name__)
         raise NotImplementedError
 
