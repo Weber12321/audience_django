@@ -41,6 +41,15 @@ class LabelingJob(models.Model):
     show_document_amount.boolean = False
     show_document_amount.short_description = '文章數量'
 
+    def get_training_set(self):
+        return self.document_set.filter(type=Document.TypeChoices.TRAIN, labels__isnull=False)
+
+    def get_dev_set(self):
+        return self.document_set.filter(type=Document.TypeChoices.DEV, labels__isnull=False)
+
+    def get_test_set(self):
+        return self.document_set.filter(type=Document.TypeChoices.TEST, labels__isnull=False)
+
 
 class Label(models.Model):
     labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
@@ -71,6 +80,11 @@ class Label(models.Model):
 
 
 class Document(models.Model):
+    class TypeChoices(models.TextChoices):
+        TRAIN = ("train", "訓練資料")
+        DEV = ("dev", "驗證資料")
+        TEST = ("test", "測試資料")
+
     labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     title = models.CharField(max_length=512, verbose_name="標題", blank=True)
     author = models.CharField(max_length=200, verbose_name="作者", blank=True)
@@ -79,6 +93,7 @@ class Document(models.Model):
     post_time = models.DateTimeField(verbose_name="發布時間", blank=True, null=True)
     labels = models.ManyToManyField(Label, verbose_name="被標記標籤", blank=True)
     hash_num = models.CharField(max_length=50, verbose_name='雜湊值', blank=True)
+    type = models.CharField(max_length=10, choices=TypeChoices.choices, default=None, null=True)
 
     class Meta:
         verbose_name = "文件"

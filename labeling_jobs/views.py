@@ -13,7 +13,7 @@ from .forms import LabelingJobForm, UploadFileJobForm, LabelForm
 from .models import LabelingJob, UploadFileJob, Document, Label
 
 # Create your views here.
-from .tasks import import_csv_data_task
+from .tasks import import_csv_data_task, generate_datasets
 
 
 class IndexView(LoginRequiredMixin, generic.ListView):
@@ -122,6 +122,13 @@ def doc_label_update(request, job_id):
         return HttpResponseRedirect(next_page)
     else:
         return HttpResponseRedirect(reverse('labeling_jobs:job-labeling', kwargs={'pk': job_id}))
+
+
+def generate_dataset(request, job_id):
+    job = LabelingJob.objects.get(pk=job_id)
+    a = AsyncTask(generate_datasets, job=job, group="generate_dataset")
+    a.run()
+    return HttpResponseRedirect(reverse('labeling_jobs:job-detail', kwargs={'pk': job_id}))
 
 
 class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):

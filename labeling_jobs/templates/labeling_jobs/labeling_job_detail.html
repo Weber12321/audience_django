@@ -161,6 +161,40 @@
     </div>
 
     <div class="col-lg-5 mb-4">
+        <div class="row mb-4">
+            <div class="col-lg-12">
+                <div class="h5">訓練資料</div>
+                <hr>
+                <div class="card-link mb-2">
+                    <a href="{% url 'labeling_jobs:generate-dataset' labeling_job.id %}">產生訓練資料</a>
+                </div>
+                <div class="card bg-light shadow">
+                    <div class="card-body">
+
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th scope="col"></th>
+                                    <th scope="col">訓練集</th>
+                                    <th scope="col">驗證集</th>
+                                    <th scope="col">測試集</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>總計</td>
+                                    <td>{{ labeling_job.get_training_set.count }}</td>
+                                    <td>{{ labeling_job.get_dev_set.count }}</td>
+                                    <td>{{ labeling_job.get_test_set.count }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="row">
             <div class="col-lg-12">
                 <div class="h5">檔案上傳紀錄</div>
@@ -199,7 +233,7 @@
             {% endfor %}
         </div>
     </div>
-    </div>
+
     <!-- Content Row -->
 
     <div class="row">

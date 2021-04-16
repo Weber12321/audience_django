@@ -2,13 +2,15 @@ import codecs
 import csv
 import hashlib
 from datetime import datetime
+from random import shuffle
 from time import sleep
+from typing import List
+
 import cchardet
-from labeling_jobs.models import LabelingJob, Document, UploadFileJob
+from labeling_jobs.models import LabelingJob, Document, UploadFileJob, Label
 
 
 def sample_task(job: UploadFileJob, sleep_time=5):
-    st = datetime.now()
     print(f'start doing job {job.file}')
     job.job_status = UploadFileJob.JobStatus.PROCESSING
     job.save()
@@ -24,6 +26,8 @@ def import_csv_data_task(upload_job: UploadFileJob, required_fields=None):
     upload_job.job_status = UploadFileJob.JobStatus.PROCESSING
     upload_job.save()
     if required_fields is None:
+        # todo 自動取得Document可用欄位，或者可於settings做設定
+        # 可用[field.name for field in Document._meta.fields] 但需決定哪些事可用的
         required_fields = ['title', 'author', 's_area_id', 'content', 'label']
     try:
         file = upload_job.file
@@ -68,8 +72,8 @@ def import_csv_data_task(upload_job: UploadFileJob, required_fields=None):
             if label:
                 label = ",".join(set(label.split(',')))
                 if len(ls := labeling_job.label_set.filter(name=label)) > 0:
-                    l = ls.first()
-                    doc.labels.add(l)
+                    _label = ls.first()
+                    doc.labels.add(_label)
                 else:
                     doc.labels.create(name=label, labeling_job_id=labeling_job.id)
 
@@ -79,3 +83,43 @@ def import_csv_data_task(upload_job: UploadFileJob, required_fields=None):
         upload_job.job_status = UploadFileJob.JobStatus.ERROR
     finally:
         upload_job.save()
+
+
+def set_type(docs: List[Document], doc_type=Document.TypeChoices.choices):
+    for doc in docs:
+        doc.type = doc_type
+        doc.save()
+    return docs
+
+
+def generate_datasets(job: LabelingJob, train: float = 0.8, dev: float = 0.1, test: float = 0.1):
+    """
+
+    :param job:
+    :param train: percentage of train set, 0~1
+    :param dev: percentage of dev set, 0~1
+    :param test: percentage of test set, 0~1
+    :return:
+    """
+    labels: List[Label] = job.label_set.all()
+    assert 0 < train < 1, "train should between 0 ~ 1"
+    assert 0 < dev < 1, "train should between 0 ~ 1"
+    assert 0 < test < 1, "train should between 0 ~ 1"
+    assert (train + dev + test) <= 1, "sum of train, dev, test should less then 1"
+    label_count = {}
+    for label in labels:
+        docs = job.document_set.all().filter(labels=label)
+        doc_num = docs.count()
+        train_count = round(train * doc_num)
+        dev_count = round(dev * doc_num)
+        test_count = round(test * doc_num)
+        docs = list(docs)
+        shuffle(list(docs))
+
+        train_set = set_type(docs[:train_count], doc_type=Document.TypeChoices.TRAIN)
+        dev_set = set_type(docs[train_count:train_count + dev_count],
+                           doc_type=Document.TypeChoices.DEV)
+        test_set = set_type(docs[-test_count:],
+                            doc_type=Document.TypeChoices.TEST)
+        label_count[label] = (len(train_set), len(dev_set), len(test_set))
+    print(label_count)

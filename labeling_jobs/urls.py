@@ -20,6 +20,7 @@ urlpatterns = [
     path('<int:job_id>/label/<int:pk>', views.LabelDetail.as_view(), name="label-detail"),
     path('<int:job_id>/label/<int:pk>/update', views.LabelUpdate.as_view(), name="label-update"),
     path('<int:job_id>/label/<int:pk>/delete', views.LabelDelete.as_view(), name="label-delete"),
-
+    # func
+    path('<int:job_id>/generate_dataset', views.generate_dataset, name="generate-dataset"),
 
 ]

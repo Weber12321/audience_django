@@ -9,12 +9,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView
 from django_q.tasks import AsyncTask
 
-from core.helpers.data_helpers import DataHelper
+from core.helpers.data_helpers import get_test_data, get_report
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm
 from .models import ModelingJob
 from .tasks import train_model, test_model
-
 
 class IndexView(LoginRequiredMixin, ListView):
     model = ModelingJob
@@ -129,14 +128,12 @@ def delete_task(request):
 def insert_csv(request):
     file = request.FILES['file']
     job_id = request.POST['job_id']
-    dataHelper = DataHelper()
-    result = dataHelper.insert_csv_to_db(file, job_id)
+    result = insert_csv_to_db(file, job_id)
     return HttpResponse(result)
 
 
 @csrf_exempt
 def training_model(request):
-    jobRef_id = request.POST['jobRef_id']
     modeling_job_id = request.POST['modeling_job_id']
 
     job = ModelingJob.objects.get(pk=modeling_job_id)
@@ -149,8 +146,7 @@ def training_model(request):
 def testing_model(request):
     file = request.FILES['file']
     modeling_job_id = request.POST['job_id']
-    dataHelper = DataHelper()
-    contents, labels = dataHelper.get_test_data(file)
+    contents, labels = get_test_data(file)
     job_train_status = ModelingJob.objects.get(pk=modeling_job_id).job_train_status
     # python manage.py qcluster
     if job_train_status != 'done':
@@ -168,8 +164,7 @@ def testing_model(request):
 
 @csrf_exempt
 def result_page(request, modeling_job_id):
-    dataHelper = DataHelper()
-    reports: dict = dataHelper.get_report(modeling_job_id)
+    reports: dict = get_report(modeling_job_id)
     accuracy = reports.pop('accuracy')
     macro_avg = reports.pop('macro avg')
     macro_avg['f1_score'] = macro_avg['f1-score']
