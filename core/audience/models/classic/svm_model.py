@@ -76,7 +76,7 @@ class SvmModel(AudienceModel):
     def eval(self, contents, y_true):
 
         for index, y in enumerate(y_true):
-            y_true[index] = y.split(',')
+            y_true[index] = y
 
         if self.model and self.vectorizer:
             y_pre = self.predict(contents)

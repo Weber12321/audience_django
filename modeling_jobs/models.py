@@ -2,7 +2,7 @@ from django.db import models
 from django.urls import reverse
 
 from audience_toolkits import settings
-from labeling_jobs.models import LabelingJob
+from labeling_jobs.models import LabelingJob, Document
 
 
 class ModelingJob(models.Model):
@@ -38,6 +38,7 @@ class ModelingJob(models.Model):
 
 
 class Report(models.Model):
+    dataset_type = models.CharField(max_length=10, choices=Document.TypeChoices.choices, default=None, null=True)
     accuracy = models.FloatField(max_length=10, verbose_name='準確率', blank=True)
     report = models.CharField(max_length=1000, verbose_name='報告')
     models_ref = models.ForeignKey(ModelingJob, on_delete=models.CASCADE, blank=True)

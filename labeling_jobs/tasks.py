@@ -92,7 +92,7 @@ def set_type(docs: List[Document], doc_type=Document.TypeChoices.choices):
     return docs
 
 
-def generate_datasets(job: LabelingJob, train: float = 0.8, dev: float = 0.1, test: float = 0.1):
+def generate_datasets_task(job: LabelingJob, train: float = 0.8, dev: float = 0.1, test: float = 0.1):
     """
 
     :param job:

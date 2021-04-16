@@ -68,34 +68,33 @@
                             <td>{{ job.get_model_type_display }}</td>
                             <td>{{ job.description }}</td>
                             <td>{{ job.is_multi_label }}</td>
-                            <td>{{ job.jobRef.name }}</td>
+                            <td><a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a></td>
 
                             <td>
 
                                 {% if job.job_train_status.upper == "DONE" %}
-                                    <button class="btn btn-warning train_btn btn-sm"
-                                            onclick="trainModel('{{ job.jobRef_id }}','{{ job.model }}','{{ job.is_multi_label }}','{{ job.id }}')">
+                                    <a class="btn btn-warning btn-sm"
+                                       href="{% url 'modeling_jobs:training-model' job.id %}">
                                         重新訓練
-                                    </button>
+                                    </a>
                                 {% else %}
-                                    <button class="btn btn-info train_btn btn-sm"
-                                            onclick="trainModel('{{ job.jobRef_id }}','{{ job.model }}','{{ job.is_multi_label }}','{{ job.id }}')">
+                                    <a class="btn btn-info btn-sm"
+                                       href="{% url 'modeling_jobs:training-model' job.id %}">
                                         執行訓練
-                                    </button>
+                                    </a>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if job.job_train_status.upper == "DONE" %}
-                                    <button type="button" class="btn btn-secondary test_btn btn-sm" data-toggle="modal"
-                                            data-target="#testModelCSV"
-                                            onclick="getModelJobInfo('{{ job.id }}','{{ job.model }}','{{ job.is_multi_label }}')">
+                                    <a class="btn btn-secondary btn-sm"
+                                       href="{% url 'modeling_jobs:testing-model' job.id %}">
                                         測試
-                                    </button>
+                                    </a>
                                 {% endif %}
                             </td>
                             {% if job.job_train_status == 'done' %}
                                 <td>
-                                    <progress value="100" max="100" style="width : 50px">100 %</progress>
+                                    done
                                 </td>
                             {% elif job.job_train_status == 'processing' %}
                                 <td>
@@ -118,6 +117,15 @@
                                         <a class="dropdown-item modify_btn"
                                            href="{% url 'modeling_jobs:api-doc-result-page' job.id %}">檢視混淆矩陣</a>
                                     {% endif %}
+                                    {#                                # 使用上傳的資料#}
+                                    {#                                    {% if job.job_train_status.upper == "DONE" %}#}
+                                    {#                                        <button type="button" class="btn btn-secondary test_btn btn-sm" data-toggle="modal"#}
+                                    {#                                                data-target="#testModelCSV"#}
+                                    {#                                                onclick="getModelJobInfo('{{ job.id }}','{{ job.model }}','{{ job.is_multi_label }}')">#}
+                                    {#                                            測試#}
+                                    {#                                        </button>#}
+                                    {#                                    {% endif %}#}
+
                                     <a class="dropdown-item modify_btn"
                                        href="{% url 'modeling_jobs:job-update' job.id %}">
                                         修改模型

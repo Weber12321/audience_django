@@ -9,11 +9,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView
 from django_q.tasks import AsyncTask
 
-from core.helpers.data_helpers import get_test_data, get_report
+from core.helpers.data_helpers import get_test_data, get_report, insert_csv_to_db
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm
 from .models import ModelingJob
-from .tasks import train_model, test_model
+from .tasks import train_model_task, test_model_task
+
 
 class IndexView(LoginRequiredMixin, ListView):
     model = ModelingJob
@@ -133,17 +134,23 @@ def insert_csv(request):
 
 
 @csrf_exempt
-def training_model(request):
-    modeling_job_id = request.POST['modeling_job_id']
-
-    job = ModelingJob.objects.get(pk=modeling_job_id)
-    a = AsyncTask(train_model, job=job, group='training_model')
+def training_model(request, pk):
+    job = ModelingJob.objects.get(pk=pk)
+    a = AsyncTask(train_model_task, job=job, group='training_model')
     a.run()
-    return HttpResponse("進行中")
+    return HttpResponseRedirect(reverse('modeling_jobs:index'))
 
 
 @csrf_exempt
-def testing_model(request):
+def testing_model(request, pk):
+    job = ModelingJob.objects.get(pk=pk)
+    a = AsyncTask(test_model_task, job=job, group='testing_model')
+    a.run()
+    return HttpResponseRedirect(reverse('modeling_jobs:index'))
+
+
+@csrf_exempt
+def testing_model_via_ext_data(request):
     file = request.FILES['file']
     modeling_job_id = request.POST['job_id']
     contents, labels = get_test_data(file)
