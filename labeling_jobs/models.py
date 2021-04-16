@@ -41,7 +41,7 @@ class LabelingJob(models.Model):
     show_document_amount.boolean = False
     show_document_amount.short_description = '文章數量'
 
-    def get_training_set(self):
+    def get_train_set(self):
         return self.document_set.filter(type=Document.TypeChoices.TRAIN, labels__isnull=False)
 
     def get_dev_set(self):
@@ -77,6 +77,15 @@ class Label(models.Model):
 
     show_document_amount.boolean = False
     show_document_amount.short_description = '已標記文章數量'
+
+    def show_train_set_count(self):
+        return self.document_set.filter(type='train').count()
+
+    def show_dev_set_count(self):
+        return self.document_set.filter(type='dev').count()
+
+    def show_test_set_count(self):
+        return self.document_set.filter(type='test').count()
 
 
 class Document(models.Model):

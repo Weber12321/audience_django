@@ -166,13 +166,19 @@
                 <div class="h5">訓練資料</div>
                 <hr>
                 <div class="card-link mb-2">
-                    <a href="{% url 'labeling_jobs:generate-dataset' labeling_job.id %}">產生訓練資料</a>
+                    <a class="btn btn-dark btn-sm mb-2"
+                       href="{% url 'labeling_jobs:generate-dataset' labeling_job.id %}">
+                        {% if labeling_job.get_training_set.count == 0 %}
+                            產生訓練資料
+                        {% else %}
+                            重新產生訓練資料
+                        {% endif %}
+                    </a>
                 </div>
                 <div class="card bg-light shadow">
                     <div class="card-body">
-
-                        <div class="table-responsive">
-                            <table class="table">
+                        <div class="table-responsive mt-2">
+                            <table class="table table-bordered">
                                 <thead>
                                 <tr>
                                     <th scope="col"></th>
@@ -182,9 +188,17 @@
                                 </tr>
                                 </thead>
                                 <tbody>
+                                {% for label in labeling_job.label_set.all %}
                                 <tr>
+                                    <td>{{ label.name }}</td>
+                                    <td>{{ label.show_train_set_count }}</td>
+                                    <td>{{ label.show_dev_set_count }}</td>
+                                    <td>{{ label.show_test_set_count }}</td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="table-active">
                                     <td>總計</td>
-                                    <td>{{ labeling_job.get_training_set.count }}</td>
+                                    <td>{{ labeling_job.get_train_set.count }}</td>
                                     <td>{{ labeling_job.get_dev_set.count }}</td>
                                     <td>{{ labeling_job.get_test_set.count }}</td>
                                 </tr>
