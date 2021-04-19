@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 
@@ -25,6 +26,8 @@ class ModelingJob(models.Model):
     job_test_status = models.CharField(max_length=20, verbose_name="模型測試狀態", default=JobStatus.WAIT,
                                        choices=JobStatus.choices, blank=True, null=True)
     model_path = models.CharField(max_length=100, verbose_name="模型存放位置", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return self.name
@@ -41,7 +44,8 @@ class Report(models.Model):
     dataset_type = models.CharField(max_length=10, choices=Document.TypeChoices.choices, default=None, null=True)
     accuracy = models.FloatField(max_length=10, verbose_name='準確率', blank=True)
     report = models.CharField(max_length=1000, verbose_name='報告')
-    models_ref = models.ForeignKey(ModelingJob, on_delete=models.CASCADE, blank=True)
+    modeling_job = models.ForeignKey(ModelingJob, on_delete=models.CASCADE, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
 
     def __str__(self):
         return self.report

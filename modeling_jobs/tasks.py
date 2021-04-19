@@ -55,7 +55,9 @@ def test_model_task(job: ModelingJob):
         raise ValueError(f"Unknown model_type: {job.model_type}")
     model.load()
     report = model.eval(contents, y_true=y_true)
-    save_report(modeling_job_id=job.id, report=report)
+    job.report_set.create(dataset_type=Document.TypeChoices.TEST, report=report, accuracy=report.get('accuracy', -1))
+    job.save()
+    # save_report(modeling_job_id=job.id, report=report)
     job.job_test_status = ModelingJob.JobStatus.DONE
     job.save()
     print('test done')
@@ -73,20 +75,23 @@ def test_model_via_ext_data(contents, y_true, job: ModelingJob):
         raise ValueError(f"Unknown model_type: {job.model_type}")
     model.load()
     report = model.eval(contents, y_true=y_true)
-    save_report(modeling_job_id=job.id, report=report)
+    job.report_set.create(dataset_type=Document.TypeChoices.TEST, report=report, accuracy=report.get('accuracy', -1))
+    job.save()
+    # save_report(modeling_job_id=job.id, report=report)
     job.job_test_status = ModelingJob.JobStatus.DONE
     job.save()
     print('test done')
 
 
-def save_report(modeling_job_id, report):
-    data = Report.objects.filter(models_ref_id=modeling_job_id)
-    accuracy = report.get('accuracy', -1)
-    if len(data) == 0:
-        r = Report(accuracy=accuracy, report=str(report), models_ref_id=modeling_job_id)
-        r.save()
-    else:
-        data.update(accuracy=accuracy, report=report)
+# def save_report(modeling_job_id, report):
+#     report =
+#     data = Report.objects.filter(models_ref_id=modeling_job_id)
+#     accuracy = report.get('accuracy', -1)
+#     if len(data) == 0:
+#         r = Report(accuracy=accuracy, report=str(report), models_ref_id=modeling_job_id)
+#         r.save()
+#     else:
+#         data.update(accuracy=accuracy, report=report)
 
 
 def get_feature_and_label(documents):

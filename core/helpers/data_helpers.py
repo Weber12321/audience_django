@@ -47,10 +47,7 @@ def save_report(modeling_job_id, report):
         data.update(accuracy=accuracy, report=report)
 
 
-def get_report(modeling_job_id):
-    modeling_job_id = int(modeling_job_id)
-    report = Report.objects.get(models_ref_id=modeling_job_id)
-    report = report.report
+def parse_report(report):
     report = report.replace("\'", "\"")
     report = json.loads(report)
 

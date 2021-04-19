@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView
 from django_q.tasks import AsyncTask
 
-from core.helpers.data_helpers import get_test_data, get_report, insert_csv_to_db
+from core.helpers.data_helpers import get_test_data, parse_report, insert_csv_to_db
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm
 from .models import ModelingJob
@@ -164,14 +164,15 @@ def testing_model_via_ext_data(request):
 
     else:
         job = ModelingJob.objects.get(pk=modeling_job_id)
-        a = AsyncTask(test_model, contents=contents, y_true=labels, job=job, group='test_model')
+        a = AsyncTask(test_model_task, contents=contents, y_true=labels, job=job, group='test_model')
         a.run()
         return HttpResponse("Done")
 
 
 @csrf_exempt
 def result_page(request, modeling_job_id):
-    reports: dict = get_report(modeling_job_id)
+    report = ModelingJob.objects.get(pk=modeling_job_id).report_set.last()
+    reports: dict = parse_report(report.report)
     accuracy = reports.pop('accuracy')
     macro_avg = reports.pop('macro avg')
     macro_avg['f1_score'] = macro_avg['f1-score']

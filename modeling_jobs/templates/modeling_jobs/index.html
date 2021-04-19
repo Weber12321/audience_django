@@ -64,7 +64,7 @@
                     {% for job in modeling_jobs %}
                         <tr>
                             <td>{{ job.id }}</td>
-                            <td>{{ job.name }}</td>
+                            <td><a href="{% url 'modeling_jobs:job-detail' job.id %}">{{ job.name }}</a></td>
                             <td>{{ job.get_model_type_display }}</td>
                             <td>{{ job.description }}</td>
                             <td>{{ job.is_multi_label }}</td>
