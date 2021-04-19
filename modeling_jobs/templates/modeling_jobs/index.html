@@ -2,7 +2,7 @@
 {% load report_extras %}
 {% block nav_title %} 模型訓練任務 {% endblock %}
 {% block page_title %}
-    Model List
+    模型訓練任務列表
 {% endblock %}
 {% block page_functions %}
     {% if user.is_staff %}
@@ -42,107 +42,81 @@
     </div>
 
     <!--main-->
-    <div class="container">
-        <div class="row">
-            <div class="accordion" id="accordionExample" style="width: 100%">
-                <table class="table table-striped">
-                    <thead>
+    <div class="row">
+        <div class="col-12">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>id</th>
+                    <th scope="col">模型名稱</th>
+                    <th scope="col">模型類型</th>
+                    <th scope="col">模型敘述</th>
+                    <th scope="col">是否為多標籤</th>
+                    <th scope="col">使用資料</th>
+                    <th scope="col">建立時間</th>
+                    <th scope="col">訓練模型</th>
+                    <th scope="col">測試模型</th>
+                    <th>訓練狀態</th>
+                    <th scope="col">編輯</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for job in modeling_jobs %}
                     <tr>
-                        <th>id</th>
-                        <th scope="col">模型名稱</th>
-                        <th scope="col">模型類型</th>
-                        <th scope="col">模型敘述</th>
-                        <th scope="col">是否為多標籤</th>
-                        <th scope="col">使用資料</th>
-                        <th scope="col">訓練模型</th>
-                        <th scope="col">測試模型</th>
-                        <th>訓練狀態</th>
-                        <th>測試狀態</th>
-                        <th scope="col">編輯</th>
+                        <td>{{ job.id }}</td>
+                        <td><a href="{% url 'modeling_jobs:job-detail' job.id %}">{{ job.name }}</a></td>
+                        <td>{{ job.get_model_type_display }}</td>
+                        <td>{{ job.description }}</td>
+                        <td>{{ job.is_multi_label }}</td>
+                        <td><a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a></td>
+                        <td>{{ job.created_at|date:"SHORT_DATE_FORMAT" }}</td>
+                        <td>
+                            <button id="train-btn-{{ job.id }}" class="btn btn-info btn-sm"
+                                    onclick="trainModel({{ job.id }},'{% url 'modeling_jobs:training-model' job.id %}')">
+                                開始訓練
+                            </button>
+                        </td>
+                        <td>
+                            <a id="test-btn-{{ job.id }}" class="btn btn-primary btn-sm"
+                               {% if job.job_train_status.upper == "DONE" %}hidden{% endif %}
+                               href="{% url 'modeling_jobs:testing-model' job.id %}">
+                                測試
+                            </a>
+
+                        </td>
+                        <td>
+                            <span id="state-{{ job.id }}">wait</span>
+                        </td>
+
+
+                        <td>
+                            <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle btn-sm"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                動作
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                <a class="dropdown-item modify_btn"
+                                   href="{% url 'modeling_jobs:job-update' job.id %}">
+                                    修改模型
+                                </a>
+                                <a class="dropdown-item delete_btn"
+                                   href="{% url 'modeling_jobs:job-delete' job.id %}">刪除</a>
+                            </div>
+                        </td>
                     </tr>
-                    </thead>
-                    <tbody>
-                    {% for job in modeling_jobs %}
-                        <tr>
-                            <td>{{ job.id }}</td>
-                            <td><a href="{% url 'modeling_jobs:job-detail' job.id %}">{{ job.name }}</a></td>
-                            <td>{{ job.get_model_type_display }}</td>
-                            <td>{{ job.description }}</td>
-                            <td>{{ job.is_multi_label }}</td>
-                            <td><a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a></td>
-
-                            <td>
-
-                                {% if job.job_train_status.upper == "DONE" %}
-                                    <a class="btn btn-warning btn-sm"
-                                       href="{% url 'modeling_jobs:training-model' job.id %}">
-                                        重新訓練
-                                    </a>
-                                {% else %}
-                                    <a class="btn btn-info btn-sm"
-                                       href="{% url 'modeling_jobs:training-model' job.id %}">
-                                        執行訓練
-                                    </a>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if job.job_train_status.upper == "DONE" %}
-                                    <a class="btn btn-secondary btn-sm"
-                                       href="{% url 'modeling_jobs:testing-model' job.id %}">
-                                        測試
-                                    </a>
-                                {% endif %}
-                            </td>
-                            {% if job.job_train_status == 'done' %}
-                                <td>
-                                    done
-                                </td>
-                            {% elif job.job_train_status == 'processing' %}
-                                <td>
-                                    <progress value="50" max="100" style="width : 50px">50 %</progress>
-                                </td>
-                            {% else %}
-                                <td>{{ job.job_train_status }}</td>
-                            {% endif %}
-                            <td>{{ job.job_test_status }}</td>
-
-
-                            <td>
-                                <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle btn-sm"
-                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    動作
-                                </button>
-                                <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-
-                                    {% if job.job_test_status == 'done' %}
-                                        <a class="dropdown-item modify_btn"
-                                           href="{% url 'modeling_jobs:api-doc-result-page' job.id %}">檢視混淆矩陣</a>
-                                    {% endif %}
-                                    {#                                # 使用上傳的資料#}
-                                    {#                                    {% if job.job_train_status.upper == "DONE" %}#}
-                                    {#                                        <button type="button" class="btn btn-secondary test_btn btn-sm" data-toggle="modal"#}
-                                    {#                                                data-target="#testModelCSV"#}
-                                    {#                                                onclick="getModelJobInfo('{{ job.id }}','{{ job.model }}','{{ job.is_multi_label }}')">#}
-                                    {#                                            測試#}
-                                    {#                                        </button>#}
-                                    {#                                    {% endif %}#}
-
-                                    <a class="dropdown-item modify_btn"
-                                       href="{% url 'modeling_jobs:job-update' job.id %}">
-                                        修改模型
-                                    </a>
-                                    <a class="dropdown-item delete_btn"
-                                       href="{% url 'modeling_jobs:job-delete' job.id %}">刪除</a>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
+    <script>
+
+
+    </script>
+{% endblock %}
+
+{% block custom_script %}
     <script>
         job_id = 0;
         model_type = '';
@@ -228,41 +202,9 @@
             })
         }
 
-        function trainModel(jobRef_id, model, is_multi_label, modeling_job_id) {
-            Swal.fire({
-                title: "確定要訓練此模組?",
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes!'
-            }).then((result) => {
-                if (result.value) {
-
-                    if (jobRef_id == 'None') {
-                        Swal.fire("Error", '請加入標記任務', "error");
-                    } else {
-                        var aj = $.ajax({
-                            url: 'training_model',
-                            data: {
-                                jobRef_id: jobRef_id,
-                                model: model,
-                                is_multi_label: is_multi_label,
-                                modeling_job_id: modeling_job_id
-                            },
-                            type: 'post',
-                            success: function (result) {
-                                Swal.fire({
-                                    title: '訓練中....',
-                                    icon: 'success'
-                                }).then(() => {
-                                    location.reload()
-                                })
-                            }
-                        })
-                    }
-                }
-            })
+        function trainModel(job_id, train_url) {
+            set_row_processing_display(job_id)
+            $.post(train_url)
         }
 
         function getModelJobInfo(id, model, is_multi_label) {
@@ -315,5 +257,73 @@
                 }
             })
         }
+
+        function set_row_done_display(job_id) {
+            $('#train-btn-' + job_id)
+                .text("重新訓練")
+                .removeClass("disabled")
+            $('#test-btn-' + job_id).attr("hidden", false)
+        }
+
+        function set_row_processing_display(job_id) {
+            $('#train-btn-' + job_id)
+                .text("訓練中")
+                .addClass("disabled")
+            $('#test-btn-' + job_id).attr("hidden", true)
+        }
+
+        function set_row_wait_display(job_id) {
+            $('#train-btn-' + job_id)
+                .text("開始訓練")
+                .removeClass("disabled")
+            $('#test-btn-' + job_id).attr("hidden", true)
+        }
+
+        function set_row_error_display(job_id) {
+            $(elem_id).text("error")
+            $('#train-btn-' + job_id).text("重試")
+                .removeClass("disabled")
+            $('#test-btn-' + job_id).attr("hidden", true)
+        }
+
+        function get_progress(url) {
+            return $.get({
+                url: url
+            })
+        }
+
+        function update_progress(job_id, url) {
+            {#var state = "wait"#}
+            get_progress(url).done(function (result) {
+                let timeout = 5000
+                console.log(result)
+                let state = result.state
+                let elem_id = '#state-' + job_id
+                console.log(elem_id)
+                $(elem_id).text(state)
+                switch (state) {
+                    case 'done':
+                        set_row_done_display(job_id)
+                        break
+                    case 'wait':
+                        set_row_wait_display(job_id)
+                        break
+                    case 'processing':
+                        timeout = 1000
+                        set_row_processing_display(job_id)
+                        break
+                    default:
+                        console.log(state)
+                        set_row_error_display(job_id)
+                }
+                setTimeout(function () {
+                    {#console.log(url)#}
+                    update_progress(job_id, url)
+                }, timeout);
+            });
+        }
+        {% for job in modeling_jobs %}
+            update_progress({{ job.id }}, "{% url 'modeling_jobs:api-job-progress' job.id %}")
+        {% endfor %}
     </script>
 {% endblock %}

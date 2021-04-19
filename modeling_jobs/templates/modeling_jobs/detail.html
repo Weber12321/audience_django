@@ -38,7 +38,8 @@
             <div class="card mb-4">
                 <div class="card-header">訓練資料</div>
                 <div class="card-body">
-                    <div class="card-title">使用資料：#{{ job.jobRef.id }} <a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a></div>
+                    <div class="card-title">使用資料：#{{ job.jobRef.id }} <a
+                            href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a></div>
 
                     <div class="card-title">資料數量：</div>
                     <div class="table-responsive mt-2">
@@ -75,10 +76,10 @@
         <div class="col-md-6 mb-4">
             <div class="h5">模型效果</div>
             <hr>
-            <div class="card mb-4">
-                <div class="card-header">訓練集</div>
-                <div class="card-body">
-                    {% if job.get_latest_train_report %}
+            {% if job.get_latest_train_report %}
+                <div class="card mb-4">
+                    <div class="card-header">訓練集</div>
+                    <div class="card-body">
                         <div>準確率：{{ job.get_latest_train_report.accuracy }}</div>
                         <table class="table">
                             <thead>
@@ -112,13 +113,14 @@
                             {% endfor %}
                             </tbody>
                         </table>
-                    {% endif %}
+                    </div>
                 </div>
-            </div>
-            <div class="card mb-4">
-                <div class="card-header">驗證集</div>
-                <div class="card-body">
-                    {% if job.get_latest_dev_report %}
+            {% endif %}
+
+            {% if job.get_latest_dev_report %}
+                <div class="card mb-4">
+                    <div class="card-header">驗證集</div>
+                    <div class="card-body">
                         <div>準確率：{{ job.get_latest_dev_report.accuracy }}</div>
                         <table class="table">
                             <thead>
@@ -152,13 +154,13 @@
                             {% endfor %}
                             </tbody>
                         </table>
-                    {% endif %}
+                    </div>
                 </div>
-            </div>
-            <div class="card mb-4">
-                <div class="card-header">測試集</div>
-                <div class="card-body">
-                    {% if job.get_latest_test_report %}
+            {% endif %}
+            {% if job.get_latest_test_report %}
+                <div class="card mb-4">
+                    <div class="card-header">測試集</div>
+                    <div class="card-body">
                         <div>準確率：{{ job.get_latest_test_report.accuracy }}</div>
                         <table class="table">
                             <thead>
@@ -192,9 +194,9 @@
                             {% endfor %}
                             </tbody>
                         </table>
-                    {% endif %}
+                    </div>
                 </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 

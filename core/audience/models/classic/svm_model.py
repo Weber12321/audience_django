@@ -7,7 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
-
+import numpy as np
 from core.audience.models.base_model import AudienceModel, MODEL_ROOT
 from core.helpers.model_helpers import get_multi_accuracy, load_joblib
 
@@ -65,6 +65,7 @@ class SvmModel(AudienceModel):
             y_true = self.mlb.fit_transform(y_true)
             self.model = OneVsRestClassifier(classifier)
         else:
+            y_true = np.asarray(y_true).ravel()
             self.model = classifier
         self.model.fit(x_train_features, y_true)
         return self.save()

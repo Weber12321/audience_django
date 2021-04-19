@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.views import generic
@@ -14,6 +14,7 @@ from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm
 from .models import ModelingJob
 from .tasks import train_model_task, test_model_task
+import json
 
 
 class IndexView(LoginRequiredMixin, ListView):
@@ -188,3 +189,13 @@ def result_page(request, modeling_job_id):
                                                          "macro_avg": macro_avg,
                                                          "weighted_avg": weighted_avg,
                                                          "labels": labels})
+
+
+def get_progress(request, pk):
+    job = ModelingJob.objects.get(pk=pk)
+
+    response_data = {
+        'state': job.job_train_status,
+        'details': job.job_train_status,
+    }
+    return HttpResponse(json.dumps(response_data), content_type='application/json')

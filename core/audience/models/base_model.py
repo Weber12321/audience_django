@@ -1,6 +1,8 @@
 from abc import abstractmethod, ABC
 from pathlib import Path
 
+from sklearn.metrics import classification_report
+
 from audience_toolkits import settings
 
 MODEL_ROOT = Path(settings.MODEL_PATH_FIELD_DIRECTORY)
@@ -37,22 +39,23 @@ class DummyModel(AudienceModel):
     用於測試流程的假模型，無需訓練與輸入，直接使用即可。
     """
 
-    def __init__(self, model_dir_name=None, dummy_message="This is a DUMMY model."):
+    def __init__(self, model_dir_name="DummyModel", dummy_message="This is a DUMMY model."):
         super().__init__(model_dir_name)
         self.dummy_message = dummy_message
 
-    def fit(self, contents, labels):
-        pass
+    def fit(self, contents, y_true):
+        return self.save()
 
     def predict(self, content):
         result = f"{self.dummy_message} Your input is: '{content}'"
         return ("dummy_label 1", "dummy_label 3"), (0.99, 0.01)
 
-    def eval(self, test_x, y_true):
-        pass
+    def eval(self, contents, y_true):
+        report = classification_report(y_true, y_true, output_dict=True)
+        return report
 
     def save(self):
-        pass
+        return MODEL_ROOT
 
     def load(self):
         pass

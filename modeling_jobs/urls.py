@@ -19,4 +19,6 @@ urlpatterns = [
     path('<int:pk>/testing', views.testing_model, name='testing-model'),
     path('testing_model', views.testing_model_via_ext_data, name='api-doc-testing-model'),
     path('<int:modeling_job_id>/result_page', views.result_page, name='api-doc-result-page'),
+
+    path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),
 ]
