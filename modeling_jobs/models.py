@@ -1,3 +1,7 @@
+import json
+from collections import namedtuple
+from typing import Union, List, NamedTuple
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
@@ -37,7 +41,28 @@ class ModelingJob(models.Model):
         verbose_name_plural = "模型訓練任務列表"
 
     def get_absolute_url(self):
-        return reverse('modeling_jobs:index')
+        return reverse('modeling_jobs:job-detail', kwargs={'pk': self.id})
+
+    def get_latest_train_report(self):
+        report = self.report_set.filter(dataset_type=Document.TypeChoices.TRAIN).last()
+        if report:
+            report.report = json.loads(report.report)
+            report.report.pop('accuracy')
+        return report
+
+    def get_latest_dev_report(self):
+        report = self.report_set.filter(dataset_type=Document.TypeChoices.DEV).last()
+        if report:
+            report.report = json.loads(report.report)
+            report.report.pop('accuracy')
+        return report
+
+    def get_latest_test_report(self):
+        report = self.report_set.filter(dataset_type=Document.TypeChoices.TEST).last()
+        if report:
+            report.report = json.loads(report.report)
+            report.report.pop('accuracy')
+        return report
 
 
 class Report(models.Model):

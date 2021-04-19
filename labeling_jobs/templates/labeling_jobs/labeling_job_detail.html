@@ -45,7 +45,6 @@
 {% block page_description %}<p class="mb-4">{{ labeling_job.description }}</p>{% endblock %}
 {% block content %}
     <div class="row mb-4">
-        <!-- Earnings (Monthly) Card Example -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
@@ -62,9 +61,6 @@
                                 {% endif %}
                             </div>
                         </div>
-                        {#                        <div class="col-auto">#}
-                        {#                            <i class="fas fa-calendar fa-2x text-gray-300"></i>#}
-                        {#                        </div>#}
                     </div>
                 </div>
             </div>
@@ -121,137 +117,138 @@
                     <hr>
                 </div>
                 {% for label in labeling_job.label_set.all %}
-                    <div class="col-lg-6 mb-4"><a href="{% url 'labeling_jobs:label-detail' labeling_job.id label.id %}"
-                                                  class="text-white">
-                        <div class="card bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %} text-white shadow">
-                            <div class="card-body">
-                                {{ label.name }}
-                                <div class="text-white-50 small">{{ label.description }}</div>
+                    <div class="col-lg-6 mb-4">
+                        <a href="{% url 'labeling_jobs:label-detail' labeling_job.id label.id %}"
+                           class="text-white">
+                            <div class="card bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %} text-white shadow">
+                                <div class="card-body">
+                                    {{ label.name }}
+                                    <div class="text-white-50 small">{{ label.description }}</div>
+                                </div>
                             </div>
-                    </a>
-                    </div>
+                        </a>
                     </div>
                 {% empty %}
                     <div class="col-lg-6 mb-4">
                         沒有設定標籤
                     </div>
                 {% endfor %}
-        </div>
-        <!-- label progress -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">標記進度</h6>
             </div>
-            <div class="card-body">
-                {% for label in labeling_job.label_set.all %}
-                    <h4 class="small font-weight-bold">{{ label.name }}
-                        <span class="float-right"><small> {{ label.show_document_amount }}/{{ label.target_amount }}</small> {{ label.show_progress_percentage }}%</span>
-                    </h4>
-                    <div class="progress mb-4">
-                        <div class="progress-bar bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}"
-                             role="progressbar" style="width: {{ label.show_progress_percentage }}%"
-                             aria-valuenow="label.show_progress_percentage"
-                             aria-valuemin="0" aria-valuemax="100"></div>
+            <!-- label progress -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">標記進度</h6>
+                </div>
+                <div class="card-body">
+                    {% for label in labeling_job.label_set.all %}
+                        <h4 class="small font-weight-bold">{{ label.name }}
+                            <span class="float-right"><small> {{ label.show_document_amount }}/{{ label.target_amount }}</small> {{ label.show_progress_percentage }}%</span>
+                        </h4>
+                        <div class="progress mb-4">
+                            <div class="progress-bar bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}"
+                                 role="progressbar" style="width: {{ label.show_progress_percentage }}%"
+                                 aria-valuenow="label.show_progress_percentage"
+                                 aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    {% empty %}
+                        沒有設定標籤
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5 mb-4">
+            <div class="row mb-4">
+                <div class="col-lg-12">
+                    <div class="h5">訓練資料</div>
+                    <hr>
+                    <div class="card-link mb-2">
+                        <a class="btn btn-dark btn-sm mb-2"
+                           href="{% url 'labeling_jobs:generate-dataset' labeling_job.id %}">
+                            {% if labeling_job.get_training_set.count == 0 %}
+                                產生訓練資料
+                            {% else %}
+                                重新產生訓練資料
+                            {% endif %}
+                        </a>
+                    </div>
+                    <div class="card bg-light shadow">
+                        <div class="card-body">
+                            <div class="table-responsive mt-2">
+                                <table class="table table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col"></th>
+                                        <th scope="col">訓練集</th>
+                                        <th scope="col">驗證集</th>
+                                        <th scope="col">測試集</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for label in labeling_job.label_set.all %}
+                                        <tr>
+                                            <td>{{ label.name }}</td>
+                                            <td>{{ label.show_train_set_count }}</td>
+                                            <td>{{ label.show_dev_set_count }}</td>
+                                            <td>{{ label.show_test_set_count }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    <tr class="table-active">
+                                        <td>總計</td>
+                                        <td>{{ labeling_job.get_train_set.count }}</td>
+                                        <td>{{ labeling_job.get_dev_set.count }}</td>
+                                        <td>{{ labeling_job.get_test_set.count }}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="h5">檔案上傳紀錄</div>
+                    <hr>
+                </div>
+                {% for upload_job in labeling_job.uploadfilejob_set.all %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card bg-light shadow">
+                            <div class="card-body">
+                                <div class="card-title">{{ upload_job.file.name }}</div>
+                                <div class="text-gray small">
+                                    {{ upload_job.created_by }} uploaded at {{ upload_job.created_at }}
+                                </div>
+                                <div class="mt-2">
+                                    {% if upload_job.job_status == 'done' %}
+                                        <span class="badge badge-success">完成</span>
+                                    {% elif upload_job.job_status == 'processing' %}
+                                        <span class="badge badge-primary">處理中</span>
+                                    {% elif upload_job.job_status == 'wait' %}
+                                        <span class="badge badge-warning">等待中</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">錯誤({{ upload_job.job_status }}）</span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-link mt-2">
+                                    <a href="{% url 'labeling_jobs:upload-job-delete' labeling_job.id upload_job.id %}">
+                                        清除上傳紀錄</a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 {% empty %}
-                    沒有設定標籤
+                    <div class="col-lg-12">
+                        沒有上傳紀錄
+                    </div>
                 {% endfor %}
             </div>
         </div>
-    </div>
 
-    <div class="col-lg-5 mb-4">
-        <div class="row mb-4">
-            <div class="col-lg-12">
-                <div class="h5">訓練資料</div>
-                <hr>
-                <div class="card-link mb-2">
-                    <a class="btn btn-dark btn-sm mb-2"
-                       href="{% url 'labeling_jobs:generate-dataset' labeling_job.id %}">
-                        {% if labeling_job.get_training_set.count == 0 %}
-                            產生訓練資料
-                        {% else %}
-                            重新產生訓練資料
-                        {% endif %}
-                    </a>
-                </div>
-                <div class="card bg-light shadow">
-                    <div class="card-body">
-                        <div class="table-responsive mt-2">
-                            <table class="table table-bordered">
-                                <thead>
-                                <tr>
-                                    <th scope="col"></th>
-                                    <th scope="col">訓練集</th>
-                                    <th scope="col">驗證集</th>
-                                    <th scope="col">測試集</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for label in labeling_job.label_set.all %}
-                                <tr>
-                                    <td>{{ label.name }}</td>
-                                    <td>{{ label.show_train_set_count }}</td>
-                                    <td>{{ label.show_dev_set_count }}</td>
-                                    <td>{{ label.show_test_set_count }}</td>
-                                </tr>
-                                {% endfor %}
-                                <tr class="table-active">
-                                    <td>總計</td>
-                                    <td>{{ labeling_job.get_train_set.count }}</td>
-                                    <td>{{ labeling_job.get_dev_set.count }}</td>
-                                    <td>{{ labeling_job.get_test_set.count }}</td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Content Row -->
+
         <div class="row">
-            <div class="col-lg-12">
-                <div class="h5">檔案上傳紀錄</div>
-                <hr>
-            </div>
-            {% for upload_job in labeling_job.uploadfilejob_set.all %}
-                <div class="col-lg-6 mb-4">
-                    <div class="card bg-light shadow">
-                        <div class="card-body">
-                            <div class="card-title">{{ upload_job.file.name }}</div>
-                            <div class="text-gray small">
-                                {{ upload_job.created_by }} uploaded at {{ upload_job.created_at }}
-                            </div>
-                            <div class="mt-2">
-                                {% if upload_job.job_status == 'done' %}
-                                    <span class="badge badge-success">完成</span>
-                                {% elif upload_job.job_status == 'processing' %}
-                                    <span class="badge badge-primary">處理中</span>
-                                {% elif upload_job.job_status == 'wait' %}
-                                    <span class="badge badge-warning">等待中</span>
-                                {% else %}
-                                    <span class="badge badge-danger">錯誤({{ upload_job.job_status }}）</span>
-                                {% endif %}
-                            </div>
-                            <div class="card-link mt-2">
-                                <a href="{% url 'labeling_jobs:upload-job-delete' labeling_job.id upload_job.id %}">
-                                    清除上傳紀錄</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% empty %}
-                <div class="col-lg-12">
-                    沒有上傳紀錄
-                </div>
-            {% endfor %}
+
         </div>
-    </div>
-
-    <!-- Content Row -->
-
-    <div class="row">
-
-    </div>
 
 {% endblock %}
