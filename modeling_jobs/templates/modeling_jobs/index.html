@@ -35,7 +35,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="testModel()">Save changes</button>
+                    <button type="button" class="btn btn-primary" onclick="test_model()">Save changes</button>
                 </div>
             </div>
         </div>
@@ -77,15 +77,13 @@
                             </button>
                         </td>
                         <td>
-                            <a id="test-btn-{{ job.id }}" class="btn btn-primary btn-sm"
-                               {% if job.job_train_status.upper == "DONE" %}hidden{% endif %}
+                            <a id="test-btn-{{ job.id }}" class="btn btn-primary btn-sm" hidden
                                href="{% url 'modeling_jobs:testing-model' job.id %}">
                                 測試
                             </a>
-
                         </td>
                         <td>
-                            <span id="state-{{ job.id }}">wait</span>
+                            <span id="state-{{ job.id }}"></span>
                         </td>
 
 
@@ -118,102 +116,14 @@
 
 {% block custom_script %}
     <script>
-        job_id = 0;
-        model_type = '';
-        multi_label = 'false';
 
-        function createJob() {
-            model_name = document.getElementById("model_name").value;
-            model_type = document.getElementById("model_type").value;
-            description = document.getElementById("description").value;
-            is_multi_label = document.getElementById("is_multi_label").value;
-            ref_job = document.getElementById("ref_job").value;
-
-            var aj = $.ajax({
-                url: 'createTask',
-                data:
-                    {
-                        model_name: model_name,
-                        model_type: model_type,
-                        description: description,
-                        is_multi_label: is_multi_label,
-                        ref_job, ref_job
-                    },
-                type: 'post',
-                success: function (result) {
-                    Swal.fire("Done!", result, "success").then(() => {
-                        location.reload()
-                    })
-                }
-            })
-        }
-
-        function getPreviousInfoToModal(id, model_name, model_type_id, description, is_multi_label, jobRef_id) {
-            job_id = id;
-            document.getElementById("modify_model_name").value = model_name;
-            document.getElementById("modify_model_type").value = model_type_id;
-            document.getElementById("modify_description").value = description;
-            document.getElementById("modify_is_multi_label").value = is_multi_label;
-            document.getElementById("modify_ref_job").value = jobRef_id;
-        }
-
-        function modifyJob() {
-            model_name = document.getElementById("modify_model_name").value;
-            model_type = document.getElementById("modify_model_type").value;
-            description = document.getElementById("modify_description").value;
-            is_multi_label = document.getElementById("modify_is_multi_label").value;
-            ref_job = document.getElementById("modify_ref_job").value;
-
-            var aj = $.ajax({
-                url: `updateTask`,
-                data:
-                    {
-                        id: job_id,
-                        model_name: model_name,
-                        model_type: model_type,
-                        description: description,
-                        is_multi_label: is_multi_label,
-                        ref_job: ref_job,
-                    },
-                type: 'post',
-                success: function (result) {
-                    console.log(123);
-                    Swal.fire("檔案已更新", result, "success").then(() => {
-                        location.reload()
-                    })
-                }
-            })
-        }
-
-        function deleteJob(id) {
-            job_id = id;
-            var aj = $.ajax({
-                url: `deleteTask`,
-                data:
-                    {
-                        id: job_id
-                    },
-                type: 'post',
-                success: function (result) {
-                    Swal.fire("檔案已刪除", result, "success").then(() => {
-                        location.reload()
-                    })
-                }
-            })
-        }
-
-        function trainModel(job_id, train_url) {
+        function train_model(job_id, train_url) {
             set_row_processing_display(job_id)
             $.post(train_url)
         }
 
-        function getModelJobInfo(id, model, is_multi_label) {
-            job_id = id;
-            model_type = model;
-            multi_label = is_multi_label;
-        }
 
-        function testModel() {
+        function test_model() {
             file = $('#test_csv_file')[0].files[0];
             if (file) {
                 var formdata = new FormData();
@@ -259,6 +169,7 @@
         }
 
         function set_row_done_display(job_id) {
+            $('#state-' + job_id).text("完成")
             $('#train-btn-' + job_id)
                 .text("重新訓練")
                 .removeClass("disabled")
@@ -266,6 +177,7 @@
         }
 
         function set_row_processing_display(job_id) {
+            $('#state-' + job_id).text("處理中")
             $('#train-btn-' + job_id)
                 .text("訓練中")
                 .addClass("disabled")
@@ -273,6 +185,7 @@
         }
 
         function set_row_wait_display(job_id) {
+            $('#state-' + job_id).text("等待中")
             $('#train-btn-' + job_id)
                 .text("開始訓練")
                 .removeClass("disabled")
@@ -280,7 +193,7 @@
         }
 
         function set_row_error_display(job_id) {
-            $(elem_id).text("error")
+            $('#state-' + job_id).text("錯誤")
             $('#train-btn-' + job_id).text("重試")
                 .removeClass("disabled")
             $('#test-btn-' + job_id).attr("hidden", true)
@@ -295,7 +208,7 @@
         function update_progress(job_id, url) {
             {#var state = "wait"#}
             get_progress(url).done(function (result) {
-                let timeout = 5000
+                let timeout = 10000
                 console.log(result)
                 let state = result.state
                 let elem_id = '#state-' + job_id
