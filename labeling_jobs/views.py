@@ -84,7 +84,7 @@ class LabelingJobDocumentsView(SingleObjectMixin, generic.ListView):
         return context
 
     def get_queryset(self):
-        return self.object.document_set.order_by('pk')
+        return self.object.document_set.exclude(document_type=Document.TypeChoices.EXT_TEST).order_by('pk')
 
 
 class LabelingRandomDocumentView(SingleObjectMixin, generic.ListView):

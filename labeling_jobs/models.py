@@ -78,10 +78,10 @@ class Label(models.Model):
         return reverse('labeling_jobs:label-detail', kwargs={'job_id': self.labeling_job.id, 'pk': self.pk})
 
     def show_document_amount(self):
-        return len(self.document_set.all())
+        return self.document_set.exclude(document_type=Document.TypeChoices.EXT_TEST).count()
 
     def show_progress_percentage(self):
-        return round(len(self.document_set.all()) / self.target_amount * 100, 2)
+        return round(self.show_document_amount() / self.target_amount * 100, 2)
 
     show_document_amount.boolean = False
     show_document_amount.short_description = '已標記文章數量'
