@@ -24,25 +24,31 @@ def get_model_class(name: str):
 def train_model_task(job: ModelingJob):
     job.job_train_status = ModelingJob.JobStatus.PROCESSING
     job.save()
-    train_set = job.jobRef.get_train_set()
-    contents, y_true = get_feature_and_label(train_set)
-    model_path = f"{job.id}_{job.name}"
-    model = load_model(model_type=job.model_type, model_path=model_path, is_multi_label=job.is_multi_label)
+    try:
+        train_set = job.jobRef.get_train_set()
+        contents, y_true = get_feature_and_label(train_set)
+        model_path = f"{job.id}_{job.name}"
+        model = load_model(model_type=job.model_type, model_path=model_path, is_multi_label=job.is_multi_label)
 
-    job.model_path = model.fit(contents=contents, y_true=y_true)
+        job.model_path = model.fit(contents=contents, y_true=y_true)
 
-    # get train set report
-    eval_dataset(model=model, dataset_type=Document.TypeChoices.TRAIN, dataset=train_set, job=job)
+        # get train set report
+        eval_dataset(model=model, dataset_type=Document.TypeChoices.TRAIN, dataset=train_set, job=job)
 
-    # get dev set report
-    eval_dataset(model=model, dataset_type=Document.TypeChoices.DEV, dataset=job.jobRef.get_dev_set(), job=job)
+        # get dev set report
+        eval_dataset(model=model, dataset_type=Document.TypeChoices.DEV, dataset=job.jobRef.get_dev_set(), job=job)
 
-    # get test set report
-    eval_dataset(model=model, dataset_type=Document.TypeChoices.TEST, dataset=job.jobRef.get_test_set(), job=job)
+        # get test set report
+        eval_dataset(model=model, dataset_type=Document.TypeChoices.TEST, dataset=job.jobRef.get_test_set(), job=job)
 
-    job.job_train_status = ModelingJob.JobStatus.DONE
-    job.save()
-    print('training done')
+        job.job_train_status = ModelingJob.JobStatus.DONE
+        job.save()
+        print('training done')
+    except Exception as e:
+        print(e)
+        job.job_train_status = ModelingJob.JobStatus.ERROR
+        job.save()
+        raise ValueError("Task Failed")
 
 
 def testing_model_via_ext_data_task(uploaded_file, job: ModelingJob, remove_old_data=True):
@@ -57,13 +63,13 @@ def testing_model_via_ext_data_task(uploaded_file, job: ModelingJob, remove_old_
         # get ext test set report
         eval_dataset(model=model, dataset_type=Document.TypeChoices.EXT_TEST, dataset=job.jobRef.get_ext_test_set(),
                      job=job)
-        job.job_test_status = ModelingJob.JobStatus.DONE
+        job.ext_test_status = ModelingJob.JobStatus.DONE
         print('test done')
     except Exception as e:
         print(e)
-        job.job_test_status = ModelingJob.JobStatus.ERROR
-    finally:
+        job.ext_test_status = ModelingJob.JobStatus.ERROR
         job.save()
+        raise ValueError("Task Failed")
 
 
 def get_feature_and_label(documents):

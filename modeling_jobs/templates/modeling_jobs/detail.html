@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load report_extras %}
-{% block title %}{{ job.name }} | 族群貼標任務{% endblock %}
-{% block nav_title %}族群貼標任務{% endblock %}
+{% block title %}{{ job.name }} | 模型訓練任務{% endblock %}
+{% block nav_title %}模型訓練任務{% endblock %}
 {% block page_title %}{{ job.name }}{% endblock %}
 {% block page_functions %}
     {% if user.is_staff %}
@@ -24,7 +24,13 @@
     <div class="mb-2">
     </div>
 {% endblock %}
-{% block page_description %}<p class="mb-4">{{ job.description }}</p>{% endblock %}
+{% block page_description %}
+    <small class="text-muted">
+        <strong>由 {{ job.created_by.username }}</strong>
+        於 {{ job.created_at }} 建立。
+    </small>
+    <p class="mb-4">{{ job.description }}</p>
+{% endblock %}
 {% block content %}
     <!-- Content Row -->
     <div class="row">
