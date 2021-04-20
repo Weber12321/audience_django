@@ -80,7 +80,7 @@
                 <div class="card mb-4">
                     <div class="card-header">訓練集</div>
                     <div class="card-body">
-                        <div>準確率：{{ job.get_latest_train_report.accuracy }}</div>
+                        <div>準確率：{{ job.get_latest_train_report.accuracy|floatformat:2 }}</div>
                         <table class="table">
                             <thead>
                             <tr>
@@ -121,7 +121,7 @@
                 <div class="card mb-4">
                     <div class="card-header">驗證集</div>
                     <div class="card-body">
-                        <div>準確率：{{ job.get_latest_dev_report.accuracy }}</div>
+                        <div>準確率：{{ job.get_latest_dev_report.accuracy|floatformat:2 }}</div>
                         <table class="table">
                             <thead>
                             <tr>
@@ -161,7 +161,7 @@
                 <div class="card mb-4">
                     <div class="card-header">測試集</div>
                     <div class="card-body">
-                        <div>準確率：{{ job.get_latest_test_report.accuracy }}</div>
+                        <div>準確率：{{ job.get_latest_test_report.accuracy|floatformat:2 }}</div>
                         <table class="table">
                             <thead>
                             <tr>
@@ -174,6 +174,47 @@
                             </thead>
                             <tbody>
                             {% for label, cm_row in job.get_latest_test_report.report.items %}
+                                <tr>
+                                    <td>
+                                        {{ label }}
+                                    </td>
+                                    <td>
+                                        {{ cm_row|get_item:"precision"|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        {{ cm_row|get_item:"recall"|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        {{ cm_row|get_item:"f1-score"|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        {{ cm_row|get_item:"support"|floatformat:0 }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if job.get_latest_ext_test_report %}
+                <div class="card mb-4">
+                    <div class="card-header">額外測試集</div>
+                    <div class="card-body">
+                        <div>準確率：{{ job.get_latest_ext_test_report.accuracy|floatformat:2 }}</div>
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th>precision</th>
+                                <th>recall</th>
+                                <th>f1-score</th>
+                                <th>support</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for label, cm_row in job.get_latest_ext_test_report.report.items %}
                                 <tr>
                                     <td>
                                         {{ label }}

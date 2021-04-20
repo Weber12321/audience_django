@@ -7,7 +7,7 @@ from django.db import models
 from django.urls import reverse
 
 from audience_toolkits import settings
-from labeling_jobs.models import LabelingJob, Document
+from labeling_jobs.models import LabelingJob, Document, Label
 
 
 class ModelingJob(models.Model):
@@ -64,6 +64,13 @@ class ModelingJob(models.Model):
             report.report.pop('accuracy')
         return report
 
+    def get_latest_ext_test_report(self):
+        report = self.report_set.filter(dataset_type=Document.TypeChoices.EXT_TEST).last()
+        if report:
+            report.report = json.loads(report.report)
+            report.report.pop('accuracy')
+        return report
+
 
 class Report(models.Model):
     dataset_type = models.CharField(max_length=10, choices=Document.TypeChoices.choices, default=None, null=True)
@@ -74,3 +81,21 @@ class Report(models.Model):
 
     def __str__(self):
         return self.report
+
+    class Meta:
+        verbose_name = "驗證報告"
+        verbose_name_plural = "驗證報告列表"
+
+
+class EvalPrediction(models.Model):
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, verbose_name="驗證報告")
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, verbose_name="預測文件")
+    prediction_labels = models.ManyToManyField(Label, related_name="prediction_label",
+                                               verbose_name="預測標籤")
+
+    def __str__(self):
+        return self.report
+
+    class Meta:
+        verbose_name = "預測結果"
+        verbose_name_plural = "預測結果列表"

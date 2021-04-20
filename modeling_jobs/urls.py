@@ -16,8 +16,7 @@ urlpatterns = [
     path('deleteTask', views.delete_task, name='api-doc-delete'),
     path('insert_csv', views.insert_csv, name='api-doc-insert_csv'),
     path('<int:pk>/training', views.training_model, name='training-model'),
-    path('<int:pk>/testing', views.testing_model, name='testing-model'),
-    path('testing_model', views.testing_model_via_ext_data, name='api-doc-testing-model'),
+    path('<int:pk>/ext_test', views.testing_model_via_ext_data, name='api-ext-testing-model'),
     path('<int:modeling_job_id>/result_page', views.result_page, name='api-doc-result-page'),
 
     path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),

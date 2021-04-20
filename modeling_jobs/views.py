@@ -9,11 +9,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView
 from django_q.tasks import AsyncTask
 
-from core.helpers.data_helpers import get_test_data, parse_report, insert_csv_to_db
+from core.helpers.data_helpers import parse_report, insert_csv_to_db
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm
 from .models import ModelingJob
-from .tasks import train_model_task, test_model_task
+from .tasks import train_model_task, testing_model_via_ext_data_task
 import json
 
 
@@ -143,29 +143,15 @@ def training_model(request, pk):
 
 
 @csrf_exempt
-def testing_model(request, pk):
-    job = ModelingJob.objects.get(pk=pk)
-    a = AsyncTask(test_model_task, job=job, group='testing_model')
-    a.run()
-    return HttpResponseRedirect(reverse('modeling_jobs:index'))
-
-
-@csrf_exempt
-def testing_model_via_ext_data(request):
-    file = request.FILES['file']
-    modeling_job_id = request.POST['job_id']
-    contents, labels = get_test_data(file)
-    job_train_status = ModelingJob.objects.get(pk=modeling_job_id).job_train_status
+def testing_model_via_ext_data(request, pk):
+    uploaded_file = request.FILES['ext_test_file']
+    job_train_status = ModelingJob.objects.get(pk=pk).job_train_status
     # python manage.py qcluster
     if job_train_status != 'done':
         return HttpResponse('請先訓練模型')
-
-    elif contents == [] and labels == []:
-        return HttpResponse('欄位不符合')
-
     else:
-        job = ModelingJob.objects.get(pk=modeling_job_id)
-        a = AsyncTask(test_model_task, contents=contents, y_true=labels, job=job, group='test_model')
+        job = ModelingJob.objects.get(pk=pk)
+        a = AsyncTask(testing_model_via_ext_data_task, uploaded_file=uploaded_file, job=job, group='ext_test_model')
         a.run()
         return HttpResponse("Done")
 
