@@ -45,30 +45,18 @@ class ModelingJob(models.Model):
 
     def get_latest_train_report(self):
         report = self.report_set.filter(dataset_type=Document.TypeChoices.TRAIN).last()
-        if report:
-            report.report = json.loads(report.report)
-            report.report.pop('accuracy')
         return report
 
     def get_latest_dev_report(self):
         report = self.report_set.filter(dataset_type=Document.TypeChoices.DEV).last()
-        if report:
-            report.report = json.loads(report.report)
-            report.report.pop('accuracy')
         return report
 
     def get_latest_test_report(self):
         report = self.report_set.filter(dataset_type=Document.TypeChoices.TEST).last()
-        if report:
-            report.report = json.loads(report.report)
-            report.report.pop('accuracy')
         return report
 
     def get_latest_ext_test_report(self):
         report = self.report_set.filter(dataset_type=Document.TypeChoices.EXT_TEST).last()
-        if report:
-            report.report = json.loads(report.report)
-            report.report.pop('accuracy')
         return report
 
 
@@ -80,22 +68,39 @@ class Report(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
 
     def __str__(self):
-        return self.report
+        return f"{self.dataset_type}, acc={self.accuracy}, created at {self.created_at}"
 
     class Meta:
         verbose_name = "驗證報告"
         verbose_name_plural = "驗證報告列表"
 
+    def get_report(self):
+        if self.report:
+            report = json.loads(self.report)
+            report.pop('accuracy')
+            return report
+        return None
+
 
 class EvalPrediction(models.Model):
     report = models.ForeignKey(Report, on_delete=models.CASCADE, verbose_name="驗證報告")
     document = models.ForeignKey(Document, on_delete=models.CASCADE, verbose_name="預測文件")
-    prediction_labels = models.ManyToManyField(Label, related_name="prediction_label",
-                                               verbose_name="預測標籤")
+    prediction_labels = models.ManyToManyField(Label, verbose_name="預測標籤")
+
+    def get_prediction(self):
+        return self.prediction_labels.all()
+
+    def get_ground_truth(self):
+        return self.document.labels.all()
+
+    def is_right_answer(self):
+        prediction = set([label.name for label in self.get_prediction()])
+        ground_truth = set([label.name for label in self.get_ground_truth()])
+        return prediction == ground_truth
 
     def __str__(self):
-        return self.report
+        return f"doc_id={self.document.id}, prediction={self.prediction_labels.all()}, ground_truth={self.document.labels.all()}"
 
     class Meta:
-        verbose_name = "預測結果"
-        verbose_name_plural = "預測結果列表"
+        verbose_name = "驗證標記"
+        verbose_name_plural = "驗證標記列表"

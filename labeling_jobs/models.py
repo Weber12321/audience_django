@@ -112,7 +112,7 @@ class Document(models.Model):
     s_area_id = models.CharField(max_length=100, verbose_name="頻道id", blank=True)
     content = models.TextField(verbose_name="內文", blank=True)
     post_time = models.DateTimeField(verbose_name="發布時間", blank=True, null=True)
-    labels = models.ManyToManyField(Label, verbose_name="被標記標籤", blank=True)
+    labels = models.ManyToManyField(Label, verbose_name="正確標籤", blank=True)
     hash_num = models.CharField(max_length=50, verbose_name='雜湊值', blank=True)
     document_type = models.CharField(max_length=10, choices=TypeChoices.choices, default=None, null=True)
 
@@ -147,3 +147,18 @@ class UploadFileJob(models.Model):
 
     def __str__(self):
         return self.file.name
+
+
+class HumanLabeling(models.Model):
+    labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="標記任務")
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, verbose_name="文件")
+    human_labels = models.ManyToManyField(Label, verbose_name="標記標籤")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return f"doc_id={self.document.id}, human={self.human_labels.all()}, ground_truth={self.document.labels.all()}"
+
+    class Meta:
+        verbose_name = "人員標記"
+        verbose_name_plural = "人員標記列表"

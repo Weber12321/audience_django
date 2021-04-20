@@ -7,12 +7,13 @@ from django.urls import reverse_lazy, reverse
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView
+from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
 
 from core.helpers.data_helpers import parse_report, insert_csv_to_db
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm
-from .models import ModelingJob
+from .models import ModelingJob, Report
 from .tasks import train_model_task, testing_model_via_ext_data_task
 import json
 
@@ -66,6 +67,26 @@ class JobDeleteView(LoginRequiredMixin, generic.DeleteView):
             return HttpResponseRedirect(self.success_url)
         else:
             return super(JobDeleteView, self).post(request, *args, **kwargs)
+
+
+class ReportDetail(SingleObjectMixin, generic.ListView):
+    paginate_by = 10
+    model = Report
+
+    # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
+    template_name = 'reports/report_detail.html'
+
+    def get(self, request, *args, **kwargs):
+        self.object: Report = self.get_object(queryset=Report.objects.all())
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report'] = self.object
+        return context
+
+    def get_queryset(self):
+        return self.object.evalprediction_set.order_by('pk')
 
 
 class DocDeleteView(LoginRequiredMixin, DetailView):

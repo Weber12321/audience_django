@@ -108,14 +108,18 @@ def eval_dataset(model, job: ModelingJob, dataset, dataset_type: Document.TypeCh
         if isinstance(pred, QuerySet):
             for _pred in pred:
                 pr.prediction_labels.add(_pred)
-        if isinstance(pred, List):
+        elif isinstance(pred, List):
             for _pred in pred:
                 if isinstance(_pred, str):
-                    pr.prediction_labels.add(labels.get(_pred))
+                    pr_label = labels.get(pred)
+                    pr.prediction_labels.add(labels.get(pr_label))
                 if isinstance(_pred, Label):
                     pr.prediction_labels.add(_pred)
-        if isinstance(pred, str):
+        elif isinstance(pred, str):
+            pr_label = labels.get(pred)
+            pr.prediction_labels.add(pr_label)
+        elif isinstance(pred, Label):
             pr.prediction_labels.add(labels.get(pred))
-        if isinstance(pred, Label):
-            pr.prediction_labels.add(labels.get(pred))
-
+        else:
+            raise ValueError(f"Unknown prediction data format {type(pred)}")
+        pr.save()

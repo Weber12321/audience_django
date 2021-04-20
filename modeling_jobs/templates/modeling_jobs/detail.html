@@ -92,7 +92,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            {% for label, cm_row in job.get_latest_train_report.report.items %}
+                            {% for label, cm_row in job.get_latest_train_report.get_report.items %}
                                 <tr>
                                     <td>
                                         {{ label }}
@@ -113,6 +113,9 @@
                             {% endfor %}
                             </tbody>
                         </table>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'modeling_jobs:report-detail' job.id job.get_latest_train_report.id %}">檢視預測細節</a>
                     </div>
                 </div>
             {% endif %}
@@ -133,7 +136,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            {% for label, cm_row in job.get_latest_dev_report.report.items %}
+                            {% for label, cm_row in job.get_latest_dev_report.get_report.items %}
                                 <tr>
                                     <td>
                                         {{ label }}
@@ -155,6 +158,9 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="card-footer">
+                        <a href="{% url 'modeling_jobs:report-detail' job.id job.get_latest_dev_report.id %}">檢視預測細節</a>
+                    </div>
                 </div>
             {% endif %}
             {% if job.get_latest_test_report %}
@@ -173,7 +179,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            {% for label, cm_row in job.get_latest_test_report.report.items %}
+                            {% for label, cm_row in job.get_latest_test_report.get_report.items %}
                                 <tr>
                                     <td>
                                         {{ label }}
@@ -194,6 +200,9 @@
                             {% endfor %}
                             </tbody>
                         </table>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'modeling_jobs:report-detail' job.id job.get_latest_test_report.id %}">檢視預測細節</a>
                     </div>
                 </div>
             {% endif %}
@@ -214,7 +223,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            {% for label, cm_row in job.get_latest_ext_test_report.report.items %}
+                            {% for label, cm_row in job.get_latest_ext_test_report.get_report.items %}
                                 <tr>
                                     <td>
                                         {{ label }}
@@ -235,6 +244,9 @@
                             {% endfor %}
                             </tbody>
                         </table>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'modeling_jobs:report-detail' job.id job.get_latest_ext_test_report.id %}">檢視預測細節</a>
                     </div>
                 </div>
             {% endif %}

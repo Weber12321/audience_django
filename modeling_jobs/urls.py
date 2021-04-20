@@ -20,4 +20,6 @@ urlpatterns = [
     path('<int:modeling_job_id>/result_page', views.result_page, name='api-doc-result-page'),
 
     path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),
+    # report curd
+    path('<int:job_id>/report/<int:pk>', views.ReportDetail.as_view(), name="report-detail"),
 ]
