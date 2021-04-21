@@ -36,7 +36,7 @@ class LabelingJob(models.Model):
     show_target_amount.short_description = '標記目標數量'
 
     def show_document_amount(self):
-        return len(self.document_set.all())
+        return self.document_set.count()
 
     show_document_amount.boolean = False
     show_document_amount.short_description = '文章數量'

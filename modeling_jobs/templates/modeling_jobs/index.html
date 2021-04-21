@@ -132,31 +132,6 @@
             $.post(train_url)
         }
 
-
-        {#function test_model(job_id) {#}
-        {#    let form = $('#test-ext-data-' +job_id).find('form')#}
-        {#    console.log(form)#}
-        {#    var aj = $.ajax({#}
-        {#        url: '{% url "modeling_jobs:api-doc-testing-model" %}',#}
-        {#        processData: false,#}
-        {#        contentType: false,#}
-        {#        catch: false,#}
-        {#        data: form.serialize(),#}
-        {#        type: 'post',#}
-        {#        success: function (result) {#}
-        {#            if (result == '欄位不符合') {#}
-        {#                Swal.fire("Error", '欄位不符合', "error");#}
-        {#            } else if (result == '請先訓練模型') {#}
-        {#                Swal.fire("Error", '請先訓練模型', "error");#}
-        {#            } else {#}
-        {#                Swal.fire("訓練中.....", 'success', "success").then(() => {#}
-        {#                    location.reload()#}
-        {#                })#}
-        {#            }#}
-        {#        }#}
-        {#    })#}
-        {#}#}
-
             function showResult(modeling_job_id) {
                 var aj = $.ajax({
                     url: 'show_result',
