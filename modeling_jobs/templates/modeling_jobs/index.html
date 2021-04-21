@@ -1,462 +1,244 @@
 {% extends 'base.html' %}
+{% load report_extras %}
 {% block nav_title %} 模型訓練任務 {% endblock %}
 {% block page_title %}
-Model List
+    模型訓練任務列表
+{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <a class="ml-auto" href="{% url 'modeling_jobs:job-create' %}">建立新任務</a>
+        </div>
+    {% endif %}
 {% endblock %}
 {% block content %}
-<div style="text-align: right;">
-    <button class="btn btn-primary btn-rounded btn-sm my-0" data-toggle="modal" data-target="#createBtn">建立任務</button>
-    <button class="btn btn-primary btn-rounded btn-sm my-0" data-toggle="modal" data-target="#insertCSV">匯入檔案</button>
-</div>
-<script>
-    job_id = 0;
-    model_type = '';
-    multi_label = 'false';
-    function createJob(){
-        model_name = document.getElementById("model_name").value;
-        model_type = document.getElementById("model_type").value;
-        description = document.getElementById("description").value;
-        is_multi_label = document.getElementById("is_multi_label").value;
-        ref_job = document.getElementById("ref_job").value;
 
-        var aj = $.ajax({
-            url : 'createTask',
-            data :
-            {
-                model_name : model_name,
-                model_type : model_type,
-                description : description,
-                is_multi_label : is_multi_label,
-                ref_job , ref_job
-            },
-            type : 'post',
-            success : function (result)
-            {
-                Swal.fire("Done!", result, "success").then(() =>
-                {
-                    location.reload()
-                })
-            }
-        })
-    }
-
-    function getPreviousInfoToModal(id,model_name,model_type_id,description,is_multi_label,jobRef_id){
-        job_id = id;
-        document.getElementById("modify_model_name").value = model_name;
-        document.getElementById("modify_model_type").value = model_type_id;
-        document.getElementById("modify_description").value = description;
-        document.getElementById("modify_is_multi_label").value = is_multi_label;
-        document.getElementById("modify_ref_job").value = jobRef_id;
-    }
-
-    function modifyJob(){
-        model_name = document.getElementById("modify_model_name").value;
-        model_type = document.getElementById("modify_model_type").value;
-        description = document.getElementById("modify_description").value;
-        is_multi_label = document.getElementById("modify_is_multi_label").value;
-        ref_job = document.getElementById("modify_ref_job").value;
-
-        var aj = $.ajax({
-            url : `updateTask`,
-            data :
-            {
-                id : job_id,
-                model_name : model_name,
-                model_type : model_type,
-                description : description,
-                is_multi_label : is_multi_label,
-                ref_job : ref_job,
-            },
-            type : 'post',
-            success : function (result)
-            {
-                console.log(123);
-                Swal.fire("檔案已更新", result, "success").then(() =>
-                {
-                    location.reload()
-                })
-            }
-        })
-    }
-
-    function deleteJob(id){
-        job_id = id;
-        var aj = $.ajax({
-            url : `deleteTask`,
-            data :
-            {
-                id : job_id
-            },
-            type : 'post',
-            success : function (result)
-            {
-                Swal.fire("檔案已刪除", result, "success").then(() =>
-                {
-                    location.reload()
-                })
-            }
-        })
-    }
-
-    function insertCSVData(){
-        file = $('#csv_file')[0].files[0];
-        if(file){
-            var formdata = new FormData();
-            formdata.append('file', file);
-            formdata.append('job_id', document.getElementById("csv_file_job").value);
-            var aj = $.ajax({
-                url : 'insert_csv',
-                processData : false,
-                contentType : false,
-                catch : false,
-                data : formdata,
-                type : 'post',
-                success : function (result)
-                {
-                    if(result == 'True'){
-                        Swal.fire("已匯入資料", 'success', "success").then(() =>
-                        {
-                            location.reload()
-                        })
-                    }
-                    else{
-                        Swal.fire("Error", 'Col Not Match', "error");
-                    }
-                }
-            })
-        }
-        else{
-            Swal.fire("Error", '未選取', "error")
-        }
-    }
-
-    function trainModel(jobRef_id,model,is_multi_label,modeling_job_id){
-        Swal.fire({
-            title:"確定要訓練此模組?",
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes!'
-        }).then((result) =>{
-            if(result.value){
-                var aj = $.ajax
-                ({
-                    url : 'training_model',
-                    data : {
-                        jobRef_id : jobRef_id,
-                        model : model,
-                        is_multi_label:is_multi_label,
-                        modeling_job_id : modeling_job_id
-                    },
-                    type : 'post',
-                    success : function (result)
-                    {
-                        Swal.fire({
-                            title: '訓練完成',
-                            icon: 'success'
-                        }).then(() => {
-                            location.reload()
-                        })
-                    }
-                })
-            }
-        })
-    }
-
-    function getModelJobInfo(id,model,is_multi_label){
-        job_id = id;
-        model_type = model;
-        multi_label = is_multi_label;
-    }
-
-    function testModel(){
-        file = $('#test_csv_file')[0].files[0];
-        if(file){
-            var formdata = new FormData();
-            formdata.append('file', file);
-            formdata.append('job_id',job_id);
-            formdata.append('model_type',model_type);
-            formdata.append('is_multi_label',multi_label);
-            var aj = $.ajax({
-                url : 'testing_model',
-                processData : false,
-                contentType : false,
-                catch : false,
-                data : formdata,
-                type : 'post',
-                success : function (result)
-                {
-                    if(result == '欄位不符'){
-                        Swal.fire("Error", '欄位不符合', "error");
-                    }
-                    if(result == '請先訓練模型'){
-                        Swal.fire("Error", '請先訓練模型', "error");
-                    }
-                    else{
-                        Swal.fire("訓練完成", 'success', "success").then(() =>
-                        {
-                            location.reload()
-                        })
-                    }
-                }
-            })
-        }
-        else{
-            Swal.fire("Error", '未選取', "error")
-        }
-    }
-
-    function showResult(modeling_job_id){
-        var aj = $.ajax({
-            url : 'show_result',
-            data : {
-                modeling_job_id : modeling_job_id,
-            },
-            type : 'post',
-            success : function (result)
-            {
-                console.log("Done")
-            }
-        })
-    }
-</script>
-
-<!--create modal-->
-<div class="modal fade" id="createBtn" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Edit</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="form-group" id="title_div">
-                        <label for="model_name" class="col-form-label">模型名稱</label>
-                        <input class="form-control" id="model_name">
+    <!--test model CSV Modal-->
+    {% for job in modeling_jobs %}
+        <div class="modal fade" id="test-ext-data-{{ job.id }}" tabindex="-1" role="dialog"
+             aria-labelledby="exampleModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">使用額外測試集</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-                    <div class="form-group" id="content_div">
-                        <label for="model_type" class="col-form-label">模型類型</label>
-                        <select class="form-control" id="model_type" name="model" required>
-                            {% for model in ml_model_list %}
-                            <option value={{ model.id }}>{{ model }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="modal-body">
+                        <form action="{% url 'modeling_jobs:api-ext-testing-model' job.id %}" method="post"
+                              enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label class="col-form-label" for="test_csv_file">輸入檔案(.csv) : </label>
+                                <input type="file" id="test_csv_file" name="ext_test_file" accept=".csv"
+                                       class="csv_file" required>
+                            </div>
+                            <label hidden>
+                                <input type="text" hidden name="job_id" value="{{ job.id }}">
+                            </label>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">
+                                    上傳
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="form-group" id="author_div">
-                        <label for="description" class="col-form-label">模型敘述</label>
-                        <input class="form-control" id="description">
-                    </div>
-                    <div class="form-group" id="s_area_id_div">
-                        <label for="is_multi_label" class="col-form-label">是否為多標籤</label>
-                        <select class="form-control" id="is_multi_label" name="model" required>
-                            <option value="True">True</option>
-                            <option value="False">False</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="ref_job_div">
-                        <label for="ref_job" class="col-form-label">reference job</label>
-                        <select class="form-control" id="ref_job" name="model" required>
-                            {% for job in job_list %}
-                            <option value="{{job.id}}">{{job}}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="createJob()">Save changes</button>
+                </div>
             </div>
         </div>
-    </div>
-</div>
+    {% endfor %}
 
-<!--modify modal-->
-<div class="modal fade" id="modifyModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">編輯</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="form-group" id="modify_model_name_div">
-                        <label for="modify_model_name" class="col-form-label">模型名稱</label>
-                        <input class="form-control" id="modify_model_name">
-                    </div>
-                    <div class="form-group" id="modify_model_type_div">
-                        <label for="modify_model_type" class="col-form-label">模型類型</label>
-                        <select class="form-control" id="modify_model_type" name="model" required disabled>
-                            {% for model in ml_model_list %}
-                            <option value={{ model.id }}>{{ model }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group" id="modify_description_div">
-                        <label for="modify_description" class="col-form-label">模型敘述</label>
-                        <input class="form-control" id="modify_description">
-                    </div>
-                    <div class="form-group" id="modify_is_multi_label_div">
-                        <label for="modify_is_multi_label" class="col-form-label">是否為多標籤</label>
-                        <select class="form-control" id="modify_is_multi_label" name="model" required>
-                            <option value="True">True</option>
-                            <option value="False">False</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="modify_ref_job_div">
-                        <label for="modify_ref_job" class="col-form-label">reference job</label>
-                        <select class="form-control" id="modify_ref_job" name="model" required>
-                            {% for job in job_list %}
-                            <option value="{{job.id}}">{{job}}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="modifyJob()">Save changes</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!--insert CSV Modal-->
-<div class="modal fade" id="insertCSV" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">編輯</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="form-group">
-                        <label class="col-form-label" for="csv_file">輸入檔案(.csv) : </label>
-                        <input type="file" id="csv_file" name="convert_file_format" accept=".csv" multiple
-                               class="csv_file" required>
-                    </div>
-                    <label class="col-form-label" for="csv_file_job">Reference Job : </label>
-                    <select class="form-control" id="csv_file_job" name="model" required>
-                        {% for job in job_list %}
-                        <option value="{{job.id}}">{{job}}</option>
-                        {% endfor %}
-                    </select>
-                    <div class="form-group">
 
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="insertCSVData()">Save changes</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!--test model CSV Modal-->
-<div class="modal fade" id="testModelCSV" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">編輯</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="form-group">
-                        <label class="col-form-label" for="test_csv_file">輸入檔案(.csv) : </label>
-                        <input type="file" id="test_csv_file" name="convert_file_format" accept=".csv" multiple
-                               class="csv_file" required>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="testModel()">Save changes</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!--main-->
-<div class="container">
+    <!--main-->
     <div class="row">
-        <div class="accordion" id="accordionExample" style="width: 100%">
+        <div class="col-12">
             <table class="table table-striped">
                 <thead>
                 <tr>
+                    <th>id</th>
                     <th scope="col">模型名稱</th>
                     <th scope="col">模型類型</th>
                     <th scope="col">模型敘述</th>
                     <th scope="col">是否為多標籤</th>
-                    <th scope="col">reference job id</th>
-                    <th scope="col">編輯</th>
+                    <th scope="col">使用資料</th>
+                    <th scope="col">建立時間</th>
+                    <th scope="col">建立者</th>
                     <th scope="col">訓練模型</th>
-                    <th scope="col">測試模型</th>
-                    <th scope="col">檢視結果</th>
+                    <th>訓練狀態</th>
+                    <th scope="col">編輯</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for job in modeling_jobs %}
-                <tr>
-                    <td>{{job.name}}</td>
-                    <td>{{job.model.name}}</td>
-                    <td>{{job.description}}</td>
-                    <td>{{job.is_multi_label}}</td>
-                    <td>{{job.jobRef_id}}</td>
-                    <td>
-                        <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle btn-sm"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            編輯
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                            <a class="dropdown-item modify_btn" data-toggle="modal"
-                               data-target="#modifyModal"
-                               onclick="getPreviousInfoToModal('{{job.id}}','{{job.name}}','{{job.model.id}}','{{job.description}}','{{job.is_multi_label}}','{{job.jobRef_id}}')">
-                                修改模型
-                            </a>
-                            <a class="dropdown-item delete_btn" onclick="deleteJob('{{job.id}}')">刪除</a>
-                        </div>
-                    </td>
-                    <td>
-                        <button class="btn btn-info train_btn btn-sm"
-                                onclick="trainModel('{{job.jobRef_id}}','{{job.model}}','{{job.is_multi_label}}','{{job.id}}')">
-                            執行訓練
-                        </button>
-                    </td>
-                    <td>
-                        <button type="button" class="btn btn-secondary test_btn btn-sm" data-toggle="modal" data-target="#testModelCSV" onclick="getModelJobInfo('{{job.id}}','{{job.model}}','{{job.is_multi_label}}')">
-                            測試
-                        </button>
-                    </td>
-                    {% if job.status %}
-                    <td>
-                        <a type="button" href="{{prefix}}/modeling_jobs/{{job.id}}/result_page">檢視混淆矩陣</a>
-<!--                        onclick="showResult('{{job.id}}')"-->
-                    </td>
-                    {% endif %}
-                </tr>
+                    <tr>
+                        <td>{{ job.id }}</td>
+                        <td><a href="{% url 'modeling_jobs:job-detail' job.id %}">{{ job.name }}</a></td>
+                        <td>{{ job.get_model_type_display }}</td>
+                        <td>{{ job.description }}</td>
+                        <td>{{ job.is_multi_label }}</td>
+                        <td><a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a></td>
+                        <td>{{ job.created_at|date:"SHORT_DATE_FORMAT" }}</td>
+                        <td>{{ job.created_by }}</td>
+                        <td>
+                            <button id="train-btn-{{ job.id }}" class="btn btn-info btn-sm"
+                                    onclick="train_model({{ job.id }},'{% url 'modeling_jobs:training-model' job.id %}')">
+                                開始訓練
+                            </button>
+                        </td>
+                        <td>
+                            <span id="state-{{ job.id }}"></span>
+                        </td>
+
+
+                        <td>
+                            <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle btn-sm"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                動作
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                <button id="test-btn-{{ job.id }}" class="dropdown-item modify_btn" hidden
+                                        data-toggle="modal" data-target="#test-ext-data-{{ job.id }}">
+                                    上傳額外測試資料
+                                </button>
+                                <a class="dropdown-item modify_btn"
+                                   href="{% url 'modeling_jobs:job-update' job.id %}">
+                                    修改模型
+                                </a>
+                                <a class="dropdown-item delete_btn"
+                                   href="{% url 'modeling_jobs:job-delete' job.id %}">刪除</a>
+                            </div>
+                        </td>
+                    </tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-</div>
+
+    <script>
+
+
+    </script>
+{% endblock %}
+
+{% block custom_script %}
+    <script>
+
+        function train_model(job_id, train_url) {
+            set_row_processing_display(job_id)
+            $.post(train_url)
+        }
+
+
+        {#function test_model(job_id) {#}
+        {#    let form = $('#test-ext-data-' +job_id).find('form')#}
+        {#    console.log(form)#}
+        {#    var aj = $.ajax({#}
+        {#        url: '{% url "modeling_jobs:api-doc-testing-model" %}',#}
+        {#        processData: false,#}
+        {#        contentType: false,#}
+        {#        catch: false,#}
+        {#        data: form.serialize(),#}
+        {#        type: 'post',#}
+        {#        success: function (result) {#}
+        {#            if (result == '欄位不符合') {#}
+        {#                Swal.fire("Error", '欄位不符合', "error");#}
+        {#            } else if (result == '請先訓練模型') {#}
+        {#                Swal.fire("Error", '請先訓練模型', "error");#}
+        {#            } else {#}
+        {#                Swal.fire("訓練中.....", 'success', "success").then(() => {#}
+        {#                    location.reload()#}
+        {#                })#}
+        {#            }#}
+        {#        }#}
+        {#    })#}
+        {#}#}
+
+            function showResult(modeling_job_id) {
+                var aj = $.ajax({
+                    url: 'show_result',
+                    data: {
+                        modeling_job_id: modeling_job_id,
+                    },
+                    type: 'post',
+                    success: function (result) {
+                        console.log("Done")
+                    }
+                })
+            }
+
+            function set_row_done_display(job_id) {
+                $('#state-' + job_id).text("完成")
+                $('#train-btn-' + job_id)
+                    .text("重新訓練")
+                    .removeClass("disabled")
+                $('#test-btn-' + job_id).attr("hidden", false)
+            }
+
+            function set_row_processing_display(job_id) {
+                $('#state-' + job_id).text("處理中")
+                $('#train-btn-' + job_id)
+                    .text("訓練中")
+                    .addClass("disabled")
+                $('#test-btn-' + job_id).attr("hidden", true)
+            }
+
+            function set_row_wait_display(job_id) {
+                $('#state-' + job_id).text("等待中")
+                $('#train-btn-' + job_id)
+                    .text("開始訓練")
+                    .removeClass("disabled")
+                $('#test-btn-' + job_id).attr("hidden", true)
+            }
+
+            function set_row_error_display(job_id) {
+                $('#state-' + job_id).text("錯誤")
+                $('#train-btn-' + job_id).text("重試")
+                    .removeClass("disabled")
+                $('#test-btn-' + job_id).attr("hidden", true)
+            }
+
+            function get_progress(url) {
+                return $.get({
+                    url: url
+                })
+            }
+
+            function update_progress(job_id, url) {
+                {#var state = "wait"#}
+                get_progress(url).done(function (result) {
+                    let timeout = 10000
+                    console.log(result)
+                    let state = result.state
+                    let elem_id = '#state-' + job_id
+                    console.log(elem_id)
+                    $(elem_id).text(state)
+                    switch (state) {
+                        case 'done':
+                            set_row_done_display(job_id)
+                            break
+                        case 'wait':
+                            set_row_wait_display(job_id)
+                            break
+                        case 'processing':
+                            timeout = 1000
+                            set_row_processing_display(job_id)
+                            break
+                        default:
+                            console.log(state)
+                            set_row_error_display(job_id)
+                    }
+                    setTimeout(function () {
+                        {#console.log(url)#}
+                        update_progress(job_id, url)
+                    }, timeout);
+                });
+            }
+            {% for job in modeling_jobs %}
+                update_progress({{ job.id }}, "{% url 'modeling_jobs:api-job-progress' job.id %}")
+            {% endfor %}
+    </script>
 {% endblock %}

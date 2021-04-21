@@ -1,16 +1,21 @@
+from collections import namedtuple
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
+from django.shortcuts import render
+from django.urls import reverse_lazy, reverse
+from django.views import generic
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import ListView, DetailView
+from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
 
+from core.helpers.data_helpers import parse_report, insert_csv_to_db
 from labeling_jobs.models import LabelingJob, Document
-from .models import ModelingJob, MLModel
-from django.views.generic import ListView, DetailView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from core.helpers.data_helpers import DataHelper
-from core.helpers.model_helpers import RuleModel, KeywordModel, ProbModel, RFModel, SvmModel, XgboostModel
-from django.template.response import TemplateResponse
-from django.shortcuts import render, redirect
-from collections import namedtuple
+from .forms import ModelingJobForm
+from .models import ModelingJob, Report
+from .tasks import train_model_task, testing_model_via_ext_data_task
+import json
 
 
 class IndexView(LoginRequiredMixin, ListView):
@@ -20,14 +25,68 @@ class IndexView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['ml_model_list'] = MLModel.objects.all()
+        context['ml_model_list'] = [choice[0] for choice in ModelingJob.model_choices]
         context['job_list'] = LabelingJob.objects.all()
         return context
 
 
-class ModelInfoView(LoginRequiredMixin, DetailView):
-    model = LabelingJob
-    template_name = "modeling_jobs/model_info.html"
+class JobDetailView(LoginRequiredMixin, generic.DetailView):
+    model = ModelingJob
+    context_object_name = 'job'
+    # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
+    template_name = 'modeling_jobs/detail.html'
+
+
+class JobCreateView(LoginRequiredMixin, generic.CreateView):
+    form_class = ModelingJobForm
+    template_name = 'modeling_jobs/add_form.html'
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+
+class JobUpdateView(LoginRequiredMixin, generic.UpdateView):
+    model = ModelingJob
+    form_class = ModelingJobForm
+    template_name = 'modeling_jobs/update_form.html'
+
+    def get_success_url(self):
+        pk = self.kwargs.get("pk")
+        return reverse('modeling_jobs:job-detail', kwargs={"pk": pk})
+
+
+class JobDeleteView(LoginRequiredMixin, generic.DeleteView):
+    model = ModelingJob
+    success_url = reverse_lazy('modeling_jobs:index')
+    template_name = 'modeling_jobs/confirm_delete_form.html'
+
+    def post(self, request, *args, **kwargs):
+        if "cancel" in request.POST:
+            print(request.POST)
+            return HttpResponseRedirect(self.success_url)
+        else:
+            return super(JobDeleteView, self).post(request, *args, **kwargs)
+
+
+class ReportDetail(SingleObjectMixin, generic.ListView):
+    paginate_by = 10
+    model = Report
+
+    # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
+    template_name = 'reports/report_detail.html'
+
+    def get(self, request, *args, **kwargs):
+        self.object: Report = self.get_object(queryset=Report.objects.all())
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report'] = self.object
+        return context
+
+    def get_queryset(self):
+        return self.object.evalprediction_set.order_by('pk')
 
 
 class DocDeleteView(LoginRequiredMixin, DetailView):
@@ -38,7 +97,7 @@ class DocDeleteView(LoginRequiredMixin, DetailView):
 
 
 @csrf_exempt
-def doc_delete(request, model_id):
+def doc_delete(request):
     doc_id = request.POST["doc_id"]
     doc = Document.objects.filter(id=doc_id)
     doc.delete()
@@ -64,7 +123,7 @@ def create_task(request):
     modelingJob.description = request.POST['description']
     modelingJob.is_multi_label = request.POST['is_multi_label']
     modelingJob.jobRef_id = request.POST['ref_job']
-    modelingJob.model_id = request.POST['model_type']
+    modelingJob.model_type = request.POST['model_type']
     modelingJob.save()
     return HttpResponse("Successfully creating a task")
 
@@ -73,7 +132,7 @@ def create_task(request):
 def update_task(request):
     m = ModelingJob.objects.get(id=request.POST['id'])
     m.name = request.POST['model_name']
-    m.model_id = request.POST['model_type']
+    m.model_type = request.POST['model_type']
     m.description = request.POST['description']
     m.is_multi_label = request.POST['is_multi_label']
     m.jobRef_id = request.POST['ref_job']
@@ -92,72 +151,36 @@ def delete_task(request):
 def insert_csv(request):
     file = request.FILES['file']
     job_id = request.POST['job_id']
-    dataHelper = DataHelper()
-    result = dataHelper.insert_csv_to_db(file, job_id)
+    result = insert_csv_to_db(file, job_id)
     return HttpResponse(result)
 
 
 @csrf_exempt
-def training_model(request):
-    jobRef_id = request.POST['jobRef_id']
-    model_type = request.POST['model']
-    is_multi_label = request.POST['is_multi_label']
-    modeling_job_id = request.POST['modeling_job_id']
-    dataHelper = DataHelper()
-    content, labels = dataHelper.get_training_data(jobRef_id)
-    if model_type == 'RULE_MODEL':
-        ruleModel = RuleModel()
-    elif model_type == 'KEYWORD_MODEL':
-        keywordModel = KeywordModel()
-    elif model_type == 'PROB_MODEL':
-        probModel = ProbModel()
-    elif model_type == 'RF_MODEL':
-        rfModel = RFModel()
-    elif model_type == 'SVM_MODEL':
-        svmModel = SvmModel()
-        if is_multi_label == "False":
-            svmModel.fit(content, labels, modeling_job_id)
-        else:
-            svmModel.multi_fit(content, labels, modeling_job_id)
-    elif model_type == 'XGBOOST_MODEL':
-        xgboostModel = XgboostModel()
-    return HttpResponse("Done")
+def training_model(request, pk):
+    job = ModelingJob.objects.get(pk=pk)
+    a = AsyncTask(train_model_task, job=job, group='training_model')
+    a.run()
+    return HttpResponseRedirect(reverse('modeling_jobs:index'))
 
 
 @csrf_exempt
-def testing_model(request):
-    file = request.FILES['file']
-    modeling_job_id = request.POST['job_id']
-    model_type = request.POST['model_type']
-    is_multi_label = request.POST['is_multi_label']
-    dataHelper = DataHelper()
-    content, labels = dataHelper.get_test_data(file)
-    if content == [] and labels == []:
-        return HttpResponse("False")
+def testing_model_via_ext_data(request, pk):
+    uploaded_file = request.FILES['ext_test_file']
+    job_train_status = ModelingJob.objects.get(pk=pk).job_train_status
+    # python manage.py qcluster
+    if job_train_status != 'done':
+        return HttpResponse('請先訓練模型')
     else:
-        if model_type == 'RULE_MODEL':
-            ruleModel = RuleModel()
-        elif model_type == 'KEYWORD_MODEL':
-            keywordModel = KeywordModel()
-        elif model_type == 'PROB_MODEL':
-            probModel = ProbModel()
-        elif model_type == 'RF_MODEL':
-            rfModel = RFModel()
-        elif model_type == 'SVM_MODEL':
-            svmModel = SvmModel()
-            if is_multi_label == 'False':
-                result = svmModel.predict(content, labels, modeling_job_id)
-            else:
-                svmModel.predict_multi_label(content, labels, modeling_job_id)
-        elif model_type == 'XGBOOST_MODEL':
-            xgboostModel = XgboostModel()
-        return HttpResponse('Done')
+        job = ModelingJob.objects.get(pk=pk)
+        a = AsyncTask(testing_model_via_ext_data_task, uploaded_file=uploaded_file, job=job, group='ext_test_model')
+        a.run()
+        return HttpResponse("Done")
 
 
 @csrf_exempt
 def result_page(request, modeling_job_id):
-    dataHelper = DataHelper()
-    reports: dict = dataHelper.get_report(modeling_job_id)
+    report = ModelingJob.objects.get(pk=modeling_job_id).report_set.last()
+    reports: dict = parse_report(report.report)
     accuracy = reports.pop('accuracy')
     macro_avg = reports.pop('macro avg')
     macro_avg['f1_score'] = macro_avg['f1-score']
@@ -173,3 +196,13 @@ def result_page(request, modeling_job_id):
                                                          "macro_avg": macro_avg,
                                                          "weighted_avg": weighted_avg,
                                                          "labels": labels})
+
+
+def get_progress(request, pk):
+    job = ModelingJob.objects.get(pk=pk)
+
+    response_data = {
+        'state': job.job_train_status,
+        'details': job.job_train_status,
+    }
+    return HttpResponse(json.dumps(response_data), content_type='application/json')

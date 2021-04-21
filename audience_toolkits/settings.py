@@ -97,6 +97,8 @@ DATABASES = {
 #     }
 # }
 
+FILE_PATH_FIELD_DIRECTORY = 'upload_files'
+MODEL_PATH_FIELD_DIRECTORY = 'model_files'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -154,6 +156,21 @@ Q_CLUSTER = {
     'queue_limit': 50,
     'bulk': 10,
     'orm': 'default'
+}
+
+# ======================================
+#     ML Model Settings Task settings
+# ======================================
+
+ML_MODELS = {
+    "DUMMY_MODEL": {
+        'verbose_name': '假模型',
+        'module': 'core.audience.models.base_model.DummyModel',
+    },
+    "SVM_MODEL": {
+        'verbose_name': 'SVM',
+        'module': 'core.audience.models.classic.svm_model.SvmModel',
+    },
 }
 
 # ======================================
