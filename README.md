@@ -20,6 +20,11 @@ python manage.py runserver
 ```
 
 ## for developers
+> ### 開發原則
+> 由於django的特性，避免後續程式測試的困難，請務必注意以下原則：
+> - core資料夾為核心模型相關程式，請勿於此package中使用django的model物件
+> - 於django專案目錄中，請盡量並正確使用django內建物件與方法，可以解省很多時間，並且避免很多常見的開發麻煩。（如template中，所有的網址請使用 `{% url %}` tag）
+
 ### django framwork
 You can read and learn everything in [documents](https://docs.djangoproject.com/zh-hans/3.1/).
 
