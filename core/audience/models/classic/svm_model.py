@@ -9,12 +9,18 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
 import numpy as np
 from core.audience.models.base_model import AudienceModel, MODEL_ROOT
+from core.dao.input_example import Features
 from core.helpers.model_helpers import get_multi_accuracy, load_joblib
 
 
 class SvmModel(AudienceModel):
-    def __init__(self, model_dir_name, is_multi_label=False):
-        super().__init__(model_dir_name)
+    def __init__(self, model_dir_name, is_multi_label=False, feature=Features.CONTENT):
+        super().__init__(model_dir_name, feature=feature)
+        self.available_features = {
+            Features.TITLE,
+            Features.CONTENT,
+            Features.AUTHOR,
+        }
         self.vectorizer = None
         self.is_multi_label = is_multi_label
         self.model_path = self.model_dir_name / 'model.pkl'
@@ -23,16 +29,23 @@ class SvmModel(AudienceModel):
         self.mlb: Optional[MultiLabelBinarizer] = None  # MultiLabelBinarizer, for multi-label task
         self.mlb_path = self.model_dir_name / 'mlb.pkl'
 
-    def convert_feature(self, contents, update_vectorizer=False):
-        # seg_contents = [' '.join(jieba.lcut(content)) for content in contents]
+    def convert_feature(self, examples,
+                        update_vectorizer=False,
+                        max_features=5000, min_df=2, stop_words='english'):
         seg_contents = []
-        for content in contents:
-            sentence = jieba.lcut(str(content))
+        for example in examples:
+            content = getattr(example, self.feature.value)
+            if self.feature in {Features.CONTENT, Features.TITLE}:
+                sentence = jieba.lcut(str(content))
+            elif self.feature in {Features.AUTHOR, }:
+                sentence = list(content)
+            else:
+                raise ValueError(f"Unavailable feature type {self.feature}")
             seg_contents.append(" ".join(sentence))
 
         if update_vectorizer:
             if self.vectorizer is None:
-                self.vectorizer = TfidfVectorizer(max_features=5000, min_df=2, stop_words='english')
+                self.vectorizer = TfidfVectorizer(max_features=max_features, min_df=min_df, stop_words=stop_words)
             x_features = self.vectorizer.fit_transform(seg_contents)
         else:
             if self.vectorizer:
@@ -41,10 +54,10 @@ class SvmModel(AudienceModel):
                 raise ValueError("模型尚未被初始化，或模型尚未被讀取。若模型已被訓練與儲存，請嘗試執行 ' load() ' 方法讀取模型。")
         return x_features
 
-    def fit(self, contents, y_true: List):
+    def fit(self, examples, y_true: List):
         """
 
-        :param contents:
+        :param examples:
         :param y_true:
                 - normal classifier: List,
                     i.e. ['sci-fi', 'thriller', 'comedy']
@@ -54,8 +67,8 @@ class SvmModel(AudienceModel):
                     or [['sci-fi', 'thriller'], ['comedy']]
         :return:
         """
-        x_train_features = self.convert_feature(contents, update_vectorizer=True)
-        classifier = svm.SVC(kernel='linear')
+        x_train_features = self.convert_feature(examples, update_vectorizer=True)
+        classifier = svm.SVC(kernel='linear', probability=True)
 
         for index, y in enumerate(y_true):
             y_true[index] = y_true[index][0].split(',')
@@ -70,24 +83,27 @@ class SvmModel(AudienceModel):
         self.model.fit(x_train_features, y_true)
         return self.save()
 
-    def predict(self, contents):
-        x_features = self.convert_feature(contents)
-        return self.model.predict(x_features)
+    def predict(self, examples):
+        x_features = self.convert_feature(examples)
+        predict_labels = self.model.predict(x_features)
+        predict_logits = self.model.predict_proba(x_features)
+        predict_logits = [tuple([elem for elem in zip(self.model.classes_, r)]) for r in predict_logits]
+        return predict_labels, predict_logits
 
-    def eval(self, contents, y_true):
+    def eval(self, examples, y_true):
 
         for index, y in enumerate(y_true):
             y_true[index] = y
 
         if self.model and self.vectorizer:
-            y_pre = self.predict(contents)
+            predict_labels, predict_logits = self.predict(examples)
             if self.is_multi_label:
                 y_true = self.mlb.transform(y_true)
-                acc = get_multi_accuracy(y_true, y_pre)
-                report = classification_report(y_true, y_pre, output_dict=True)
+                acc = get_multi_accuracy(y_true, predict_labels)
+                report = classification_report(y_true, predict_labels, output_dict=True)
                 report['accuracy'] = acc
             else:
-                report = classification_report(y_true, y_pre, output_dict=True)
+                report = classification_report(y_true, predict_labels, output_dict=True)
             return report
         else:
             raise ValueError(f"模型尚未被訓練，或模型尚未被讀取。若模型已被訓練與儲存，請嘗試執行 ' load() ' 方法讀取模型。")

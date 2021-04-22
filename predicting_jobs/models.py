@@ -105,7 +105,7 @@ class PredictingTarget(models.Model):
 
 class PredictingResult(models.Model):
     predicting_target = models.ForeignKey(PredictingTarget, verbose_name="預測資料範圍", on_delete=models.CASCADE)
-    label = models.ForeignKey(Label, verbose_name="預測標籤名稱", on_delete=models.CASCADE)
+    label_name = models.CharField(max_length=200, verbose_name="標籤名稱")
     score = models.FloatField(verbose_name="預測分數")
     data_id = models.CharField(max_length=200, verbose_name="預測文章ID")
 

@@ -151,8 +151,8 @@ UPLOAD_FILE_DIRECTORY = 'upload_files'
 Q_CLUSTER = {
     'name': 'audience_toolkits',
     'workers': 4,
-    'timeout': 90,
-    'retry': 120,
+    'timeout': 300,
+    'retry': 1200,
     'queue_limit': 50,
     'bulk': 10,
     'orm': 'default'

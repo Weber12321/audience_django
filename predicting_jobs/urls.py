@@ -18,4 +18,6 @@ urlpatterns = [
          name='job-applying-model-update'),
     path('<int:job_id>/applying-model/<int:pk>/delete', views.ApplyingModelDelete.as_view(),
          name='job-applying-model-delete'),
+
+    path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),
 ]

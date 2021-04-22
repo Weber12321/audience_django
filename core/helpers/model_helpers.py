@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import joblib
 
 
@@ -7,7 +8,7 @@ def get_multi_accuracy(y_true, y_pre):
     wrong = 0
     for i in range(len(y_true)):
         for j in range(len(y_true[i])):
-            if y_true[i][j] == y_pre[i][j]:
+            if y_true[i][j].all(y_pre[i][j]):
                 right += 1
             else:
                 wrong += 1

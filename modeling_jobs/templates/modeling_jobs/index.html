@@ -132,88 +132,88 @@
             $.post(train_url)
         }
 
-            function showResult(modeling_job_id) {
-                var aj = $.ajax({
-                    url: 'show_result',
-                    data: {
-                        modeling_job_id: modeling_job_id,
-                    },
-                    type: 'post',
-                    success: function (result) {
-                        console.log("Done")
-                    }
-                })
-            }
+        function showResult(modeling_job_id) {
+            var aj = $.ajax({
+                url: 'show_result',
+                data: {
+                    modeling_job_id: modeling_job_id,
+                },
+                type: 'post',
+                success: function (result) {
+                    console.log("Done")
+                }
+            })
+        }
 
-            function set_row_done_display(job_id) {
-                $('#state-' + job_id).text("完成")
-                $('#train-btn-' + job_id)
-                    .text("重新訓練")
-                    .removeClass("disabled")
-                $('#test-btn-' + job_id).attr("hidden", false)
-            }
+        function set_row_done_display(job_id) {
+            $('#state-' + job_id).text("完成")
+            $('#train-btn-' + job_id)
+                .text("重新訓練")
+                .removeClass("disabled")
+            $('#test-btn-' + job_id).attr("hidden", false)
+        }
 
-            function set_row_processing_display(job_id) {
-                $('#state-' + job_id).text("處理中")
-                $('#train-btn-' + job_id)
-                    .text("訓練中")
-                    .addClass("disabled")
-                $('#test-btn-' + job_id).attr("hidden", true)
-            }
+        function set_row_processing_display(job_id) {
+            $('#state-' + job_id).text("處理中")
+            $('#train-btn-' + job_id)
+                .text("訓練中")
+                .addClass("disabled")
+            $('#test-btn-' + job_id).attr("hidden", true)
+        }
 
-            function set_row_wait_display(job_id) {
-                $('#state-' + job_id).text("等待中")
-                $('#train-btn-' + job_id)
-                    .text("開始訓練")
-                    .removeClass("disabled")
-                $('#test-btn-' + job_id).attr("hidden", true)
-            }
+        function set_row_wait_display(job_id) {
+            $('#state-' + job_id).text("等待中")
+            $('#train-btn-' + job_id)
+                .text("開始訓練")
+                .removeClass("disabled")
+            $('#test-btn-' + job_id).attr("hidden", true)
+        }
 
-            function set_row_error_display(job_id) {
-                $('#state-' + job_id).text("錯誤")
-                $('#train-btn-' + job_id).text("重試")
-                    .removeClass("disabled")
-                $('#test-btn-' + job_id).attr("hidden", true)
-            }
+        function set_row_error_display(job_id) {
+            $('#state-' + job_id).text("錯誤")
+            $('#train-btn-' + job_id).text("重試")
+                .removeClass("disabled")
+            $('#test-btn-' + job_id).attr("hidden", true)
+        }
 
-            function get_progress(url) {
-                return $.get({
-                    url: url
-                })
-            }
+        function get_progress(url) {
+            return $.get({
+                url: url
+            })
+        }
 
-            function update_progress(job_id, url) {
-                {#var state = "wait"#}
-                get_progress(url).done(function (result) {
-                    let timeout = 10000
-                    console.log(result)
-                    let state = result.state
-                    let elem_id = '#state-' + job_id
-                    console.log(elem_id)
-                    $(elem_id).text(state)
-                    switch (state) {
-                        case 'done':
-                            set_row_done_display(job_id)
-                            break
-                        case 'wait':
-                            set_row_wait_display(job_id)
-                            break
-                        case 'processing':
-                            timeout = 1000
-                            set_row_processing_display(job_id)
-                            break
-                        default:
-                            console.log(state)
-                            set_row_error_display(job_id)
-                    }
-                    setTimeout(function () {
-                        {#console.log(url)#}
-                        update_progress(job_id, url)
-                    }, timeout);
-                });
-            }
-            {% for job in modeling_jobs %}
-                update_progress({{ job.id }}, "{% url 'modeling_jobs:api-job-progress' job.id %}")
-            {% endfor %}
+        function update_progress(job_id, url) {
+            {#var state = "wait"#}
+            get_progress(url).done(function (result) {
+                let timeout = 10000
+                console.log(result)
+                let state = result.state
+                let elem_id = '#state-' + job_id
+                console.log(elem_id)
+                $(elem_id).text(state)
+                switch (state) {
+                    case 'done':
+                        set_row_done_display(job_id)
+                        break
+                    case 'wait':
+                        set_row_wait_display(job_id)
+                        break
+                    case 'processing':
+                        timeout = 1000
+                        set_row_processing_display(job_id)
+                        break
+                    default:
+                        console.log(state)
+                        set_row_error_display(job_id)
+                }
+                setTimeout(function () {
+                    {#console.log(url)#}
+                    update_progress(job_id, url)
+                }, timeout);
+            });
+        }
+        {% for job in modeling_jobs %}
+            update_progress({{ job.id }}, "{% url 'modeling_jobs:api-job-progress' job.id %}")
+        {% endfor %}
     </script>
 {% endblock %}

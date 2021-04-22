@@ -86,9 +86,9 @@ class ApplyingModelAdmin(admin.ModelAdmin):
 
 class PredictingResultAdmin(admin.ModelAdmin):
     model = PredictingResult
-    list_display = ('data_id', 'label', 'predicting_target')
-    search_fields = ['predicting_target', 'label', 'data_id']
-    list_filter = ['predicting_target', 'label']
+    list_display = ('data_id', 'label_name', 'predicting_target')
+    search_fields = ['predicting_target', 'label_name', 'data_id']
+    list_filter = ['predicting_target', 'label_name']
 
 
 admin.site.register(PredictingResult, PredictingResultAdmin)

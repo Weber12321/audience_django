@@ -1,5 +1,6 @@
 from dataclasses import dataclass, astuple, field
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 from core.helpers.log_helper import get_logger
@@ -13,13 +14,24 @@ DEFAULT_EXPLAIN_COUNT: str = "EXPLAIN SELECT count(*) FROM {} {};"
 ID_CONDITION: str = " AND id > {} "
 
 
+class Features(Enum):
+    """
+    可用特徵，會使用value去操作'getattr(example, feature.value)'
+    """
+    S_AREA_ID = 's_area_id'
+    AUTHOR = 'author'
+    TITLE = 'title'
+    CONTENT = 'content'
+    POST_TIME = 'post_time'
+
+
 @dataclass
 class InputExample:
-    id_: str
-    s_area_id: str
-    author: str
-    title: str
-    content: str
+    id_: Optional[str]
+    s_area_id: Optional[str]
+    author: Optional[str]
+    title: Optional[str]
+    content: Optional[str]
     post_time: Optional[datetime]
     label: Optional[str] = field(default=None)
 
@@ -39,7 +51,6 @@ def _fix_null_str(x):
         return ""
     else:
         return x
-
 
 # def _find_stop_position(txt: str, pos: int) -> Optional[tuple]:
 #     """ Return a stop's (beginning index, ending index) after the starting position (pos) in the text. """

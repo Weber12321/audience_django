@@ -6,6 +6,7 @@ from django.db.models import QuerySet
 
 from audience_toolkits import settings
 from core.audience.models.base_model import AudienceModel
+from core.dao.input_example import Features, InputExample
 from labeling_jobs.models import Document, LabelingJob, Label
 from labeling_jobs.tasks import create_documents
 from modeling_jobs.models import ModelingJob
@@ -28,9 +29,9 @@ def train_model_task(job: ModelingJob):
         train_set = job.jobRef.get_train_set()
         contents, y_true = get_feature_and_label(train_set)
         model_path = f"{job.id}_{job.name}"
-        model = load_model(model_type=job.model_type, model_path=model_path, is_multi_label=job.is_multi_label)
+        model = load_model(job, model_path)
 
-        job.model_path = model.fit(contents=contents, y_true=y_true)
+        job.model_path = model.fit(examples=contents, y_true=y_true)
 
         # get train set report
         eval_dataset(model=model, dataset_type=Document.TypeChoices.TRAIN, dataset=train_set, job=job)
@@ -57,7 +58,7 @@ def testing_model_via_ext_data_task(uploaded_file, job: ModelingJob, remove_old_
     try:
         create_ext_data(uploaded_file=uploaded_file, job=job.jobRef, remove_old_data=remove_old_data)
         print(job.model_type, job.model_path, job.is_multi_label)
-        model = load_model(model_type=job.model_type, model_path=job.model_path, is_multi_label=job.is_multi_label)
+        model = load_model(job)
         print(model)
         model.load()
         # get ext test set report
@@ -72,13 +73,16 @@ def testing_model_via_ext_data_task(uploaded_file, job: ModelingJob, remove_old_
         raise ValueError("Task Failed")
 
 
-def get_feature_and_label(documents):
-    content = []
+def get_feature_and_label(documents: List[Document], feature=Features.CONTENT):
+    examples: List[InputExample] = []
     labels = []
     for doc in documents:
-        content.append(doc.content)
+        example = InputExample(id_=str(doc.id), s_area_id=doc.s_area_id, title=doc.title, author=doc.author,
+                               content=doc.content,
+                               post_time=doc.post_time)
+        examples.append(example)
         labels.append([label.name for label in doc.labels.all()])
-    return content, labels
+    return examples, labels
 
 
 def create_ext_data(job: LabelingJob, uploaded_file, remove_old_data=True):
@@ -88,15 +92,16 @@ def create_ext_data(job: LabelingJob, uploaded_file, remove_old_data=True):
     create_documents(uploaded_file, job=job, document_type=Document.TypeChoices.EXT_TEST)
 
 
-def load_model(model_type, model_path, is_multi_label):
-    if model_type in settings.ML_MODELS:
-        model_cls = get_model_class(model_type)
-        model: AudienceModel = model_cls(model_dir_name=model_path)
+def load_model(job: ModelingJob, model_path=None):
+    if job.model_type in settings.ML_MODELS:
+        model_cls = get_model_class(job.model_type)
+        model: AudienceModel = model_cls(model_dir_name=model_path if model_path else job.model_path)
         if hasattr(model, 'is_multi_label'):
-            model.is_multi_label = is_multi_label
+            print(job.is_multi_label)
+            model.is_multi_label = job.is_multi_label
         return model
     else:
-        raise ValueError(f"Unknown model_type: {model_type}")
+        raise ValueError(f"Unknown model_type: {job.model_type}")
 
 
 def eval_dataset(model, job: ModelingJob, dataset, dataset_type: Document.TypeChoices):
@@ -106,9 +111,9 @@ def eval_dataset(model, job: ModelingJob, dataset, dataset_type: Document.TypeCh
     tmp_report = job.report_set.create(dataset_type=dataset_type, report=report_json,
                                        accuracy=report.get('accuracy', -1))
 
-    y_pre = model.predict(contents)
+    predict_labels, predict_logits = model.predict(contents)
     labels = {_label.name: _label for _label in job.jobRef.label_set.all()}
-    for doc, pred in zip(dataset, y_pre):
+    for doc, pred in zip(dataset, predict_labels):
         # process prediction
         pr = tmp_report.evalprediction_set.create(document=doc)
         if isinstance(pred, QuerySet):

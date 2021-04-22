@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 # Create your views here.
 from django.urls import reverse_lazy
 from django.views import generic
@@ -9,6 +9,7 @@ from django_q.tasks import AsyncTask
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
 from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel
 from predicting_jobs.tasks import predict_task
+import json
 
 
 class IndexView(LoginRequiredMixin, generic.ListView):
@@ -135,3 +136,13 @@ def start_job(request, pk):
         a.run()
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
+
+
+def get_progress(request, pk):
+    job = PredictingJob.objects.get(pk=pk)
+
+    response_data = {
+        'state': job.job_status,
+        'details': {target.name: target.job_status for target in job.predictingtarget_set.all()},
+    }
+    return HttpResponse(json.dumps(response_data), content_type='application/json')

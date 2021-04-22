@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Dict, List
+from typing import Dict, List, Generator
 
 from typing import Iterable
 
@@ -7,7 +7,7 @@ from core.audience.models.base_model import AudienceModel
 from core.dao.input_example import InputExample
 from core.helpers.log_helper import get_logger
 
-RESULT = namedtuple("Result", "label, score")
+RESULT = namedtuple("Result", "labels, logits")
 
 
 class AudienceWorker:
@@ -19,25 +19,21 @@ class AudienceWorker:
 
         self.models: List[AudienceModel] = model_list
 
-    def run(self, input_examples: Iterable[InputExample]):
-        for example in input_examples:
-            yield self.run_labeling(example)
-
-    def run_labeling(self, doc: InputExample) -> List[List[RESULT]]:
+    def run_labeling(self, input_examples: List[InputExample]) -> List[List[RESULT]]:
         """
 
-        :param doc:
+        :param input_examples:
         :return: list of models-> list of label results -> label, score
         """
-        results = []
+        model_predicted_result = [[] for i in range(len(input_examples))]
         for audience_model in self.models:
-            labels, logits = audience_model.predict([doc])
-            rs_list = [RESULT(*rs) for rs in zip(labels, logits)]
-            results.append(rs_list)
-        return results
+            predict_labels, predict_logits = audience_model.predict(input_examples)
+            for i in range(len(input_examples)):
+                model_predicted_result[i].append(RESULT(predict_labels[i], predict_logits[i]))
+        return model_predicted_result
 
     @staticmethod
-    def ensemble_results(predicting_results: List[List[RESULT]], bypass_same_label=False) -> Dict[str, float]:
+    def ensemble_results(predicting_results: List[RESULT], bypass_same_label=False) -> Dict[str, float]:
         """
         
         :param predicting_results: list of models-> list of label results -> label, score
@@ -45,11 +41,15 @@ class AudienceWorker:
         :return: dictionary of each label and score {label: score}
         """
         ensemble_results = {}
-        for model_result in predicting_results:
-            for rs in model_result:
+        for result in predicting_results:
+            logits_dict = {cls: logit for cls, logit in result.logits}
+            if isinstance(result.labels, str):
+                labels = [result.labels]
+            else:
+                labels = result.labels
+            for label in labels:
                 if not bypass_same_label:
-                    ensemble_results[rs.label] = ensemble_results.get(rs.label, 0) + rs.score
+                    ensemble_results[label] = ensemble_results.get(label, 0) + logits_dict.get(label, 0)
                 else:
-                    if rs.label not in ensemble_results:
-                        ensemble_results[rs.label] = rs.score
+                    ensemble_results[label] = logits_dict.get(label, 0)
         return ensemble_results

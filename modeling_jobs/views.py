@@ -158,6 +158,7 @@ def insert_csv(request):
 @csrf_exempt
 def training_model(request, pk):
     job = ModelingJob.objects.get(pk=pk)
+    print(job.is_multi_label)
     a = AsyncTask(train_model_task, job=job, group='training_model')
     a.run()
     return HttpResponseRedirect(reverse('modeling_jobs:index'))
