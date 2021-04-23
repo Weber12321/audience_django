@@ -43,21 +43,11 @@
                             <span id="state-{{ job.id }}"></span>
                         </td>
                         <td>
-                            <form action="{% url 'predicting_jobs:job_start' job.id %}"
-                                  method="post">
-                                {% if job.job_status.upper == 'WAIT' %}
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-success">開始</button>
-                                {% elif job.job_status.upper == 'DONE' %}
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-warning">重新預測</button>
-                                {% elif job.job_status.upper == 'PROCESSING' %}
-                                    <button type="button" disabled class="btn btn-primary disabled">處理中</button>
-                                {% else %}
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger">重試</button>
-                                {% endif %}
-                            </form>
+                            <button type="button" class="btn btn-sm btn-secondary"
+                                    id="run-job-btn-{{ job.id }}"
+                                    onclick="run_job({{ job.id }},'{% url 'predicting_jobs:job_start' job.id %}')">
+                                開始貼標
+                            </button>
                         </td>
                     </tr>
                 {% endfor %}
@@ -69,10 +59,33 @@
 
 {% block custom_script %}
     <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
 
-        function train_model(job_id, train_url) {
+        const csrftoken = getCookie('csrftoken');
+        console.log(csrftoken)
+        $.ajaxSetup({
+            beforeSend: function (xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        });
+
+        function run_job(job_id, run_job_url) {
             set_row_processing_display(job_id)
-            $.post(train_url)
+            $.post(run_job_url)
         }
 
         function showResult(modeling_job_id) {
@@ -90,33 +103,29 @@
 
         function set_row_done_display(job_id) {
             $('#state-' + job_id).text("完成")
-            $('#train-btn-' + job_id)
+            $('#run-job-btn-' + job_id)
                 .text("重新訓練")
                 .removeClass("disabled")
-            $('#test-btn-' + job_id).attr("hidden", false)
         }
 
         function set_row_processing_display(job_id) {
             $('#state-' + job_id).text("處理中")
-            $('#train-btn-' + job_id)
+            $('#run-job-btn-' + job_id)
                 .text("訓練中")
                 .addClass("disabled")
-            $('#test-btn-' + job_id).attr("hidden", true)
         }
 
         function set_row_wait_display(job_id) {
             $('#state-' + job_id).text("等待中")
-            $('#train-btn-' + job_id)
+            $('#run-job-btn-' + job_id)
                 .text("開始訓練")
                 .removeClass("disabled")
-            $('#test-btn-' + job_id).attr("hidden", true)
         }
 
         function set_row_error_display(job_id) {
             $('#state-' + job_id).text("錯誤")
-            $('#train-btn-' + job_id).text("重試")
+            $('#run-job-btn-' + job_id).text("重試")
                 .removeClass("disabled")
-            $('#test-btn-' + job_id).attr("hidden", true)
         }
 
         function get_progress(url) {

@@ -5,33 +5,23 @@
 {% block page_title %}{{ predicting_job.name }}{% endblock %}
 {% block page_functions %}
     {% if user.is_staff %}
-
-        <form action="{% url 'predicting_jobs:job_start' predicting_job.id %}"
-              method="post">
-            {% if predicting_job.job_status.upper == 'WAIT' %}
-                {% csrf_token %}
-                <button type="submit" class="btn btn-success">開始</button>
-            {% elif predicting_job.job_status.upper == 'DONE' %}
-                {% csrf_token %}
-                <button type="submit" class="btn btn-warning">重新預測</button>
-            {% elif predicting_job.job_status.upper == 'PROCESSING' %}
-                <button type="button" disabled class="btn btn-primary disabled">處理中</button>
-            {% else %}
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">重試</button>
-            {% endif %}
-        </form>
-        <div class="dropdown mb-4">
-            <button class="btn btn-primary dropdown-toggle" type="button"
-                    id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false">
-                操作
+        <div class="btn-group" role="group" aria-label="predicting job functions">
+            <button type="button" class="btn btn-sm btn-secondary"
+                    id="run-job-btn-{{ predicting_job.id }}"
+                    onclick="run_job({{ predicting_job.id }},'{% url 'predicting_jobs:job_start' predicting_job.id %}')">
+                開始貼標
             </button>
-            <div class="dropdown-menu animated--fade-in"
-                 aria-labelledby="dropdownMenuButton">
-                <a class="dropdown-item"
-                   href="{% url 'predicting_jobs:job-update' predicting_job.id %}?next={{ request.path }}">修改</a>
-                <a class="dropdown-item" href="{% url 'predicting_jobs:job-delete' predicting_job.id %}">刪除</a>
+
+            <div class="btn-group" role="group">
+                <button id="btnGroupDrop1" type="button" class="btn btn-sm btn-secondary dropdown-toggle"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    操作
+                </button>
+                <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                    <a class="dropdown-item"
+                       href="{% url 'predicting_jobs:job-update' predicting_job.id %}?next={{ request.path }}">修改</a>
+                    <a class="dropdown-item" href="{% url 'predicting_jobs:job-delete' predicting_job.id %}">刪除</a>
+                </div>
             </div>
         </div>
     {% endif %}
@@ -63,22 +53,35 @@
                                 <th scope="col">模型類型</th>
                                 <th scope="col">優先度</th>
                                 <th scope="col"></th>
-                                <th scope="col"></th>
                             </tr>
                             </thead>
                             <tbody>
                             {% for applying_model in predicting_job.applyingmodel_set.all %}
-                                <tr>
-                                <th scope="row">{{ applying_model.id }}</th>
-                                <td>{{ applying_model.modeling_job.name }}</td>
-                                <td>{{ applying_model.modeling_job.model_type }}</td>
-                                <td>{{ applying_model.priority }}</td>
-                                <td>
-                                    <a href="{% url 'predicting_jobs:job-applying-model-update' predicting_job.id applying_model.id %}"
-                                       class="btn btn-warning">修改</a></td>
-                                <td>
-                                    <a href="{% url 'predicting_jobs:job-applying-model-delete' predicting_job.id applying_model.id %}"
-                                       class="btn btn-danger">刪除</a></td>
+                                {% with modeling_job=applying_model.modeling_job %}
+                                    <tr>
+                                    <th scope="row">{{ applying_model.id }}</th>
+                                    <td>
+                                        <a href="{% url 'modeling_jobs:job-detail' modeling_job.id %}">{{ modeling_job.name }}</a>
+                                    </td>
+                                    <td>{{ modeling_job.get_model_type_display }}</td>
+                                    <td>{{ applying_model.priority }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button id="btnGroupDrop1" type="button"
+                                                    class="btn btn-secondary dropdown-toggle btn-sm"
+                                                    data-toggle="dropdown"
+                                                    aria-haspopup="true" aria-expanded="false">
+                                                操作
+                                            </button>
+                                            <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                                <a href="{% url 'predicting_jobs:job-applying-model-update' predicting_job.id applying_model.id %}"
+                                                   class="dropdown-item">修改</a>
+                                                <a href="{% url 'predicting_jobs:job-applying-model-delete' predicting_job.id applying_model.id %}"
+                                                   class="dropdown-item">刪除</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                {% endwith %}
                             {% endfor %}
                             </tbody>
                         </table>
@@ -99,10 +102,8 @@
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">資料範圍名稱</th>
-                                <th scope="col">描述</th>
                                 <th scope="col">資料源</th>
                                 <th scope="col">時間範圍</th>
-                                <th scope="col"></th>
                                 <th scope="col"></th>
                             </tr>
                             </thead>
@@ -111,13 +112,23 @@
                                 <tr>
                                 <th scope="row">{{ target.id }}</th>
                                 <td>{{ target.name }}</td>
-                                <td>{{ target.description }}</td>
                                 <td>{{ target.source.name }}</td>
                                 <td>{{ target.begin_post_time }}<br>~<br>{{ target.end_post_time }}</td>
-                                <td><a href="{% url 'predicting_jobs:job-target-update' predicting_job.id target.id %}"
-                                       class="btn btn-warning">修改</a></td>
-                                <td><a href="{% url 'predicting_jobs:job-target-delete' predicting_job.id target.id %}"
-                                       class="btn btn-danger">刪除</a></td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button id="btnGroupDrop1" type="button"
+                                                class="btn btn-secondary dropdown-toggle btn-sm" data-toggle="dropdown"
+                                                aria-haspopup="true" aria-expanded="false">
+                                            操作
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                            <a href="{% url 'predicting_jobs:job-target-update' predicting_job.id target.id %}"
+                                               class="dropdown-item">修改</a>
+                                            <a href="{% url 'predicting_jobs:job-target-delete' predicting_job.id target.id %}"
+                                               class="dropdown-item">刪除</a>
+                                        </div>
+                                    </div>
+                                </td>
                             {% endfor %}
                             </tbody>
                         </table>
@@ -134,9 +145,9 @@
 {% block custom_script %}
     <script>
 
-        function train_model(job_id, train_url) {
+        function run_job(job_id, run_job_url) {
             set_row_processing_display(job_id)
-            $.post(train_url)
+            $.post(run_job_url)
         }
 
         function showResult(modeling_job_id) {

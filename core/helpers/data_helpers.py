@@ -114,3 +114,18 @@ def insert_csv_to_db(file, job_id):
             else:
                 doc.labels.create(name=label, labeling_job_id=job.id)
     return result
+
+
+def chunks(generator, chunk_size):
+    """Yield successive chunks from a generator"""
+    chunk = []
+
+    for item in generator:
+        if len(chunk) >= chunk_size:
+            yield chunk
+            chunk = [item]
+        else:
+            chunk.append(item)
+
+    if chunk:
+        yield chunk

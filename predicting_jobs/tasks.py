@@ -8,6 +8,7 @@ from tqdm import tqdm
 from core.audience.models.base_model import AudienceModel, DummyModel
 from core.audience.audience_worker import AudienceWorker, RESULT
 from core.dao.input_example import InputExample
+from core.helpers.data_helpers import chunks
 from modeling_jobs.tasks import load_model
 from predicting_jobs.models import PredictingJob, PredictingTarget, JobStatus, ApplyingModel, PredictingResult
 
@@ -56,7 +57,7 @@ def check_if_status_break(job_id):
 
 
 def predict_task(job: PredictingJob):
-    chunks_size = 100
+    chunks_size = 1000
     job.job_status = JobStatus.PROCESSING
     job.save()
     reset_predict_targets(job)
@@ -104,17 +105,3 @@ def predict_task(job: PredictingJob):
     finally:
         job.save()
 
-
-def chunks(generator, chunk_size):
-    """Yield successive chunks from a generator"""
-    chunk = []
-
-    for item in generator:
-        if len(chunk) >= chunk_size:
-            yield chunk
-            chunk = [item]
-        else:
-            chunk.append(item)
-
-    if chunk:
-        yield chunk
