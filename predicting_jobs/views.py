@@ -58,7 +58,7 @@ class PredictingJobDelete(LoginRequiredMixin, generic.DeleteView):
 
 
 class PredictingTargetUpdate(LoginRequiredMixin, generic.UpdateView):
-    # model = PredictingTarget
+    model = PredictingTarget
     form_class = PredictingTargetForm
     template_name = 'predicting_target/update_form.html'
 
@@ -130,7 +130,8 @@ class ApplyingModelDelete(LoginRequiredMixin, generic.DeleteView):
 
 
 def start_job(request, pk):
-    if request.POST:
+    if request.method == 'POST':
+        print("start predicting")
         job = PredictingJob.objects.get(pk=pk)
         a = AsyncTask(predict_task, job, group="predicting_audience")
         a.run()

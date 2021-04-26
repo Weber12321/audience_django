@@ -114,7 +114,7 @@ def _fix_null_str(x):
 #         sql_query = DEFAULT_SELECT_ID_QUERY.format(f"{conn_info.table}",
 #                                                    f"{condition if condition is not None else ''} LIMIT {batch} "
 #                                                    f"OFFSET {finish_count - batch}")
-#     with get_db_connection(conn_info) as conn:
+#     with get_mysql_connection(conn_info) as conn:
 #         cursor = conn.cursor()
 #         _logger.debug(sql_query)
 #         cursor.execute(sql_query)
@@ -161,7 +161,7 @@ def _fix_null_str(x):
 #         query = sql_query.format(f"{conn_info.table}",
 #                                  f"{_condition if _condition is not None else ''} LIMIT {_limit}")
 #         tmp_rows = list()
-#         with get_db_connection(conn_info) as conn:
+#         with get_mysql_connection(conn_info) as conn:
 #             cursor = conn.cursor()
 #             _logger.debug(query)
 #             cursor.execute(query)

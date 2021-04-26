@@ -10,9 +10,9 @@ from django.views.generic import ListView, DetailView
 from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
 
-from core.helpers.data_helpers import parse_report, insert_csv_to_db
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm
+from .helpers import insert_csv_to_db, parse_report
 from .models import ModelingJob, Report
 from .tasks import train_model_task, testing_model_via_ext_data_task
 import json

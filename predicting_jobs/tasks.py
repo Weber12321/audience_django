@@ -1,19 +1,19 @@
-from collections import namedtuple
 from datetime import datetime
 from time import sleep
-from typing import List, Dict, Iterable, Generator
+from typing import List, Dict, Iterable
 
 from tqdm import tqdm
 
-from core.audience.models.base_model import AudienceModel, DummyModel
-from core.audience.audience_worker import AudienceWorker, RESULT
+from audience_toolkits import settings
+from core.audience.audience_worker import AudienceWorker
+from core.audience.models.base_model import AudienceModel
 from core.dao.input_example import InputExample
-from core.helpers.data_helpers import chunks
+from core.helpers.data_helpers import chunks, get_opview_data_rows
 from modeling_jobs.tasks import load_model
-from predicting_jobs.models import PredictingJob, PredictingTarget, JobStatus, ApplyingModel, PredictingResult
+from predicting_jobs.models import PredictingJob, PredictingTarget, JobStatus, ApplyingModel, PredictingResult, Source
 
 
-class TaskCanceledByUser(Exception):
+class TaskCanceledByUserException(Exception):
     pass
 
 
@@ -25,6 +25,34 @@ def get_dummy_predicting_target_data(predicting_target: PredictingTarget, ):
             author=predicting_target.name,
             title=predicting_target.name,
             content=predicting_target.description, post_time=datetime.now())
+
+
+def get_target_data(predicting_target: PredictingTarget, fetch_size=1000, max_rows=None,
+                    fields=settings.AVAILABLE_FIELDS):
+    source: Source = predicting_target.source
+    connection_settings = {
+        "host": source.host,
+        "port": source.port,
+        "user": source.username,
+        "password": source.password,
+        "source_name": source.schema,
+        "table": source.tablename,
+        "fetch_size": fetch_size,
+        "max_rows": max_rows,
+        "fields": fields,
+        "conditions": [
+            f"post_time between '{predicting_target.begin_post_time}' and '{predicting_target.end_post_time}'"
+        ]
+    }
+    for row in get_opview_data_rows(**connection_settings):
+        yield InputExample(
+            id_=row.get("id"),
+            s_area_id=row.get("s_area_id"),
+            author=row.get("author"),
+            title=row.get("title"),
+            content=row.get("content"),
+            post_time=row.get("post_time"),
+        )
 
 
 def get_models(applying_models: List[ApplyingModel]) -> List[AudienceModel]:
@@ -39,7 +67,7 @@ def get_models(applying_models: List[ApplyingModel]) -> List[AudienceModel]:
 
 def reset_predict_targets(job: PredictingJob, status=JobStatus.WAIT):
     for target in job.predictingtarget_set.all():
-        target.job_status = JobStatus.WAIT
+        target.job_status = status
         target.save()
 
 
@@ -50,14 +78,14 @@ def check_if_status_break(job_id):
         status = JobStatus(status)
     if status == JobStatus.BREAK:
         reset_predict_targets(job, status=JobStatus.BREAK)
-        raise TaskCanceledByUser("Job canceled by user.")
+        raise TaskCanceledByUserException("Job canceled by user.")
     if status == JobStatus.ERROR:
         reset_predict_targets(job, status=JobStatus.BREAK)
         raise ValueError("Something happened or status changed by user.")
 
 
 def predict_task(job: PredictingJob):
-    chunks_size = 1000
+    batch_size = 1000
     job.job_status = JobStatus.PROCESSING
     job.save()
     reset_predict_targets(job)
@@ -76,8 +104,8 @@ def predict_task(job: PredictingJob):
             predicting_target.save()
             predicting_target.job_status = JobStatus.PROCESSING
             predicting_target.save()
-            input_examples: Iterable[InputExample] = get_dummy_predicting_target_data(predicting_target)
-            for example_chunk in tqdm(chunks(input_examples, chunk_size=chunks_size)):
+            input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size, max_rows=100)
+            for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size)):
                 sleep(1)
                 check_if_status_break(job.id)
                 batch_results = predict_worker.run_labeling(example_chunk)
@@ -90,13 +118,14 @@ def predict_task(job: PredictingJob):
                         predicting_result = PredictingResult(predicting_target=predicting_target,
                                                              label_name=label_name,
                                                              score=score, data_id=data_id)
+                        print(label_name, tmp_example.content[:50])
                         predicting_result.save()
             predicting_target.job_status = JobStatus.DONE
             predicting_target.save()
 
         # if success
         job.job_status = JobStatus.DONE
-    except TaskCanceledByUser as e:
+    except TaskCanceledByUserException as e:
         job.job_status = JobStatus.BREAK
     except Exception as e:
         # if something wrong
@@ -105,3 +134,6 @@ def predict_task(job: PredictingJob):
     finally:
         job.save()
 
+# todo 貼標結果抽驗
+# 各標籤抽驗
+# 抽驗結果下載

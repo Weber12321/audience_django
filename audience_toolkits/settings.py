@@ -195,6 +195,8 @@ TEMP_DIR = BASE_DIR / 'tmp'
 
 # predicting_result
 FETCH_COUNT = -1
+CONNECT_RETRIES = 3
+AVAILABLE_FIELDS = ['id', 's_id', 's_area_id', 'title', 'author', 'content', 'post_time']
 PREDICT_DATABASE = {
     'source': {
         'ENGINE': 'django.db.backends.mysql',

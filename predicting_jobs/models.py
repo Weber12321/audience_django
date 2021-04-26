@@ -63,8 +63,8 @@ class Source(models.Model):
                                 default=PREDICT_DATABASE.get("source", {}).get("USER"))
     password = models.CharField(max_length=100, verbose_name="資料庫密碼", null=True,
                                 default=PREDICT_DATABASE.get("source", {}).get("PASSWORD"))
-    port = models.CharField(max_length=6, verbose_name="資料庫連接埠",
-                            default=PREDICT_DATABASE.get("source", {}).get("PORT"))
+    port = models.IntegerField(verbose_name="資料庫連接埠",
+                               default=int(PREDICT_DATABASE.get("source", {}).get("PORT")))
     schema = models.CharField(max_length=100, verbose_name="資料庫名稱", null=True,
                               default=PREDICT_DATABASE.get("source", {}).get("SCHEMA"))
     tablename = models.CharField(max_length=100, verbose_name="資料表名稱",

@@ -76,7 +76,6 @@
         }
 
         const csrftoken = getCookie('csrftoken');
-        console.log(csrftoken)
         $.ajaxSetup({
             beforeSend: function (xhr, settings) {
                 xhr.setRequestHeader("X-CSRFToken", csrftoken);
@@ -104,21 +103,21 @@
         function set_row_done_display(job_id) {
             $('#state-' + job_id).text("完成")
             $('#run-job-btn-' + job_id)
-                .text("重新訓練")
+                .text("重新貼標")
                 .removeClass("disabled")
         }
 
         function set_row_processing_display(job_id) {
             $('#state-' + job_id).text("處理中")
             $('#run-job-btn-' + job_id)
-                .text("訓練中")
+                .text("處理中")
                 .addClass("disabled")
         }
 
         function set_row_wait_display(job_id) {
             $('#state-' + job_id).text("等待中")
             $('#run-job-btn-' + job_id)
-                .text("開始訓練")
+                .text("開始貼標")
                 .removeClass("disabled")
         }
 

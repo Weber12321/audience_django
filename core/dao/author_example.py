@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Iterable, Any
 from tqdm import tqdm
 
 from core.dao.conn_info import ConnInfo
-from core.helpers.db_helper import insert_example, init_schema, select_example, update_example, select_examples
+from core.helpers.db_helper import insert_example, init_schema, select_example, update_example, select_rows
 from core.helpers.text_helper import REText
 from core.helpers.enums_helper import DBType, Errors, ModelType
 
@@ -303,7 +303,7 @@ def select_labeling_authors(conn_info: ConnInfo, source_author: str) -> List[Opt
         raise ValueError(f"{Errors.UNKNOWN_DB_TYPE}: {conn_info.db_type}")
 
     results: List[Optional[Author]] = [get_labeling_author_entity_from_row(result) for result in
-                                       select_examples(conn_info, query, [source_author])]
+                                       select_rows(conn_info, query, [source_author])]
     return results
 
 
@@ -319,7 +319,7 @@ def select_labeling_authors_sample(conn_info: ConnInfo, panel: str = None,
         raise ValueError(f"{Errors.UNKNOWN_DB_TYPE}: {conn_info.db_type}")
 
     results: List[Dict] = [get_labeling_author_entity_from_row(result).to_api_result() for result in
-                           select_examples(conn_info, query, panel)]
+                           select_rows(conn_info, query, panel)]
     return results
 
 
@@ -330,7 +330,7 @@ def select_authors(conn_info: ConnInfo, limit: int = 100, offset: int = 0) -> Li
         raise ValueError(f"{Errors.UNKNOWN_DB_TYPE}: {conn_info.db_type}")
 
     results: List[Optional[Author]] = [get_author_entity_from_row(result) for result in
-                                       select_examples(conn_info, query)]
+                                       select_rows(conn_info, query)]
     return results
 
 
