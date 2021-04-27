@@ -76,7 +76,7 @@ def chunks(generator, chunk_size):
 if __name__ == '__main__':
     rows = get_opview_data_rows(host="172.18.20.190", port=3306, user='rd2', password='eland4321',
                                 source_name="forum_data", fetch_size=23, max_rows=1000,
-                                fields=settings.AVAILABLE_FIELDS,
+                                fields=settings.AVAILABLE_FIELDS.keys(),
                                 conditions=["post_time between '2019-01-01 00:00:00' and '2020-01-01 00:00:00'"])
     count = 0
     for i, row in enumerate(rows):

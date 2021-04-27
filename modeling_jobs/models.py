@@ -12,6 +12,7 @@ from labeling_jobs.models import LabelingJob, Document, Label
 
 class ModelingJob(models.Model):
     model_choices = [(key, value.get("verbose_name", key)) for key, value in settings.ML_MODELS.items()]
+    feature_choices = [(key, value) for key, value in settings.AVAILABLE_FIELDS.items()]
 
     class JobStatus(models.TextChoices):
         WAIT = ('wait', '等待中')
@@ -24,6 +25,7 @@ class ModelingJob(models.Model):
     description = models.CharField(max_length=100, verbose_name="模型敘述")
     is_multi_label = models.BooleanField(verbose_name="是否為多標籤")
     model_type = models.CharField(max_length=50, choices=model_choices)
+    feature = models.CharField(max_length=50, choices=feature_choices, default='content')
     jobRef = models.ForeignKey(LabelingJob, verbose_name="使用資料", on_delete=models.SET_NULL, blank=True, null=True)
     job_train_status = models.CharField(max_length=20, verbose_name="模型訓練狀態", default=JobStatus.WAIT,
                                         choices=JobStatus.choices)

@@ -196,7 +196,16 @@ TEMP_DIR = BASE_DIR / 'tmp'
 # predicting_result
 FETCH_COUNT = -1
 CONNECT_RETRIES = 3
-AVAILABLE_FIELDS = ['id', 's_id', 's_area_id', 'title', 'author', 'content', 'post_time']
+# 若要新增AVAILABLE_FIELDS請同步調整 core.dao.input_example，key必須與InputExample對齊（會以getattr(key必須與InputExample對齊, key)取值）。
+AVAILABLE_FIELDS = {
+    'id': '文章id',
+    's_id': '來源id',
+    's_area_id': '頻道id',
+    'title': '標題',
+    'author': '作者',
+    'content': '內文',
+    'post_time': '發文時間',
+}
 PREDICT_DATABASE = {
     'source': {
         'ENGINE': 'django.db.backends.mysql',

@@ -95,7 +95,8 @@ def create_ext_data(job: LabelingJob, uploaded_file, remove_old_data=True):
 def load_model(job: ModelingJob, model_path=None):
     if job.model_type in settings.ML_MODELS:
         model_cls = get_model_class(job.model_type)
-        model: AudienceModel = model_cls(model_dir_name=model_path if model_path else job.model_path)
+        model: AudienceModel = model_cls(model_dir_name=model_path if model_path else job.model_path,
+                                         feature=job.feature)
         if hasattr(model, 'is_multi_label'):
             print(job.is_multi_label)
             model.is_multi_label = job.is_multi_label

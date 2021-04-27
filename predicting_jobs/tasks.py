@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from time import sleep
 from typing import List, Dict, Iterable
@@ -28,7 +29,7 @@ def get_dummy_predicting_target_data(predicting_target: PredictingTarget, ):
 
 
 def get_target_data(predicting_target: PredictingTarget, fetch_size=1000, max_rows=None,
-                    fields=settings.AVAILABLE_FIELDS):
+                    fields=settings.AVAILABLE_FIELDS.keys()):
     source: Source = predicting_target.source
     connection_settings = {
         "host": source.host,
@@ -61,7 +62,7 @@ def get_models(applying_models: List[ApplyingModel]) -> List[AudienceModel]:
         model = load_model(applying_model.modeling_job)
         model.load()
         model_list.append(model)
-        print(model.__str__())
+        # print(model.__str__())
     return model_list
 
 
@@ -101,25 +102,29 @@ def predict_task(job: PredictingJob):
             check_if_status_break(job.id)
             print(f"Cleaning predicting data from target '{predicting_target}'")
             predicting_target.predictingresult_set.all().delete()
-            predicting_target.save()
             predicting_target.job_status = JobStatus.PROCESSING
             predicting_target.save()
-            input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size, max_rows=100)
+            input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size,
+                                                                     max_rows=100)
             for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size)):
-                sleep(1)
+                # sleep(1)
                 check_if_status_break(job.id)
                 batch_results = predict_worker.run_labeling(example_chunk)
                 # todo save result tags into database
                 for tmp_example, example_results in zip(example_chunk, batch_results):
-                    ensemble_results: Dict[str, float] = predict_worker.ensemble_results(example_results,
-                                                                                         bypass_same_label=True)
+                    ensemble_results, apply_path = predict_worker.ensemble_results(example_results,
+                                                                                   bypass_same_label=True)
                     data_id = tmp_example.id_
                     for label_name, score in ensemble_results.items():
                         predicting_result = PredictingResult(predicting_target=predicting_target,
                                                              label_name=label_name,
-                                                             score=score, data_id=data_id)
-                        print(label_name, tmp_example.content[:50])
+                                                             score=score, data_id=data_id,
+                                                             apply_path=json.dumps(apply_path[label_name],
+                                                                                   ensure_ascii=False))
+                        # print(apply_path[label_name])
+                        # print(label_name, tmp_example.content[:50], "..." if len(tmp_example.content) > 50 else "")
                         predicting_result.save()
+                        print(predicting_result.apply_path)
             predicting_target.job_status = JobStatus.DONE
             predicting_target.save()
 

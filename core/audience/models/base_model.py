@@ -19,7 +19,7 @@ class AudienceModel(ABC):
     def __init__(self, model_dir_name: str, feature: Features = Features.CONTENT):
         self.model = None
         self.model_dir_name = Path(model_dir_name)
-        self.feature = feature
+        self.feature = feature if isinstance(feature, Features) else Features(feature)
 
     @abstractmethod
     def fit(self, examples: Iterable[InputExample], y_true):
