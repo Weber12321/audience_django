@@ -8,9 +8,16 @@ from audience_toolkits import settings
 
 
 class LabelingJob(models.Model):
-    name = models.CharField(max_length=100, verbose_name="標記工作名稱")
+    class JobTypes(models.TextChoices):
+        SUPERVISE_MODEL = ("supervise_model", "監督式學習模型")
+        RULE_BASE_MODEL = ("rule_base", "規則模型")
+        TERM_WEIGHT_MODEL = ("term_weight", "詞彙權重模型")
+
+    name = models.CharField(max_length=100, verbose_name="標記工作名稱", default="Job")
     description = models.TextField(verbose_name="定義與說明")
     is_multi_label = models.BooleanField(default=False, verbose_name="是否屬於多標籤")
+    job_data_type = models.CharField(max_length=20, choices=JobTypes.choices, verbose_name="任務類型",
+                                     default=JobTypes.SUPERVISE_MODEL)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)

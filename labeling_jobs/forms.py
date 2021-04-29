@@ -13,20 +13,23 @@ class UploadFileJobForm(forms.ModelForm):
 class LabelingJobForm(forms.ModelForm):
     class Meta:
         model = LabelingJob
-        fields = ["name", "description", "is_multi_label"]
-        last_job_id = LabelingJob.objects.last().id if LabelingJob.objects.last() is not None else 0
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control',
-                                           'value': f'Jab {last_job_id + 1}'}),
-            'description': forms.Textarea(attrs={'class': 'form-control'}),
-            'is_multi_label': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'created_by': forms.TextInput(attrs={'hidden': True})
-        }
-        labels = {
-            'name': '任務名稱',
-            'description': '描述與定義',
-            "is_multi_label": '是否為多標籤分類'
-        }
+        fields = "__all__"
+        exclude = ['created_by']
+        # last_job_id = 0  # LabelingJob.objects.last().id if LabelingJob.objects.last() is not None else 0
+        # widgets = {
+        #     'name': forms.TextInput(attrs={'class': 'form-control',
+        #                                    'value': f'Jab'}),
+        #     'description': forms.Textarea(attrs={'class': 'form-control'}),
+        #     'job_type': forms.Textarea(attrs={'class': 'form-control'}),
+        #     'is_multi_label': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        #     'created_by': forms.TextInput(attrs={'hidden': True})
+        # }
+        # labels = {
+        #     'name': '任務名稱',
+        #     'job_type': '任務類型',
+        #     'description': '描述與定義',
+        #     "is_multi_label": '是否為多標籤分類'
+        # }
 
 
 class LabelForm(forms.ModelForm):
