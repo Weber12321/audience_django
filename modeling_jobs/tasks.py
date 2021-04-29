@@ -5,7 +5,7 @@ from typing import List
 from django.db.models import QuerySet
 
 from audience_toolkits import settings
-from core.audience.models.base_model import AudienceModel
+from core.audience.models.base_model import SuperviseModel
 from core.dao.input_example import Features, InputExample
 from labeling_jobs.models import Document, LabelingJob, Label
 from labeling_jobs.tasks import create_documents
@@ -98,8 +98,8 @@ def create_ext_data(job: LabelingJob, uploaded_file, remove_old_data=True):
 def load_model(job: ModelingJob, model_path=None):
     if job.model_type in settings.ML_MODELS:
         model_cls = get_model_class(job.model_type)
-        model: AudienceModel = model_cls(model_dir_name=model_path if model_path else job.model_path,
-                                         feature=job.feature)
+        model: SuperviseModel = model_cls(model_dir_name=model_path if model_path else job.model_path,
+                                          feature=job.feature)
         if hasattr(model, 'is_multi_label'):
             print(job.is_multi_label)
             model.is_multi_label = job.is_multi_label

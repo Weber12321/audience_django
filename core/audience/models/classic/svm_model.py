@@ -8,12 +8,12 @@ from sklearn.metrics import classification_report
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
 import numpy as np
-from core.audience.models.base_model import AudienceModel, MODEL_ROOT
+from core.audience.models.base_model import SuperviseModel, MODEL_ROOT
 from core.dao.input_example import Features
 from core.helpers.model_helpers import get_multi_accuracy, load_joblib
 
 
-class SvmModel(AudienceModel):
+class SvmModel(SuperviseModel):
     def __init__(self, model_dir_name, is_multi_label=False, feature=Features.CONTENT):
         super().__init__(model_dir_name, feature=feature)
         self.available_features = {

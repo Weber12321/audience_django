@@ -1,7 +1,7 @@
-from core.audience.models.base_model import AudienceModel
+from core.audience.models.base_model import SuperviseModel
 
 
-class TermWeightModel(AudienceModel):
+class TermWeightModel(SuperviseModel):
     def __init__(self, model_dir_name):
         super().__init__(model_dir_name=model_dir_name)
         print(self.__name__)

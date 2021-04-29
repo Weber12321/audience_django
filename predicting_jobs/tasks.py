@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from audience_toolkits import settings
 from core.audience.audience_worker import AudienceWorker
-from core.audience.models.base_model import AudienceModel
+from core.audience.models.base_model import SuperviseModel
 from core.dao.input_example import InputExample
 from core.helpers.data_helpers import chunks, get_opview_data_rows
 from modeling_jobs.tasks import load_model
@@ -59,7 +59,7 @@ def get_target_data(predicting_target: PredictingTarget, fetch_size: int = 1000,
             )
 
 
-def get_models(applying_models: List[ApplyingModel]) -> List[AudienceModel]:
+def get_models(applying_models: List[ApplyingModel]) -> List[SuperviseModel]:
     model_list = []
     for applying_model in applying_models:
         model = load_model(applying_model.modeling_job)

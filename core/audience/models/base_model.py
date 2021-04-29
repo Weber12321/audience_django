@@ -10,9 +10,9 @@ from core.dao.input_example import InputExample, Features
 MODEL_ROOT = Path(settings.MODEL_PATH_FIELD_DIRECTORY)
 
 
-class AudienceModel(ABC):
+class SuperviseModel(ABC):
     """
-    此模型為分類器類型，主要用於依據特徵分類，並輸出類別與機率值（或分數）。
+    此模型為監督式分類器類型，主要用於依據特徵分類，並輸出類別與機率值（或分數）。
     注意：若有不同類型的模型或輸出方式，請另外設計不同的Interface並繼承之。
     """
 
@@ -49,7 +49,34 @@ class AudienceModel(ABC):
         raise NotImplementedError
 
 
-class DummyModel(AudienceModel):
+class RuleBaseModel(ABC):
+    """
+    此模型為規則模型，無需訓練，需指定與編輯模型規則，命中規則就回傳該標籤
+    """
+
+    def __init__(self, model_dir_name: str, feature: Features = Features.CONTENT):
+        self.rules = None
+        self.model_dir_name = Path(model_dir_name)
+        self.feature = feature if isinstance(feature, Features) else Features(feature)
+
+    @abstractmethod
+    def predict(self, examples: Iterable[InputExample]) -> List[Tuple[Tuple]]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def eval(self, examples: Iterable[InputExample], y_true):
+        raise NotImplementedError
+
+    @abstractmethod
+    def save(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def load(self):
+        raise NotImplementedError
+
+
+class DummyModel(SuperviseModel):
     """
     用於測試流程的假模型，無需訓練與輸入，直接使用即可。
     """

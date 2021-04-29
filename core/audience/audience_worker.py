@@ -3,7 +3,7 @@ from typing import Dict, List, Generator, Tuple
 
 from typing import Iterable
 
-from core.audience.models.base_model import AudienceModel
+from core.audience.models.base_model import SuperviseModel
 from core.dao.input_example import InputExample
 from core.helpers.log_helper import get_logger
 
@@ -11,13 +11,13 @@ RESULT = namedtuple("Result", "labels, logits, model, feature, value")
 
 
 class AudienceWorker:
-    def __init__(self, model_list: List[AudienceModel], logger=None):
+    def __init__(self, model_list: List[SuperviseModel], logger=None):
         if logger is None:
             self.logger = get_logger(context="AudienceWorker")
         else:
             self.logger = logger
 
-        self.models: List[AudienceModel] = model_list
+        self.models: List[SuperviseModel] = model_list
 
     def run_labeling(self, input_examples: List[InputExample]) -> List[List[RESULT]]:
         """

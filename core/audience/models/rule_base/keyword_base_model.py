@@ -1,13 +1,10 @@
-from core.audience.models.base_model import AudienceModel
+from core.audience.models.base_model import RuleBaseModel
 
 
-class KeywordModel(AudienceModel):
+class KeywordModel(RuleBaseModel):
     def __init__(self, model_dir_name):
         super().__init__(model_dir_name=model_dir_name)
         print(self.__name__)
-        raise NotImplementedError
-
-    def fit(self, contents, y_true):
         raise NotImplementedError
 
     def predict(self, contents):
