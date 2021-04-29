@@ -167,7 +167,7 @@ def training_model(request, pk):
 @csrf_exempt
 def testing_model_via_ext_data(request, pk):
     uploaded_file = request.FILES['ext_test_file']
-    job_train_status = ModelingJob.objects.get(pk=pk).job_train_status
+    job_train_status = ModelingJob.objects.get(pk=pk).job_status
     # python manage.py qcluster
     if job_train_status != 'done':
         return HttpResponse('請先訓練模型')
@@ -203,7 +203,7 @@ def get_progress(request, pk):
     job = ModelingJob.objects.get(pk=pk)
 
     response_data = {
-        'state': job.job_train_status,
-        'details': job.job_train_status,
+        'state': job.job_status,
+        'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load report_extras %}
+{% load result_extras %}
 {% block nav_title %} 模型訓練任務 {% endblock %}
 {% block page_title %}
     模型訓練任務列表
@@ -61,7 +61,6 @@
                     <th>id</th>
                     <th scope="col">模型名稱</th>
                     <th scope="col">模型類型</th>
-                    <th scope="col">模型敘述</th>
                     <th scope="col">是否為多標籤</th>
                     <th scope="col">使用資料</th>
                     <th scope="col">建立時間</th>
@@ -77,7 +76,6 @@
                         <td>{{ job.id }}</td>
                         <td><a href="{% url 'modeling_jobs:job-detail' job.id %}">{{ job.name }}</a></td>
                         <td>{{ job.get_model_type_display }}</td>
-                        <td>{{ job.description }}</td>
                         <td>{{ job.is_multi_label }}</td>
                         <td><a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a></td>
                         <td>{{ job.created_at|date:"SHORT_DATE_FORMAT" }}</td>
@@ -89,10 +87,9 @@
                             </button>
                         </td>
                         <td>
-                            <span id="state-{{ job.id }}"></span>
+                            <span id="state-{{ job.id }}" data-toggle="tooltip" data-placement="top"
+                                  title="無錯誤訊息"></span>
                         </td>
-
-
                         <td>
                             <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle btn-sm"
                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -145,32 +142,32 @@
             })
         }
 
-        function set_row_done_display(job_id) {
-            $('#state-' + job_id).text("完成")
+        function set_row_done_display(job_id, details) {
+            $('#state-' + job_id).text("完成").attr('data-original-title', details)
             $('#train-btn-' + job_id)
                 .text("重新訓練")
                 .removeClass("disabled")
             $('#test-btn-' + job_id).attr("hidden", false)
         }
 
-        function set_row_processing_display(job_id) {
-            $('#state-' + job_id).text("處理中")
+        function set_row_processing_display(job_id, details) {
+            $('#state-' + job_id).text("處理中").attr('data-original-title', details)
             $('#train-btn-' + job_id)
                 .text("訓練中")
                 .addClass("disabled")
             $('#test-btn-' + job_id).attr("hidden", true)
         }
 
-        function set_row_wait_display(job_id) {
-            $('#state-' + job_id).text("等待中")
+        function set_row_wait_display(job_id, details) {
+            $('#state-' + job_id).text("等待中").attr('data-original-title', details)
             $('#train-btn-' + job_id)
                 .text("開始訓練")
                 .removeClass("disabled")
             $('#test-btn-' + job_id).attr("hidden", true)
         }
 
-        function set_row_error_display(job_id) {
-            $('#state-' + job_id).text("錯誤")
+        function set_row_error_display(job_id, details) {
+            $('#state-' + job_id).text("錯誤").attr('data-original-title', details);
             $('#train-btn-' + job_id).text("重試")
                 .removeClass("disabled")
             $('#test-btn-' + job_id).attr("hidden", true)
@@ -188,24 +185,26 @@
                 let timeout = 10000
                 console.log(result)
                 let state = result.state
+                let details = result.details
                 let elem_id = '#state-' + job_id
                 console.log(elem_id)
                 $(elem_id).text(state)
                 switch (state) {
                     case 'done':
-                        set_row_done_display(job_id)
+                        set_row_done_display(job_id, details)
                         break
                     case 'wait':
-                        set_row_wait_display(job_id)
+                        set_row_wait_display(job_id, details)
                         break
                     case 'processing':
                         timeout = 1000
-                        set_row_processing_display(job_id)
+                        set_row_processing_display(job_id, details)
                         break
                     default:
                         console.log(state)
-                        set_row_error_display(job_id)
+                        set_row_error_display(job_id, details)
                 }
+
                 setTimeout(function () {
                     {#console.log(url)#}
                     update_progress(job_id, url)

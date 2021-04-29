@@ -39,7 +39,6 @@ class AudienceWorker:
     def ensemble_results(predicting_results: List[RESULT], bypass_same_label=True) \
             -> Tuple[Dict[str, float], Dict[str, List[RESULT]]]:
         """
-        
         :param predicting_results: list of models-> list of label results -> label, score
         :param bypass_same_label: True 先預測先贏，只保留第一個預測到的分數； False 加總所有預測到的分數
         :return: 回傳最終統整完的標籤名稱與分數，以及預測路徑（模型先後順序），這邊的標籤將喪失關聯

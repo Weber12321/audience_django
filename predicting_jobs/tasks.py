@@ -3,6 +3,7 @@ from datetime import datetime
 from time import sleep
 from typing import List, Dict, Iterable
 
+from django.utils import timezone
 from tqdm import tqdm
 
 from audience_toolkits import settings
@@ -28,8 +29,8 @@ def get_dummy_predicting_target_data(predicting_target: PredictingTarget, ):
             content=predicting_target.description, post_time=datetime.now())
 
 
-def get_target_data(predicting_target: PredictingTarget, fetch_size=1000, max_rows=None,
-                    fields=settings.AVAILABLE_FIELDS.keys()):
+def get_target_data(predicting_target: PredictingTarget, fetch_size: int = 1000, max_rows: int = None,
+                    fields=settings.AVAILABLE_FIELDS.keys(), min_len: int = 10, max_len: int = 1000):
     source: Source = predicting_target.source
     connection_settings = {
         "host": source.host,
@@ -46,14 +47,16 @@ def get_target_data(predicting_target: PredictingTarget, fetch_size=1000, max_ro
         ]
     }
     for row in get_opview_data_rows(**connection_settings):
-        yield InputExample(
-            id_=row.get("id"),
-            s_area_id=row.get("s_area_id"),
-            author=row.get("author"),
-            title=row.get("title"),
-            content=row.get("content"),
-            post_time=row.get("post_time"),
-        )
+        if min_len <= len(row.get("content")) <= max_len:
+            yield InputExample(
+                id_=row.get("id"),
+                s_id=row.get("s_id"),
+                s_area_id=row.get("s_area_id"),
+                author=row.get("author"),
+                title=row.get("title"),
+                content=row.get("content"),
+                post_time=row.get("post_time"),
+            )
 
 
 def get_models(applying_models: List[ApplyingModel]) -> List[AudienceModel]:
@@ -96,45 +99,55 @@ def predict_task(job: PredictingJob):
     modeling_jobs = [applying_model.modeling_job for applying_model in applying_models]
     print(f"Using models:", [mj.name for mj in modeling_jobs])
     # start predicting
-
     try:
         for predicting_target in job.predictingtarget_set.all():
+            document_count = 0
             check_if_status_break(job.id)
             print(f"Cleaning predicting data from target '{predicting_target}'")
             predicting_target.predictingresult_set.all().delete()
             predicting_target.job_status = JobStatus.PROCESSING
             predicting_target.save()
             input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size,
-                                                                     max_rows=100)
-            for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size)):
+                                                                     max_rows=10000,
+                                                                     max_len=int(predicting_target.max_content_length),
+                                                                     min_len=int(predicting_target.min_content_length))
+            for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size),
+                                      desc=f'{batch_size} documents per iter'):
                 # sleep(1)
                 check_if_status_break(job.id)
                 batch_results = predict_worker.run_labeling(example_chunk)
                 # todo save result tags into database
                 for tmp_example, example_results in zip(example_chunk, batch_results):
+                    document_count += 1
                     ensemble_results, apply_path = predict_worker.ensemble_results(example_results,
                                                                                    bypass_same_label=True)
                     data_id = tmp_example.id_
                     for label_name, score in ensemble_results.items():
-                        predicting_result = PredictingResult(predicting_target=predicting_target,
-                                                             label_name=label_name,
-                                                             score=score, data_id=data_id,
-                                                             apply_path=json.dumps(apply_path[label_name],
-                                                                                   ensure_ascii=False))
+                        predicting_result = PredictingResult(
+                            predicting_target=predicting_target,
+                            label_name=label_name,
+                            score=score, data_id=data_id,
+                            source_author=f"{tmp_example.s_id}_{tmp_example.author}",
+                            apply_path=json.dumps(apply_path[label_name], ensure_ascii=False),
+                            created_at=timezone.now()
+                        )
                         # print(apply_path[label_name])
                         # print(label_name, tmp_example.content[:50], "..." if len(tmp_example.content) > 50 else "")
                         predicting_result.save()
-                        print(predicting_result.apply_path)
+                        # print(predicting_result.apply_path)
+            print(f"target: {predicting_target.name} processed {document_count} documents.")
             predicting_target.job_status = JobStatus.DONE
             predicting_target.save()
 
         # if success
         job.job_status = JobStatus.DONE
     except TaskCanceledByUserException as e:
+        job.error_message = "Job canceled by user."
         job.job_status = JobStatus.BREAK
     except Exception as e:
         # if something wrong
         print(e)
+        job.error_message = e
         job.job_status = JobStatus.ERROR
     finally:
         job.save()

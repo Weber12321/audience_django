@@ -23,7 +23,7 @@ def get_model_class(name: str):
 
 
 def train_model_task(job: ModelingJob):
-    job.job_train_status = ModelingJob.JobStatus.PROCESSING
+    job.job_status = ModelingJob.JobStatus.PROCESSING
     job.save()
     try:
         train_set = job.jobRef.get_train_set()
@@ -42,12 +42,13 @@ def train_model_task(job: ModelingJob):
         # get test set report
         eval_dataset(model=model, dataset_type=Document.TypeChoices.TEST, dataset=job.jobRef.get_test_set(), job=job)
 
-        job.job_train_status = ModelingJob.JobStatus.DONE
+        job.job_status = ModelingJob.JobStatus.DONE
         job.save()
         print('training done')
     except Exception as e:
         print(e)
-        job.job_train_status = ModelingJob.JobStatus.ERROR
+        job.error_message = e
+        job.job_status = ModelingJob.JobStatus.ERROR
         job.save()
         raise ValueError("Task Failed")
 
@@ -68,6 +69,7 @@ def testing_model_via_ext_data_task(uploaded_file, job: ModelingJob, remove_old_
         print('test done')
     except Exception as e:
         print(e)
+        job.error_message = e
         job.ext_test_status = ModelingJob.JobStatus.ERROR
         job.save()
         raise ValueError("Task Failed")
@@ -77,7 +79,8 @@ def get_feature_and_label(documents: List[Document], feature=Features.CONTENT):
     examples: List[InputExample] = []
     labels = []
     for doc in documents:
-        example = InputExample(id_=str(doc.id), s_area_id=doc.s_area_id, title=doc.title, author=doc.author,
+        example = InputExample(id_=str(doc.id), s_id=doc.s_id, s_area_id=doc.s_area_id, title=doc.title,
+                               author=doc.author,
                                content=doc.content,
                                post_time=doc.post_time)
         examples.append(example)

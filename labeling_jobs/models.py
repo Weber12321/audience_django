@@ -109,6 +109,7 @@ class Document(models.Model):
     labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     title = models.CharField(max_length=512, verbose_name="標題", blank=True)
     author = models.CharField(max_length=200, verbose_name="作者", blank=True)
+    s_id = models.CharField(max_length=100, verbose_name="來源id", blank=True)
     s_area_id = models.CharField(max_length=100, verbose_name="頻道id", blank=True)
     content = models.TextField(verbose_name="內文", blank=True)
     post_time = models.DateTimeField(verbose_name="發布時間", blank=True, null=True)

@@ -122,6 +122,10 @@
                                             操作
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                            {% if target.job_status.lower == "done" %}
+                                                <a href="{% url 'predicting_jobs:result-samples' predicting_job.id target.id %}"
+                                                   class="dropdown-item">查看抽樣結果</a>
+                                            {% endif %}
                                             <a href="{% url 'predicting_jobs:job-target-update' predicting_job.id target.id %}"
                                                class="dropdown-item">修改</a>
                                             <a href="{% url 'predicting_jobs:job-target-delete' predicting_job.id target.id %}"

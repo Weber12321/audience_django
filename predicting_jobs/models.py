@@ -91,6 +91,7 @@ class PredictingTarget(models.Model):
     min_content_length = models.IntegerField(verbose_name='最小文章長度', default=10)
     max_content_length = models.IntegerField(verbose_name='最大文章長度', default=2000)
     job_status = models.CharField(max_length=20, verbose_name="任務狀態", default=JobStatus.WAIT, choices=JobStatus.choices)
+    error_message = models.TextField(verbose_name="錯誤訊息", null=True)
 
     def __str__(self):
         return self.name
@@ -112,6 +113,7 @@ class PredictingResult(models.Model):
     label_name = models.CharField(max_length=200, verbose_name="標籤名稱")
     score = models.FloatField(verbose_name="預測分數")
     data_id = models.CharField(max_length=200, verbose_name="預測文章ID")
+    source_author = models.CharField(max_length=200, verbose_name="作者", default="UNK")
     apply_path = models.JSONField(verbose_name="模型預測路徑", null=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
 

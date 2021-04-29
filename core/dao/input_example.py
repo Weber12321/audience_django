@@ -7,7 +7,7 @@ from core.helpers.log_helper import get_logger
 
 _logger = get_logger("DBOperator", verbose=True)
 
-DEFAULT_SELECT_QUERY: str = "SELECT id, s_area_id, author, title, content, post_time FROM {} {};"
+DEFAULT_SELECT_QUERY: str = "SELECT id, s_id, s_area_id, author, title, content, post_time FROM {} {};"
 DEFAULT_SELECT_ID_QUERY: str = "SELECT id FROM {} {};"
 DEFAULT_SQLITE_COUNT_QUERY: str = "SELECT count(*) as rows FROM {} {};"
 DEFAULT_EXPLAIN_COUNT: str = "EXPLAIN SELECT count(*) FROM {} {};"
@@ -18,6 +18,7 @@ class Features(Enum):
     """
     可用特徵，會使用value去操作'getattr(example, feature.value)'
     """
+    S_ID = 's_id'
     S_AREA_ID = 's_area_id'
     AUTHOR = 'author'
     TITLE = 'title'
@@ -28,6 +29,7 @@ class Features(Enum):
 @dataclass
 class InputExample:
     id_: Optional[str]
+    s_id: Optional[str]
     s_area_id: Optional[str]
     author: Optional[str]
     title: Optional[str]

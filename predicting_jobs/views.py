@@ -7,7 +7,7 @@ from django.views import generic
 from django_q.tasks import AsyncTask
 
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
-from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel
+from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult
 from predicting_jobs.tasks import predict_task
 import json
 
@@ -127,6 +127,31 @@ class ApplyingModelDelete(LoginRequiredMixin, generic.DeleteView):
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
         return reverse_lazy('predicting_jobs:job-detail', kwargs={"pk": job_id})
+
+
+class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
+    paginate_by = 100
+    model = PredictingResult
+    template_name = "predicting_target/predict_result.html"
+    context_object_name = 'result_rows'
+
+    def get_queryset(self):
+        label_name = self.request.GET.dict().get("label_name")
+        if label_name:
+            return PredictingResult.objects.filter(label_name=label_name)
+        else:
+            return PredictingResult.objects.all()
+
+
+class PredictResultSamplingByLabelListView(LoginRequiredMixin, generic.ListView):
+    paginate_by = 100
+    model = PredictingResult
+    template_name = "predicting_target/predict_result.html"
+    context_object_name = 'result_rows'
+
+    def get_queryset(self):
+        label_name = self.kwargs['label_name']
+        return PredictingResult.objects.filter(label_name=label_name)
 
 
 def start_job(request, pk):

@@ -25,11 +25,11 @@ class PredictingTargetForm(forms.ModelForm):
     class Meta:
         model = PredictingTarget
         fields = '__all__'
-        exclude = ['predicting_job']
-        widgets = {
-            "begin_post_time": forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            "end_post_time": forms.DateTimeInput(attrs={'type': 'datetime-local'})
-        }
+        exclude = ['predicting_job', 'error_message']
+        # widgets = {
+        #     "begin_post_time": forms.DateTimeInput(attrs={'type': 'datetime-local'}, input_formats='%Y-%m-%d'),
+        #     "end_post_time": forms.DateTimeInput(attrs={'type': 'datetime-local'}, input_formats='%Y-%m-%d')
+        # }
 
 
 class ApplyingModelForm(forms.ModelForm):

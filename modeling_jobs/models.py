@@ -27,8 +27,9 @@ class ModelingJob(models.Model):
     model_type = models.CharField(max_length=50, choices=model_choices)
     feature = models.CharField(max_length=50, choices=feature_choices, default='content')
     jobRef = models.ForeignKey(LabelingJob, verbose_name="使用資料", on_delete=models.SET_NULL, blank=True, null=True)
-    job_train_status = models.CharField(max_length=20, verbose_name="模型訓練狀態", default=JobStatus.WAIT,
-                                        choices=JobStatus.choices)
+    job_status = models.CharField(max_length=20, verbose_name="模型訓練狀態", default=JobStatus.WAIT,
+                                  choices=JobStatus.choices)
+    error_message = models.TextField(verbose_name="錯誤訊息", null=True)
     ext_test_status = models.CharField(max_length=20, verbose_name="模型測試狀態", default=JobStatus.WAIT,
                                        choices=JobStatus.choices)
     model_path = models.CharField(max_length=100, verbose_name="模型存放位置", blank=True)

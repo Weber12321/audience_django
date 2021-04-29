@@ -1,0 +1,24 @@
+{% load result_extras %}
+<ul>
+    {% for row in result_rows %}
+        <li>
+            {{ row.id }} - {{ row.data_id }}, {{ row.source_author }}, {{ row.label_name }}, {{ row.score }}, {{ row.apply_path|get_apply_path_features }}
+        </li>
+    {% endfor %}
+</ul>
+
+<div class="col-12 pagination text-center">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}">上一頁</a>
+                {% endif %}
+
+                <span class="current">
+                     {{ page_obj.number }} / {{ paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">下一頁</a>
+                {% endif %}
+            </span>
+</div>
