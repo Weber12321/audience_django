@@ -19,6 +19,21 @@ python manage.py qcluster
 python manage.py runserver
 ```
 
+## available models
+### Supervise Models
+#### SVM
+待補充
+#### RandomForest
+待補充
+### RuleBase Models
+#### Keyword
+待補充
+#### Regex
+待補充
+
+## available features
+- 待補充
+- 待補充
 ## for developers
 > ### 開發原則
 > 避免後續程式測試的困難，請務必注意以下原則：
