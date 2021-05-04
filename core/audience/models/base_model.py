@@ -55,7 +55,7 @@ class RuleBaseModel(ABC):
     """
 
     def __init__(self, model_dir_name: str, feature: Features = Features.CONTENT, **kwargs):
-        self.rules = None
+        self.patterns = None
         self.model_dir_name = Path(model_dir_name)
         self.feature = feature if isinstance(feature, Features) else Features(feature)
 
