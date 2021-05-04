@@ -13,9 +13,13 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf.urls import url
 from django.contrib import admin
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import path, include
-from django.contrib.auth import views as auth_views
+from django.views import static
+
+from audience_toolkits import settings
 
 urlpatterns = [
     path('', include('home.urls')),
@@ -24,4 +28,9 @@ urlpatterns = [
     path('predicting_jobs/', include('predicting_jobs.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+    url(r'^static/(?P<path>.*)$', static.serve,
+        {'document_root': 'static'}, name='static'),
+]
+urlpatterns = [
+    url('^audience/', include(urlpatterns)),
 ]
