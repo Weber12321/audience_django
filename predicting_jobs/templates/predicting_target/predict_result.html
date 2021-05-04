@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load result_extras %}
+{% block content %}
+    <div class="col-12 m-4 pagination justify-content-center">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
+                {% endif %}
+
+                <span class="current">
+                     {{ page_obj.number }} / {{ paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
+                {% endif %}
+            </span>
+    </div>
+    <div class="row">
+        <div class="col-10">
+            <div class="list-group">
+                {% for row in result_rows %}
+                    <div class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ row.label_name }}</h5>
+                            <small>{{ row.created_at }}</small>
+                        </div>
+                        <p class="mb-1">{{ row.apply_path|get_apply_path_features }}</p>
+                        <small>#{{ row.id }} - {{ row.data_id }}, {{ row.source_author }}</small>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-2">
+            <div class="list-group">
+                {% for label_name in exist_labels %}
+                    <a href="{% url 'predicting_jobs:result-samples' predicting_job.id predicting_target.id %}?label_name={{ label_name }}"
+                       class="list-group-item list-group-item-action {% if label_name == current_label %}active{% endif %}"
+                       aria-current="true">
+                        {{ label_name }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-12 m-4 pagination justify-content-center">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
+                {% endif %}
+
+                <span class="current">
+                     {{ page_obj.number }} / {{ paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
+                {% endif %}
+            </span>
+    </div>
+{% endblock %}

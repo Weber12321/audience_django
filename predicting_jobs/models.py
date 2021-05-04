@@ -49,6 +49,7 @@ class ApplyingModel(models.Model):
         unique_together = ('predicting_job', 'modeling_job',)
         verbose_name = "應用模型"
         verbose_name_plural = "應用模型列表"
+        ordering = ('priority', 'created_at',)
 
     def get_absolute_url(self):
         return reverse('predicting_jobs:job-detail', kwargs={'pk': self.predicting_job_id})
@@ -63,8 +64,8 @@ class Source(models.Model):
                                 default=PREDICT_DATABASE.get("source", {}).get("USER"))
     password = models.CharField(max_length=100, verbose_name="資料庫密碼", null=True,
                                 default=PREDICT_DATABASE.get("source", {}).get("PASSWORD"))
-    port = models.CharField(max_length=6, verbose_name="資料庫連接埠",
-                            default=PREDICT_DATABASE.get("source", {}).get("PORT"))
+    port = models.IntegerField(verbose_name="資料庫連接埠",
+                               default=int(PREDICT_DATABASE.get("source", {}).get("PORT")))
     schema = models.CharField(max_length=100, verbose_name="資料庫名稱", null=True,
                               default=PREDICT_DATABASE.get("source", {}).get("SCHEMA"))
     tablename = models.CharField(max_length=100, verbose_name="資料表名稱",
@@ -91,6 +92,7 @@ class PredictingTarget(models.Model):
     min_content_length = models.IntegerField(verbose_name='最小文章長度', default=10)
     max_content_length = models.IntegerField(verbose_name='最大文章長度', default=2000)
     job_status = models.CharField(max_length=20, verbose_name="任務狀態", default=JobStatus.WAIT, choices=JobStatus.choices)
+    error_message = models.TextField(verbose_name="錯誤訊息", null=True)
 
     def __str__(self):
         return self.name
@@ -104,10 +106,17 @@ class PredictingTarget(models.Model):
 
 
 class PredictingResult(models.Model):
+    """
+    預測結果，供預測結果抽樣驗證用，最終會輸出至rd4的db供rd5建索引。建索引需要的欄位為source_author（<s_id>_<author>）, panel（label_name）。
+    注意：在匯出時不要清空rd5建索引的表格，可用update與insert，且必須於成功建完索引後將結果清掉，避免資料庫太肥大。
+    """
     predicting_target = models.ForeignKey(PredictingTarget, verbose_name="預測資料範圍", on_delete=models.CASCADE)
-    label = models.ForeignKey(Label, verbose_name="預測標籤名稱", on_delete=models.CASCADE)
+    label_name = models.CharField(max_length=200, verbose_name="標籤名稱")
     score = models.FloatField(verbose_name="預測分數")
     data_id = models.CharField(max_length=200, verbose_name="預測文章ID")
+    source_author = models.CharField(max_length=200, verbose_name="作者", default="UNK")
+    apply_path = models.JSONField(verbose_name="模型預測路徑", null=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
 
     def __str__(self):
         return f"{self.data_id} result"

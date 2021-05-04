@@ -1,26 +1,40 @@
 from dataclasses import dataclass, astuple, field
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 from core.helpers.log_helper import get_logger
 
 _logger = get_logger("DBOperator", verbose=True)
 
-DEFAULT_SELECT_QUERY: str = "SELECT id, s_area_id, author, title, content, post_time FROM {} {};"
+DEFAULT_SELECT_QUERY: str = "SELECT id, s_id, s_area_id, author, title, content, post_time FROM {} {};"
 DEFAULT_SELECT_ID_QUERY: str = "SELECT id FROM {} {};"
 DEFAULT_SQLITE_COUNT_QUERY: str = "SELECT count(*) as rows FROM {} {};"
 DEFAULT_EXPLAIN_COUNT: str = "EXPLAIN SELECT count(*) FROM {} {};"
 ID_CONDITION: str = " AND id > {} "
 
 
+class Features(Enum):
+    """
+    可用特徵，會使用value去操作'getattr(example, feature.value)'
+    """
+    S_ID = 's_id'
+    S_AREA_ID = 's_area_id'
+    AUTHOR = 'author'
+    TITLE = 'title'
+    CONTENT = 'content'
+    POST_TIME = 'post_time'
+
+
 @dataclass
 class InputExample:
-    id_: str
-    s_area_id: str
-    author: str
-    title: str
-    content: str
-    post_time: Optional[datetime]
+    id_: Optional[str] = field(default=None)
+    s_id: Optional[str] = field(default=None)
+    s_area_id: Optional[str] = field(default=None)
+    author: Optional[str] = field(default=None)
+    title: Optional[str] = field(default=None)
+    content: Optional[str] = field(default=None)
+    post_time: Optional[datetime] = field(default=None)
     label: Optional[str] = field(default=None)
 
     def __iter__(self):
@@ -39,7 +53,6 @@ def _fix_null_str(x):
         return ""
     else:
         return x
-
 
 # def _find_stop_position(txt: str, pos: int) -> Optional[tuple]:
 #     """ Return a stop's (beginning index, ending index) after the starting position (pos) in the text. """
@@ -103,7 +116,7 @@ def _fix_null_str(x):
 #         sql_query = DEFAULT_SELECT_ID_QUERY.format(f"{conn_info.table}",
 #                                                    f"{condition if condition is not None else ''} LIMIT {batch} "
 #                                                    f"OFFSET {finish_count - batch}")
-#     with get_db_connection(conn_info) as conn:
+#     with get_mysql_connection(conn_info) as conn:
 #         cursor = conn.cursor()
 #         _logger.debug(sql_query)
 #         cursor.execute(sql_query)
@@ -150,7 +163,7 @@ def _fix_null_str(x):
 #         query = sql_query.format(f"{conn_info.table}",
 #                                  f"{_condition if _condition is not None else ''} LIMIT {_limit}")
 #         tmp_rows = list()
-#         with get_db_connection(conn_info) as conn:
+#         with get_mysql_connection(conn_info) as conn:
 #             cursor = conn.cursor()
 #             _logger.debug(query)
 #             cursor.execute(query)

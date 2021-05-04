@@ -10,12 +10,21 @@ urlpatterns = [
     path('<int:pk>/update/', views.PredictingJobUpdate.as_view(), name='job-update'),
     path('<int:pk>/delete/', views.PredictingJobDelete.as_view(), name='job-delete'),
     path('<int:pk>/run/', views.start_job, name='job_start'),
+
+    # targets
     path('<int:job_id>/target/add', views.PredictingTargetCreate.as_view(), name='job-target-add'),
     path('<int:job_id>/target/<int:pk>/update', views.PredictingTargetUpdate.as_view(), name='job-target-update'),
     path('<int:job_id>/target/<int:pk>/delete', views.PredictingTargetDelete.as_view(), name='job-target-delete'),
+    path('<int:job_id>/target/<int:pk>/result_samples', views.PredictResultSamplingListView.as_view(),
+         name='result-samples'),
+
+    # applying models
     path('<int:job_id>/applying-model/add', views.ApplyingModelCreate.as_view(), name='job-applying-model-add'),
     path('<int:job_id>/applying-model/<int:pk>/update', views.ApplyingModelUpdate.as_view(),
          name='job-applying-model-update'),
     path('<int:job_id>/applying-model/<int:pk>/delete', views.ApplyingModelDelete.as_view(),
          name='job-applying-model-delete'),
+
+    # apis
+    path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),
 ]

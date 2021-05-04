@@ -1,103 +1,157 @@
-from collections import namedtuple
+import json
 from datetime import datetime
-from typing import List, Dict
+from time import sleep
+from typing import List, Dict, Iterable
 
-from core.audience.models.base_model import AudienceModel, DummyModel
-from core.audience.audience_worker import AudienceWorker, RESULT
+from django.utils import timezone
+from tqdm import tqdm
+
+from audience_toolkits import settings
+from core.audience.audience_worker import AudienceWorker
+from core.audience.models.base_model import SuperviseModel
 from core.dao.input_example import InputExample
-from predicting_jobs.models import PredictingJob, PredictingTarget, JobStatus, ApplyingModel, PredictingResult
+from core.helpers.data_helpers import chunks, get_opview_data_rows
+from modeling_jobs.tasks import get_model
+from predicting_jobs.models import PredictingJob, PredictingTarget, JobStatus, ApplyingModel, PredictingResult, Source
 
 
-def get_dummy_predicting_target_data(predicting_target: PredictingTarget):
-    return [
-        InputExample(
+class TaskCanceledByUserException(Exception):
+    pass
+
+
+def get_dummy_predicting_target_data(predicting_target: PredictingTarget, ):
+    for i in range(10000):
+        yield InputExample(
             id_=f"WH_{i}",
             s_area_id=f"WH_{i}",
             author=predicting_target.name,
             title=predicting_target.name,
             content=predicting_target.description, post_time=datetime.now())
-        for i in range(10)
-    ]
 
 
-def get_models(applying_models: List[ApplyingModel]) -> List[AudienceModel]:
+def get_target_data(predicting_target: PredictingTarget, fetch_size: int = 1000, max_rows: int = None,
+                    fields=settings.AVAILABLE_FIELDS.keys(), min_len: int = 10, max_len: int = 1000):
+    source: Source = predicting_target.source
+    connection_settings = {
+        "host": source.host,
+        "port": source.port,
+        "user": source.username,
+        "password": source.password,
+        "source_name": source.schema,
+        "table": source.tablename,
+        "fetch_size": fetch_size,
+        "max_rows": max_rows,
+        "fields": fields,
+        "conditions": [
+            f"post_time between '{predicting_target.begin_post_time}' and '{predicting_target.end_post_time}'"
+        ]
+    }
+    for row in get_opview_data_rows(**connection_settings):
+        if min_len <= len(row.get("content")) <= max_len:
+            yield InputExample(
+                id_=row.get("id"),
+                s_id=row.get("s_id"),
+                s_area_id=row.get("s_area_id"),
+                author=row.get("author"),
+                title=row.get("title"),
+                content=row.get("content"),
+                post_time=row.get("post_time"),
+            )
+
+
+def get_models(applying_models: List[ApplyingModel]) -> List[SuperviseModel]:
     model_list = []
     for applying_model in applying_models:
-        model = DummyModel(applying_model.modeling_job.name)
+        model = get_model(applying_model.modeling_job)
+        # print(model.model_dir_name)
         model_list.append(model)
+        # print(model.__str__())
     return model_list
 
 
-def get_dummy_models(num=2):
-    return [DummyModel(dummy_message=f"I'm number {i}") for i in range(num)]
+def reset_predict_targets(job: PredictingJob, status=JobStatus.WAIT):
+    for target in job.predictingtarget_set.all():
+        target.job_status = status
+        target.save()
 
 
-def get_dummy_label_set():
-    DummyLabel = namedtuple("Label", "name, id")
-    label1 = DummyLabel(name="dummy_label 1", id=1)
-    label2 = DummyLabel(name="dummy_label 2", id=2)
-    label3 = DummyLabel(name="dummy_label 3", id=2)
-    return [label1, label2]
-
-
-def get_dummy_modeling_jobs(num=2):
-    DummyJobRef = namedtuple("LabelingJob", "label_set")
-    modeling_job = namedtuple("ModelingJob", "jobRef")
-    DummyLabelSet = namedtuple("LabelSet", "all")
-    label_set = DummyLabelSet(all=get_dummy_label_set)
-    job_ref = DummyJobRef(label_set=label_set)
-    return [modeling_job(jobRef=job_ref) for i in range(num)]
+def check_if_status_break(job_id):
+    job: PredictingJob = PredictingJob.objects.get(pk=job_id)
+    status = job.job_status
+    if isinstance(status, str):
+        status = JobStatus(status)
+    if status == JobStatus.BREAK:
+        reset_predict_targets(job, status=JobStatus.BREAK)
+        raise TaskCanceledByUserException("Job canceled by user.")
+    if status == JobStatus.ERROR:
+        reset_predict_targets(job, status=JobStatus.BREAK)
+        raise ValueError("Something happened or status changed by user.")
 
 
 def predict_task(job: PredictingJob):
+    batch_size = 1000
     job.job_status = JobStatus.PROCESSING
     job.save()
-
-    # models = get_models(job.applyingmodel_set.order_by("priority", "created_at"))
-    models = get_dummy_models(num=3)
+    reset_predict_targets(job)
+    applying_models = job.applyingmodel_set.order_by("priority", "created_at")
+    models = get_models(applying_models)
     predict_worker = AudienceWorker(models)
-    # modeling_jobs = [model.modeling_job for model in job.applyingmodel_set.all()]
-    modeling_jobs = get_dummy_modeling_jobs(2)
+    modeling_jobs = [applying_model.modeling_job for applying_model in applying_models]
+    print(f"Using models:", [mj.name for mj in modeling_jobs])
     # start predicting
-    for predicting_target in job.predictingtarget_set.all():
-        print(f"Cleaning predicting data from target '{predicting_target}'")
-        predicting_target.predictingresult_set.all().delete()
-        predicting_target.save()
-        try:
+    try:
+        for predicting_target in job.predictingtarget_set.all():
+            document_count = 0
+            check_if_status_break(job.id)
+            print(f"Cleaning predicting data from target '{predicting_target}'")
+            predicting_target.predictingresult_set.all().delete()
             predicting_target.job_status = JobStatus.PROCESSING
             predicting_target.save()
-            input_examples: List[InputExample] = get_dummy_predicting_target_data(predicting_target)
-            for i, results in enumerate(predict_worker.run(input_examples)):
+            input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size,
+                                                                     max_rows=10000,
+                                                                     max_len=int(predicting_target.max_content_length),
+                                                                     min_len=int(predicting_target.min_content_length))
+            for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size),
+                                      desc=f'{batch_size} documents per iter'):
+                # sleep(1)
+                check_if_status_break(job.id)
+                batch_results = predict_worker.run_labeling(example_chunk)
                 # todo save result tags into database
-                tmp_results = []
-                bypass_label_set = set()
-                for modeling_job, result in zip(modeling_jobs, results):
-                    # get all label and id mapping for create predicting_result
-                    label_id_mapping = {label.name: label.id for label in modeling_job.jobRef.label_set.all()}
-                    _results = []
-                    for rs in result:
-                        if rs.label not in bypass_label_set:
-                            _result = RESULT(label_id_mapping.get(rs.label, rs.label), rs.score)
-                            if not isinstance(_result.label, int):
-                                bypass_label_set.add(_result.label)
-                                print(f"[ERROR] Unknown Label '{rs.label}' in {modeling_job}, pass")
-                            else:
-                                _results.append(_result)
-                    tmp_results.append(_results)
-                ensemble_results: Dict[str, float] = predict_worker.ensemble_results(tmp_results,
-                                                                                     bypass_same_label=True)
-                data_id = input_examples[i].id_
-                for label_id, score in ensemble_results.items():
-                    predicting_result = PredictingResult(predicting_target=predicting_target, label_id=label_id,
-                                                         score=score, data_id=data_id)
-                    predicting_result.save()
+                for tmp_example, example_results in zip(example_chunk, batch_results):
+                    document_count += 1
+                    ensemble_results, apply_path = predict_worker.ensemble_results(example_results,
+                                                                                   bypass_same_label=True)
+                    data_id = tmp_example.id_
+                    for label_name, score in ensemble_results.items():
+                        predicting_result = PredictingResult(
+                            predicting_target=predicting_target,
+                            label_name=label_name,
+                            score=score, data_id=data_id,
+                            source_author=f"{tmp_example.s_id}_{tmp_example.author}",
+                            apply_path=json.dumps(apply_path[label_name], ensure_ascii=False),
+                            created_at=timezone.now()
+                        )
+                        # print(apply_path[label_name])
+                        # print(label_name, tmp_example.content[:50], "..." if len(tmp_example.content) > 50 else "")
+                        predicting_result.save()
+                        # print(predicting_result.apply_path)
+            print(f"target: {predicting_target.name} processed {document_count} documents.")
             predicting_target.job_status = JobStatus.DONE
             predicting_target.save()
-        except Exception as e:
-            # if something wrong
-            print(e.with_traceback())
-            job.job_status = JobStatus.ERROR
-            job.save()
-    # if success
-    job.job_status = JobStatus.DONE
-    job.save()
+
+        # if success
+        job.job_status = JobStatus.DONE
+    except TaskCanceledByUserException as e:
+        job.error_message = "Job canceled by user."
+        job.job_status = JobStatus.BREAK
+    except Exception as e:
+        # if something wrong
+        print(e)
+        job.error_message = e
+        job.job_status = JobStatus.ERROR
+    finally:
+        job.save()
+
+# todo 貼標結果抽驗
+# 各標籤抽驗
+# 抽驗結果下載

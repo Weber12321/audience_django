@@ -1,55 +1,62 @@
-from collections import namedtuple
-from typing import Dict, List
+from collections import namedtuple, defaultdict
+from typing import Dict, List, Generator, Tuple
 
 from typing import Iterable
 
-from core.audience.models.base_model import AudienceModel
+from core.audience.models.base_model import SuperviseModel
 from core.dao.input_example import InputExample
 from core.helpers.log_helper import get_logger
 
-RESULT = namedtuple("Result", "label, score")
+RESULT = namedtuple("Result", "labels, logits, model, feature, value")
 
 
 class AudienceWorker:
-    def __init__(self, model_list: List[AudienceModel], logger=None):
+    def __init__(self, model_list: List[SuperviseModel], logger=None):
         if logger is None:
             self.logger = get_logger(context="AudienceWorker")
         else:
             self.logger = logger
 
-        self.models: List[AudienceModel] = model_list
+        self.models: List[SuperviseModel] = model_list
 
-    def run(self, input_examples: Iterable[InputExample]):
-        for example in input_examples:
-            yield self.run_labeling(example)
-
-    def run_labeling(self, doc: InputExample) -> List[List[RESULT]]:
+    def run_labeling(self, input_examples: List[InputExample]) -> List[List[RESULT]]:
         """
 
-        :param doc:
+        :param input_examples:
         :return: list of models-> list of label results -> label, score
         """
-        results = []
+        model_predicted_result = [[] for i in range(len(input_examples))]
         for audience_model in self.models:
-            labels, logits = audience_model.predict([doc])
-            rs_list = [RESULT(*rs) for rs in zip(labels, logits)]
-            results.append(rs_list)
-        return results
+            predict_labels, predict_logits = audience_model.predict(input_examples)
+            for i, example in enumerate(input_examples):
+                model_predicted_result[i].append(
+                    RESULT(labels=predict_labels[i], logits=predict_logits[i],
+                           model=audience_model.model_dir_name.__str__(),
+                           feature=audience_model.feature.value, value=getattr(example, audience_model.feature.value)))
+                # print(model_predicted_result[i][-1])
+        return model_predicted_result
 
     @staticmethod
-    def ensemble_results(predicting_results: List[List[RESULT]], bypass_same_label=False) -> Dict[str, float]:
+    def ensemble_results(predicting_results: List[RESULT], bypass_same_label=True) \
+            -> Tuple[Dict[str, float], Dict[str, List[RESULT]]]:
         """
-        
         :param predicting_results: list of models-> list of label results -> label, score
-        :param bypass_same_label: if False -> sum of scores of each label, else -> use first score of each label
-        :return: dictionary of each label and score {label: score}
+        :param bypass_same_label: True 先預測先贏，只保留第一個預測到的分數； False 加總所有預測到的分數
+        :return: 回傳最終統整完的標籤名稱與分數，以及預測路徑（模型先後順序），這邊的標籤將喪失關聯
         """
-        ensemble_results = {}
-        for model_result in predicting_results:
-            for rs in model_result:
+        ensemble_results = defaultdict(float)
+        apply_path = defaultdict(list)
+        for result in predicting_results:
+            logits_dict = {cls: logit for cls, logit in result.logits}
+            if isinstance(result.labels, str):
+                labels = [result.labels]
+            else:
+                labels = result.labels
+            for label in labels:
                 if not bypass_same_label:
-                    ensemble_results[rs.label] = ensemble_results.get(rs.label, 0) + rs.score
+                    ensemble_results[label] = ensemble_results.get(label, 0) + logits_dict.get(label, 0)
+                    apply_path[label].append(result._asdict())
                 else:
-                    if rs.label not in ensemble_results:
-                        ensemble_results[rs.label] = rs.score
-        return ensemble_results
+                    ensemble_results[label] = logits_dict.get(label, 0)
+                    apply_path[label] = [result._asdict()]
+        return ensemble_results, apply_path

@@ -7,11 +7,13 @@ from django.db import models
 from django.urls import reverse
 
 from audience_toolkits import settings
+from core.helpers.model_helpers import get_model_class
 from labeling_jobs.models import LabelingJob, Document, Label
 
 
 class ModelingJob(models.Model):
     model_choices = [(key, value.get("verbose_name", key)) for key, value in settings.ML_MODELS.items()]
+    feature_choices = [(key, value) for key, value in settings.AVAILABLE_FIELDS.items()]
 
     class JobStatus(models.TextChoices):
         WAIT = ('wait', '等待中')
@@ -23,10 +25,12 @@ class ModelingJob(models.Model):
     name = models.CharField(max_length=100, verbose_name="模型名稱")
     description = models.CharField(max_length=100, verbose_name="模型敘述")
     is_multi_label = models.BooleanField(verbose_name="是否為多標籤")
-    model_type = models.CharField(max_length=50, choices=model_choices)
+    model_name = models.CharField(max_length=50, choices=model_choices)
+    feature = models.CharField(max_length=50, choices=feature_choices, default='content')
     jobRef = models.ForeignKey(LabelingJob, verbose_name="使用資料", on_delete=models.SET_NULL, blank=True, null=True)
-    job_train_status = models.CharField(max_length=20, verbose_name="模型訓練狀態", default=JobStatus.WAIT,
-                                        choices=JobStatus.choices)
+    job_status = models.CharField(max_length=20, verbose_name="模型訓練狀態", default=JobStatus.WAIT,
+                                  choices=JobStatus.choices)
+    error_message = models.TextField(verbose_name="錯誤訊息", null=True)
     ext_test_status = models.CharField(max_length=20, verbose_name="模型測試狀態", default=JobStatus.WAIT,
                                        choices=JobStatus.choices)
     model_path = models.CharField(max_length=100, verbose_name="模型存放位置", blank=True)
@@ -39,6 +43,14 @@ class ModelingJob(models.Model):
     class Meta:
         verbose_name = "模型訓練任務"
         verbose_name_plural = "模型訓練任務列表"
+
+    def get_model_type(self):
+        model_cls = get_model_class(self.model_name)
+        return model_cls.__base__.__name__
+
+    def is_trainable(self):
+        model_cls = get_model_class(self.model_name)
+        return hasattr(model_cls, "fit")
 
     def get_absolute_url(self):
         return reverse('modeling_jobs:job-detail', kwargs={'pk': self.id})

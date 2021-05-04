@@ -26,39 +26,28 @@
                     <th scope="col">建立時間</th>
                     <th scope="col">狀態</th>
                     <th scope="col"></th>
-                    <th scope="col"></th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for predicting_job in predicting_jobs %}
+                {% for job in predicting_jobs %}
                     <tr>
-                        <th scope="row">{{ predicting_job.id }}</th>
-                        <td>{{ predicting_job.name }}</td>
-                        <td>{{ predicting_job.description }}</td>
-                        <td>{{ predicting_job.applyingmodel_set.count }}</td>
-                        <td>{{ predicting_job.predictingtarget_set.count }}</td>
-                        <td>{{ predicting_job.created_by }}</td>
-                        <td>{{ predicting_job.created_at }}</td>
-                        <td>{{ predicting_job.job_status }}</td>
-                        <td><a href="{% url 'predicting_jobs:job-detail' predicting_job.id %}"
-                               class="btn btn-link">檢視細節</a>
+                        <th scope="row">{{ job.id }}</th>
+                        <td><a href="{% url 'predicting_jobs:job-detail' job.id %}"
+                               class="btn btn-link">{{ job.name }}</a></td>
+                        <td>{{ job.description }}</td>
+                        <td>{{ job.applyingmodel_set.count }}</td>
+                        <td>{{ job.predictingtarget_set.count }}</td>
+                        <td>{{ job.created_by }}</td>
+                        <td>{{ job.created_at }}</td>
+                        <td>
+                            <span id="state-{{ job.id }}"></span>
                         </td>
                         <td>
-                            <form action="{% url 'predicting_jobs:job_start' predicting_job.id %}"
-                                  method="post">
-                                {% if predicting_job.job_status.upper == 'WAIT' %}
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-success">開始</button>
-                                {% elif predicting_job.job_status.upper == 'DONE' %}
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-warning">重新預測</button>
-                                {% elif predicting_job.job_status.upper == 'PROCESSING' %}
-                                    <button type="button" disabled class="btn btn-primary disabled">處理中</button>
-                                {% else %}
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger">重試</button>
-                                {% endif %}
-                            </form>
+                            <button type="button" class="btn btn-sm btn-secondary"
+                                    id="run-job-btn-{{ job.id }}"
+                                    onclick="run_job({{ job.id }},'{% url 'predicting_jobs:job_start' job.id %}')">
+                                開始貼標
+                            </button>
                         </td>
                     </tr>
                 {% endfor %}
@@ -66,4 +55,116 @@
             </table>
         </div>
     </div>
+{% endblock %}
+
+{% block custom_script %}
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+        $.ajaxSetup({
+            beforeSend: function (xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        });
+
+        function run_job(job_id, run_job_url) {
+            set_row_processing_display(job_id)
+            $.post(run_job_url)
+        }
+
+        function showResult(modeling_job_id) {
+            var aj = $.ajax({
+                url: 'show_result',
+                data: {
+                    modeling_job_id: modeling_job_id,
+                },
+                type: 'post',
+                success: function (result) {
+                    console.log("Done")
+                }
+            })
+        }
+
+        function set_row_done_display(job_id) {
+            $('#state-' + job_id).text("完成")
+            $('#run-job-btn-' + job_id)
+                .text("重新貼標")
+                .removeClass("disabled")
+        }
+
+        function set_row_processing_display(job_id) {
+            $('#state-' + job_id).text("處理中")
+            $('#run-job-btn-' + job_id)
+                .text("處理中")
+                .addClass("disabled")
+        }
+
+        function set_row_wait_display(job_id) {
+            $('#state-' + job_id).text("等待中")
+            $('#run-job-btn-' + job_id)
+                .text("開始貼標")
+                .removeClass("disabled")
+        }
+
+        function set_row_error_display(job_id) {
+            $('#state-' + job_id).text("錯誤")
+            $('#run-job-btn-' + job_id).text("重試")
+                .removeClass("disabled")
+        }
+
+        function get_progress(url) {
+            return $.get({
+                url: url
+            })
+        }
+
+        function update_progress(job_id, url) {
+            {#var state = "wait"#}
+            get_progress(url).done(function (result) {
+                let timeout = 10000
+                console.log(result)
+                let state = result.state
+                let elem_id = '#state-' + job_id
+                console.log(elem_id)
+                $(elem_id).text(state)
+                switch (state) {
+                    case 'done':
+                        set_row_done_display(job_id)
+                        break
+                    case 'wait':
+                        set_row_wait_display(job_id)
+                        break
+                    case 'processing':
+                        timeout = 1000
+                        set_row_processing_display(job_id)
+                        break
+                    default:
+                        console.log(state)
+                        set_row_error_display(job_id)
+                }
+                setTimeout(function () {
+                    {#console.log(url)#}
+                    update_progress(job_id, url)
+                }, timeout);
+            });
+        }
+        {% for job in predicting_jobs %}
+            update_progress({{ job.id }}, "{% url 'predicting_jobs:api-job-progress' job.id %}")
+        {% endfor %}
+    </script>
 {% endblock %}

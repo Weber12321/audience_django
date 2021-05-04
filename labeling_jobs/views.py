@@ -9,8 +9,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
 
-from .forms import LabelingJobForm, UploadFileJobForm, LabelForm
-from .models import LabelingJob, UploadFileJob, Document, Label
+from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm
+from .models import LabelingJob, UploadFileJob, Document, Label, Rule
 
 # Create your views here.
 from .tasks import import_csv_data_task, generate_datasets_task
@@ -28,8 +28,14 @@ class IndexView(LoginRequiredMixin, generic.ListView):
 class LabelingJobDetailView(LoginRequiredMixin, generic.DetailView):
     model = LabelingJob
     context_object_name = 'labeling_job'
+
     # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
-    template_name = 'labeling_jobs/labeling_job_detail.html'
+
+    def get_template_names(self):
+        if self.object.job_data_type == LabelingJob.JobDataTypes.RULE_BASE_MODEL:
+            return 'labeling_jobs/rule_labeling_job_detail.html'
+        else:
+            return 'labeling_jobs/labeling_job_detail.html'
 
 
 class LabelingJobCreate(LoginRequiredMixin, generic.CreateView):
@@ -114,9 +120,9 @@ def doc_label_update(request, job_id):
     next_page = request.POST.get("next", None)
     labels = [Label.objects.get(pk=label_id) for label_id in label_ids]
     doc = Document.objects.get(id=doc_id)
-    doc.labels.clear()
+    doc.label.clear()
     for label in labels:
-        doc.labels.add(label)
+        doc.label.add(label)
     doc.save()
     if next_page:
         return HttpResponseRedirect(next_page)
@@ -172,6 +178,14 @@ class LabelUpdate(LoginRequiredMixin, generic.UpdateView):
     form_class = LabelForm
     template_name = 'labels/update_form.html'
 
+    def get_success_url(self):
+        job_id = self.kwargs.get('job_id')
+        pk = self.kwargs.get('pk')
+        if self.object.labeling_job.job_data_type == LabelingJob.JobDataTypes.RULE_BASE_MODEL:
+            return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+        else:
+            return reverse_lazy('labeling_jobs:label-detail', kwargs={"job_id": job_id, "pk": pk})
+
 
 class LabelCreate(LoginRequiredMixin, generic.CreateView):
     # model = PredictingTarget
@@ -222,6 +236,47 @@ class LabelDetail(SingleObjectMixin, generic.ListView):
 
     def get_queryset(self):
         return self.object.document_set.order_by('pk')
+
+
+class RuleUpdate(LoginRequiredMixin, generic.UpdateView):
+    model = Rule
+    form_class = RuleForm
+    template_name = 'rules/update_form.html'
+
+
+class RuleCreate(LoginRequiredMixin, generic.CreateView):
+    form_class = RuleForm
+    template_name = 'rules/add_form.html'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['labeling_job_id'] = self.kwargs.get('job_id')
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.labeling_job_id = self.kwargs.get('job_id')
+        return super(RuleCreate, self).form_valid(form)
+
+    def get_success_url(self):
+        job_id = self.kwargs.get('job_id')
+        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+
+
+class RuleDelete(LoginRequiredMixin, generic.DeleteView):
+    model = Rule
+    # success_url = reverse_lazy('predicting_jobs:index')
+    template_name = 'rules/confirm_delete_form.html'
+
+    def post(self, request, *args, **kwargs):
+        if "cancel" in request.POST:
+            print(request.POST)
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return super(RuleDelete, self).post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        job_id = self.kwargs.get('job_id')
+        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
 
 
 class DocumentDetailView(LoginRequiredMixin, generic.DetailView):

@@ -7,7 +7,7 @@
     {% if user.is_staff %}
         <div class="dropdown mb-4">
 
-            {% if labeling_job.document_set.all and labeling_job.label_set.all %}
+            {% if labeling_job.document_set.count and labeling_job.label_set.count %}
                 <a class="btn btn-success"
                    href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
             {% endif %}
@@ -94,11 +94,8 @@
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 資料數量
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ labeling_job.show_document_amount }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ labeling_job.document_set.count }}</div>
                         </div>
-                        {#                        <div class="col-auto">#}
-                        {#                            <i class="fas fa-comments fa-2x text-gray-300"></i>#}
-                        {#                        </div>#}
                     </div>
                 </div>
             </div>

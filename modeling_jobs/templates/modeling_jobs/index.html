@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load report_extras %}
+{% load result_extras %}
 {% block nav_title %} 模型訓練任務 {% endblock %}
 {% block page_title %}
     模型訓練任務列表
@@ -61,7 +61,6 @@
                     <th>id</th>
                     <th scope="col">模型名稱</th>
                     <th scope="col">模型類型</th>
-                    <th scope="col">模型敘述</th>
                     <th scope="col">是否為多標籤</th>
                     <th scope="col">使用資料</th>
                     <th scope="col">建立時間</th>
@@ -76,30 +75,30 @@
                     <tr>
                         <td>{{ job.id }}</td>
                         <td><a href="{% url 'modeling_jobs:job-detail' job.id %}">{{ job.name }}</a></td>
-                        <td>{{ job.get_model_type_display }}</td>
-                        <td>{{ job.description }}</td>
+                        <td>{{ job.get_model_name_display }}</td>
                         <td>{{ job.is_multi_label }}</td>
                         <td><a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a></td>
                         <td>{{ job.created_at|date:"SHORT_DATE_FORMAT" }}</td>
                         <td>{{ job.created_by }}</td>
                         <td>
                             <button id="train-btn-{{ job.id }}" class="btn btn-info btn-sm"
+                                    {% if not job.is_trainable %}hidden{% endif %}
                                     onclick="train_model({{ job.id }},'{% url 'modeling_jobs:training-model' job.id %}')">
                                 開始訓練
                             </button>
                         </td>
                         <td>
-                            <span id="state-{{ job.id }}"></span>
+                            <span id="state-{{ job.id }}" data-toggle="tooltip" data-placement="top"
+                                  title="無錯誤訊息"></span>
                         </td>
-
-
                         <td>
                             <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle btn-sm"
                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 動作
                             </button>
                             <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                <button id="test-btn-{{ job.id }}" class="dropdown-item modify_btn" hidden
+                                <button id="test-btn-{{ job.id }}" class="dropdown-item modify_btn"
+                                        {% if job.is_trainable %}hidden{% endif %}
                                         data-toggle="modal" data-target="#test-ext-data-{{ job.id }}">
                                     上傳額外測試資料
                                 </button>
@@ -132,113 +131,99 @@
             $.post(train_url)
         }
 
+        function showResult(modeling_job_id) {
+            var aj = $.ajax({
+                url: 'show_result',
+                data: {
+                    modeling_job_id: modeling_job_id,
+                },
+                type: 'post',
+                success: function (result) {
+                    console.log("Done")
+                }
+            })
+        }
 
-        {#function test_model(job_id) {#}
-        {#    let form = $('#test-ext-data-' +job_id).find('form')#}
-        {#    console.log(form)#}
-        {#    var aj = $.ajax({#}
-        {#        url: '{% url "modeling_jobs:api-doc-testing-model" %}',#}
-        {#        processData: false,#}
-        {#        contentType: false,#}
-        {#        catch: false,#}
-        {#        data: form.serialize(),#}
-        {#        type: 'post',#}
-        {#        success: function (result) {#}
-        {#            if (result == '欄位不符合') {#}
-        {#                Swal.fire("Error", '欄位不符合', "error");#}
-        {#            } else if (result == '請先訓練模型') {#}
-        {#                Swal.fire("Error", '請先訓練模型', "error");#}
-        {#            } else {#}
-        {#                Swal.fire("訓練中.....", 'success', "success").then(() => {#}
-        {#                    location.reload()#}
-        {#                })#}
-        {#            }#}
-        {#        }#}
-        {#    })#}
-        {#}#}
-
-            function showResult(modeling_job_id) {
-                var aj = $.ajax({
-                    url: 'show_result',
-                    data: {
-                        modeling_job_id: modeling_job_id,
-                    },
-                    type: 'post',
-                    success: function (result) {
-                        console.log("Done")
-                    }
-                })
+        function set_row_done_display(job_id, details, is_trainable) {
+            $('#state-' + job_id).text("完成").attr('data-original-title', details);
+            $('#train-btn-' + job_id)
+                .text("重新訓練")
+                .removeClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", false);
             }
+        }
 
-            function set_row_done_display(job_id) {
-                $('#state-' + job_id).text("完成")
-                $('#train-btn-' + job_id)
-                    .text("重新訓練")
-                    .removeClass("disabled")
-                $('#test-btn-' + job_id).attr("hidden", false)
+        function set_row_processing_display(job_id, details, is_trainable) {
+            $('#state-' + job_id).text("處理中").attr('data-original-title', details);
+            $('#train-btn-' + job_id)
+                .text("訓練中")
+                .addClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", true);
             }
+        }
 
-            function set_row_processing_display(job_id) {
-                $('#state-' + job_id).text("處理中")
-                $('#train-btn-' + job_id)
-                    .text("訓練中")
-                    .addClass("disabled")
-                $('#test-btn-' + job_id).attr("hidden", true)
+        function set_row_wait_display(job_id, details, is_trainable) {
+            $('#state-' + job_id).text("等待中").attr('data-original-title', details);
+            $('#train-btn-' + job_id)
+                .text("開始訓練")
+                .removeClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", true);
             }
+        }
 
-            function set_row_wait_display(job_id) {
-                $('#state-' + job_id).text("等待中")
-                $('#train-btn-' + job_id)
-                    .text("開始訓練")
-                    .removeClass("disabled")
-                $('#test-btn-' + job_id).attr("hidden", true)
+        function set_row_error_display(job_id, details, is_trainable) {
+            $('#state-' + job_id).text("錯誤").attr('data-original-title', details);
+            $('#train-btn-' + job_id).text("重試")
+                .removeClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", true);
             }
+        }
 
-            function set_row_error_display(job_id) {
-                $('#state-' + job_id).text("錯誤")
-                $('#train-btn-' + job_id).text("重試")
-                    .removeClass("disabled")
-                $('#test-btn-' + job_id).attr("hidden", true)
-            }
+        function get_progress(url) {
+            return $.get({
+                url: url
+            })
+        }
 
-            function get_progress(url) {
-                return $.get({
-                    url: url
-                })
-            }
+        function update_progress(job_id, url, is_trainable) {
+            {#var state = "wait"#}
+            get_progress(url).done(function (result) {
+                let timeout = 10000
+                console.log(result)
+                let state = result.state
+                let details = result.details
+                let elem_id = '#state-' + job_id
+                console.log(elem_id)
+                $(elem_id).text(state)
+                switch (state) {
+                    case 'done':
+                        set_row_done_display(job_id, details, is_trainable)
+                        break
+                    case 'wait':
+                        set_row_wait_display(job_id, details, is_trainable)
+                        break
+                    case 'processing':
+                        timeout = 1000
+                        set_row_processing_display(job_id, details, is_trainable)
+                        break
+                    default:
+                        console.log(state)
+                        set_row_error_display(job_id, details, is_trainable)
+                }
 
-            function update_progress(job_id, url) {
-                {#var state = "wait"#}
-                get_progress(url).done(function (result) {
-                    let timeout = 10000
-                    console.log(result)
-                    let state = result.state
-                    let elem_id = '#state-' + job_id
-                    console.log(elem_id)
-                    $(elem_id).text(state)
-                    switch (state) {
-                        case 'done':
-                            set_row_done_display(job_id)
-                            break
-                        case 'wait':
-                            set_row_wait_display(job_id)
-                            break
-                        case 'processing':
-                            timeout = 1000
-                            set_row_processing_display(job_id)
-                            break
-                        default:
-                            console.log(state)
-                            set_row_error_display(job_id)
-                    }
-                    setTimeout(function () {
-                        {#console.log(url)#}
-                        update_progress(job_id, url)
-                    }, timeout);
-                });
-            }
-            {% for job in modeling_jobs %}
-                update_progress({{ job.id }}, "{% url 'modeling_jobs:api-job-progress' job.id %}")
-            {% endfor %}
+                setTimeout(function () {
+                    {#console.log(url)#}
+                    update_progress(job_id, url)
+                }, timeout);
+            });
+        }
+        {% for job in modeling_jobs %}
+            update_progress({{ job.id }}, "{% url 'modeling_jobs:api-job-progress' job.id %}", Boolean('{{ job.is_trainable }}') == 'True'
+            )
+        {% endfor %}
     </script>
 {% endblock %}

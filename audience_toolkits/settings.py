@@ -151,8 +151,8 @@ UPLOAD_FILE_DIRECTORY = 'upload_files'
 Q_CLUSTER = {
     'name': 'audience_toolkits',
     'workers': 4,
-    'timeout': 90,
-    'retry': 120,
+    'timeout': 10000,
+    'retry': 12000,
     'queue_limit': 50,
     'bulk': 10,
     'orm': 'default'
@@ -170,6 +170,14 @@ ML_MODELS = {
     "SVM_MODEL": {
         'verbose_name': 'SVM',
         'module': 'core.audience.models.classic.svm_model.SvmModel',
+    },
+    "RANDOM_FOREST": {
+        'verbose_name': '隨機森林',
+        'module': 'core.audience.models.classic.random_forest_model.RandomForestModel',
+    },
+    "KEYWORD_MODEL": {
+        'verbose_name': '關鍵字比對',
+        'module': 'core.audience.models.rule_base.keyword_base_model.KeywordModel',
     },
 }
 
@@ -195,6 +203,17 @@ TEMP_DIR = BASE_DIR / 'tmp'
 
 # predicting_result
 FETCH_COUNT = -1
+CONNECT_RETRIES = 3
+# 若要新增AVAILABLE_FIELDS請同步調整 core.dao.input_example，key必須與InputExample對齊（會以getattr(key必須與InputExample對齊, key)取值）。
+AVAILABLE_FIELDS = {
+    'id': '文章id',
+    's_id': '來源id',
+    's_area_id': '頻道id',
+    'title': '標題',
+    'author': '作者',
+    'content': '內文',
+    'post_time': '發文時間',
+}
 PREDICT_DATABASE = {
     'source': {
         'ENGINE': 'django.db.backends.mysql',

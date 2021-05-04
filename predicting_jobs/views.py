@@ -1,14 +1,15 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 # Create your views here.
 from django.urls import reverse_lazy
 from django.views import generic
 from django_q.tasks import AsyncTask
 
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
-from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel
+from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult
 from predicting_jobs.tasks import predict_task
+import json
 
 
 class IndexView(LoginRequiredMixin, generic.ListView):
@@ -57,7 +58,7 @@ class PredictingJobDelete(LoginRequiredMixin, generic.DeleteView):
 
 
 class PredictingTargetUpdate(LoginRequiredMixin, generic.UpdateView):
-    # model = PredictingTarget
+    model = PredictingTarget
     form_class = PredictingTargetForm
     template_name = 'predicting_target/update_form.html'
 
@@ -128,10 +129,45 @@ class ApplyingModelDelete(LoginRequiredMixin, generic.DeleteView):
         return reverse_lazy('predicting_jobs:job-detail', kwargs={"pk": job_id})
 
 
+class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
+    paginate_by = 25
+    model = PredictingResult
+    template_name = "predicting_target/predict_result.html"
+    context_object_name = 'result_rows'
+
+    def get_queryset(self):
+        label_name = self.request.GET.dict().get("label_name")
+        if label_name:
+            return PredictingResult.objects.filter(label_name=label_name)
+        else:
+            return PredictingResult.objects.all()
+
+    def get_context_data(self, **kwargs):
+        label_name = self.request.GET.dict().get("label_name")
+        context = super(PredictResultSamplingListView, self).get_context_data(**kwargs)
+        # todo 待測試multi-label時的狀況
+        context['exist_labels'] = sorted([labels[0] for labels in set(PredictingResult.objects.values_list("label_name"))])
+        context['current_label'] = label_name
+        context['predicting_target'] = PredictingTarget.objects.get(pk=self.kwargs.get('pk'))
+        context['predicting_job'] = PredictingJob.objects.get(pk=self.kwargs.get('job_id'))
+        return context
+
+
 def start_job(request, pk):
-    if request.POST:
+    if request.method == 'POST':
+        print("start predicting")
         job = PredictingJob.objects.get(pk=pk)
         a = AsyncTask(predict_task, job, group="predicting_audience")
         a.run()
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
+
+
+def get_progress(request, pk):
+    job = PredictingJob.objects.get(pk=pk)
+
+    response_data = {
+        'state': job.job_status,
+        'details': {target.name: target.job_status for target in job.predictingtarget_set.all()},
+    }
+    return HttpResponse(json.dumps(response_data), content_type='application/json')

@@ -20,6 +20,10 @@ urlpatterns = [
     path('<int:job_id>/label/<int:pk>', views.LabelDetail.as_view(), name="label-detail"),
     path('<int:job_id>/label/<int:pk>/update', views.LabelUpdate.as_view(), name="label-update"),
     path('<int:job_id>/label/<int:pk>/delete', views.LabelDelete.as_view(), name="label-delete"),
+    # rule curd
+    path('<int:job_id>/rule/add', views.RuleCreate.as_view(), name="rule-add"),
+    path('<int:job_id>/rule/<int:pk>/update', views.RuleUpdate.as_view(), name="rule-update"),
+    path('<int:job_id>/rule/<int:pk>/delete', views.RuleDelete.as_view(), name="rule-delete"),
     # func
     path('<int:job_id>/generate_dataset', views.generate_dataset, name="generate-dataset"),
 

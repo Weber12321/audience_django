@@ -5,7 +5,6 @@ from typing import Iterable, List
 import requests
 
 from audience_toolkits.settings import DEEPNLP_POS_API, DEEPNLP_POS_API_TOKEN, BASE_DIR as ROOT_DIR, STOP_WORD_DIR
-from text_helper import split_batch
 
 
 def _read_file(file_path) -> str:
@@ -60,6 +59,7 @@ class DeepnlpPosTokenizer(Tokenizer):
             斷詞後的文件sequence列表
         """
         rs = []
+        from core.helpers.text_helper import split_batch
         for _docs in split_batch(docs, batch):
             query = {
                 "token": self.api_token,
