@@ -18,7 +18,7 @@ def train_model_task(job: ModelingJob):
     job.save()
     try:
         model_path = f"{job.id}_{job.name}"
-        model = get_model(job, model_path)
+        model = get_model(job, model_path, for_training=True)
         if isinstance(model, SuperviseModel):
             train_set = job.jobRef.get_train_set()
             contents, y_true = get_feature_and_label(train_set)
@@ -101,7 +101,7 @@ def get_model(job: ModelingJob, model_path=None, for_training=False):
         if hasattr(model, 'is_multi_label'):
             # print(job.is_multi_label)
             model.is_multi_label = job.is_multi_label
-        if isinstance(model, SuperviseModel) and for_training:
+        if isinstance(model, SuperviseModel) and not for_training:
             model.load()
         elif isinstance(model, RuleBaseModel):
             rules = get_rules(job=job.jobRef)
