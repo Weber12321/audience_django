@@ -87,20 +87,21 @@ def create_ext_data(job: LabelingJob, uploaded_file, remove_old_data=True):
     create_documents(uploaded_file, job=job, document_type=Document.TypeChoices.EXT_TEST)
 
 
-def get_model(job: ModelingJob, model_path=None):
+def get_model(job: ModelingJob, model_path=None, for_training=False):
     # if job.model_path is None and model_path is None:
 
     if job.model_name in settings.ML_MODELS:
         model_cls = get_model_class(job.model_name)
         if issubclass(model_cls, RuleBaseModel):
             model_path = f"{job.id}_{job.name}"
+        print(model_path)
         model: Union[SuperviseModel, RuleBaseModel] = model_cls(
             model_dir_name=model_path if model_path else job.model_path,
             feature=job.feature)
         if hasattr(model, 'is_multi_label'):
             # print(job.is_multi_label)
             model.is_multi_label = job.is_multi_label
-        if isinstance(model, SuperviseModel):
+        if isinstance(model, SuperviseModel) and for_training:
             model.load()
         elif isinstance(model, RuleBaseModel):
             rules = get_rules(job=job.jobRef)
