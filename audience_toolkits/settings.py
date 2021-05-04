@@ -179,6 +179,10 @@ ML_MODELS = {
         'verbose_name': '關鍵字比對',
         'module': 'core.audience.models.rule_base.keyword_base_model.KeywordModel',
     },
+    "REGEX_MODEL": {
+        'verbose_name': '正則表達式比對',
+        'module': 'core.audience.models.rule_base.regex_model.RegexModel',
+    },
 }
 
 # ======================================

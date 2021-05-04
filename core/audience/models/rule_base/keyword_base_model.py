@@ -5,7 +5,6 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 from core.audience.models.base_model import RuleBaseModel
 from core.dao.input_example import Features, InputExample
-from core.helpers.model_helpers import get_multi_accuracy
 
 
 class KeywordModel(RuleBaseModel):
