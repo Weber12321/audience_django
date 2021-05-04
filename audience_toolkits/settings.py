@@ -175,6 +175,10 @@ ML_MODELS = {
         'verbose_name': '隨機森林',
         'module': 'core.audience.models.classic.random_forest_model.RandomForestModel',
     },
+    "KEYWORD_MODEL": {
+        'verbose_name': '關鍵字比對',
+        'module': 'core.audience.models.rule_base.keyword_base_model.KeywordModel',
+    },
 }
 
 # ======================================

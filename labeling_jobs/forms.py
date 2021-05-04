@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import LabelingJob, Label, UploadFileJob
+from .models import LabelingJob, Label, UploadFileJob, Rule
 
 
 class UploadFileJobForm(forms.ModelForm):
@@ -47,9 +47,25 @@ class LabelForm(forms.ModelForm):
         }
 
 
+class RuleForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        labeling_job_id = kwargs.pop('labeling_job_id', None)
+        super(RuleForm, self).__init__(*args, **kwargs)
+        if labeling_job_id:
+            self.fields['label'].queryset = Label.objects.filter(
+                labeling_job_id=labeling_job_id)
+        else:
+            self.fields['label'].queryset = self.instance.labeling_job.label_set.all()
+
+    class Meta:
+        model = Rule
+        fields = "__all__"
+        exclude = ['labeling_job', 'created_at', 'created_by']
+
+
 class DocumentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(DocumentForm, self).__init__(*args, **kwargs)
         if self.instance.labeling_job_id:
-            self.fields['labels'].queryset = Label.objects.filter(
+            self.fields['label'].queryset = Label.objects.filter(
                 labeling_job_id=self.instance.labeling_job_id)

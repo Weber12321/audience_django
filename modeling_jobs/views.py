@@ -10,6 +10,7 @@ from django.views.generic import ListView, DetailView
 from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
 
+from core.audience.models.base_model import RuleBaseModel, SuperviseModel
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm
 from .helpers import insert_csv_to_db, parse_report
@@ -123,7 +124,7 @@ def create_task(request):
     modelingJob.description = request.POST['description']
     modelingJob.is_multi_label = request.POST['is_multi_label']
     modelingJob.jobRef_id = request.POST['ref_job']
-    modelingJob.model_type = request.POST['model_type']
+    modelingJob.model_name = request.POST['model_type']
     modelingJob.save()
     return HttpResponse("Successfully creating a task")
 
@@ -132,7 +133,7 @@ def create_task(request):
 def update_task(request):
     m = ModelingJob.objects.get(id=request.POST['id'])
     m.name = request.POST['model_name']
-    m.model_type = request.POST['model_type']
+    m.model_name = request.POST['model_type']
     m.description = request.POST['description']
     m.is_multi_label = request.POST['is_multi_label']
     m.jobRef_id = request.POST['ref_job']
@@ -175,7 +176,7 @@ def testing_model_via_ext_data(request, pk):
         job = ModelingJob.objects.get(pk=pk)
         a = AsyncTask(testing_model_via_ext_data_task, uploaded_file=uploaded_file, job=job, group='ext_test_model')
         a.run()
-        return HttpResponse("Done")
+        return HttpResponseRedirect(reverse('modeling_jobs:job-detail', kwargs={"pk": pk}))
 
 
 @csrf_exempt
@@ -201,7 +202,19 @@ def result_page(request, modeling_job_id):
 
 def get_progress(request, pk):
     job = ModelingJob.objects.get(pk=pk)
-
+    if job.get_model_type() == RuleBaseModel.__name__:
+        if job.jobRef.job_data_type != LabelingJob.JobDataTypes.RULE_BASE_MODEL:
+            job.error_message = "Data type error, RuleBaseModel need rules in labeling job, not labeled data (SUPERVISE_MODEL)."
+            job.job_status = ModelingJob.JobStatus.ERROR
+            job.save()
+        else:
+            job.job_status = ModelingJob.JobStatus.DONE
+            job.save()
+    elif job.get_model_type() == SuperviseModel.__name__:
+        if job.jobRef.job_data_type != LabelingJob.JobDataTypes.SUPERVISE_MODEL:
+            job.error_message = "Data type error, SuperviseModel need labeled data in labeling job, not rules (RULE_BASE_MODEL)."
+            job.job_status = ModelingJob.JobStatus.ERROR
+            job.save()
     response_data = {
         'state': job.job_status,
         'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,

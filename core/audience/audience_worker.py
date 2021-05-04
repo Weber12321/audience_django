@@ -33,6 +33,7 @@ class AudienceWorker:
                     RESULT(labels=predict_labels[i], logits=predict_logits[i],
                            model=audience_model.model_dir_name.__str__(),
                            feature=audience_model.feature.value, value=getattr(example, audience_model.feature.value)))
+                # print(model_predicted_result[i][-1])
         return model_predicted_result
 
     @staticmethod

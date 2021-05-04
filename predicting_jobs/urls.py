@@ -17,9 +17,6 @@ urlpatterns = [
     path('<int:job_id>/target/<int:pk>/delete', views.PredictingTargetDelete.as_view(), name='job-target-delete'),
     path('<int:job_id>/target/<int:pk>/result_samples', views.PredictResultSamplingListView.as_view(),
          name='result-samples'),
-    path('<int:job_id>/target/<int:pk>/result_samples/<str:label_name>',
-         views.PredictResultSamplingByLabelListView.as_view(),
-         name='result-samples-by-label'),
 
     # applying models
     path('<int:job_id>/applying-model/add', views.ApplyingModelCreate.as_view(), name='job-applying-model-add'),

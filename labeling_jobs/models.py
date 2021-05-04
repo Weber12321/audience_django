@@ -8,7 +8,7 @@ from audience_toolkits import settings
 
 
 class LabelingJob(models.Model):
-    class JobTypes(models.TextChoices):
+    class JobDataTypes(models.TextChoices):
         SUPERVISE_MODEL = ("supervise_model", "監督式學習模型")
         RULE_BASE_MODEL = ("rule_base", "規則模型")
         TERM_WEIGHT_MODEL = ("term_weight", "詞彙權重模型")
@@ -16,8 +16,8 @@ class LabelingJob(models.Model):
     name = models.CharField(max_length=100, verbose_name="標記工作名稱", default="Job")
     description = models.TextField(verbose_name="定義與說明")
     is_multi_label = models.BooleanField(default=False, verbose_name="是否屬於多標籤")
-    job_data_type = models.CharField(max_length=20, choices=JobTypes.choices, verbose_name="任務類型",
-                                     default=JobTypes.SUPERVISE_MODEL)
+    job_data_type = models.CharField(max_length=20, choices=JobDataTypes.choices, verbose_name="任務類型",
+                                     default=JobDataTypes.SUPERVISE_MODEL)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
@@ -156,6 +156,10 @@ class UploadFileJob(models.Model):
     def __str__(self):
         return self.file.name
 
+    class Meta:
+        verbose_name = "文件上傳任務"
+        verbose_name_plural = "文件上傳任務列表"
+
 
 class HumanLabeling(models.Model):
     labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="標記任務")
@@ -170,3 +174,28 @@ class HumanLabeling(models.Model):
     class Meta:
         verbose_name = "人員標記"
         verbose_name_plural = "人員標記列表"
+
+
+class Rule(models.Model):
+    class RuleType(models.TextChoices):
+        KEYWORD = ('keyword', '關鍵字')
+        REGEX = ('regex', '正則表達式')
+        TERM_WEIGHT = ('term_weight', '詞彙加權')
+
+    labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE)
+    content = models.CharField(max_length=200, verbose_name="規則內文")
+    label = models.ForeignKey(Label, verbose_name="標籤", on_delete=models.CASCADE)
+    rule_type = models.CharField(max_length=20, verbose_name="規則類型", choices=RuleType.choices, default=RuleType.KEYWORD)
+    score = models.FloatField(verbose_name="命中分數", default=1)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return f"<'{self.label}'>, {self.score}, {self.content}"
+
+    def get_absolute_url(self):
+        return reverse('labeling_jobs:job-detail', kwargs={'pk': self.labeling_job.id})
+
+    class Meta:
+        verbose_name = "規則"
+        verbose_name_plural = "規則列表"

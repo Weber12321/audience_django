@@ -28,13 +28,13 @@ class Features(Enum):
 
 @dataclass
 class InputExample:
-    id_: Optional[str]
-    s_id: Optional[str]
-    s_area_id: Optional[str]
-    author: Optional[str]
-    title: Optional[str]
-    content: Optional[str]
-    post_time: Optional[datetime]
+    id_: Optional[str] = field(default=None)
+    s_id: Optional[str] = field(default=None)
+    s_area_id: Optional[str] = field(default=None)
+    author: Optional[str] = field(default=None)
+    title: Optional[str] = field(default=None)
+    content: Optional[str] = field(default=None)
+    post_time: Optional[datetime] = field(default=None)
     label: Optional[str] = field(default=None)
 
     def __iter__(self):

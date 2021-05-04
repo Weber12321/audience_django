@@ -130,7 +130,7 @@ class ApplyingModelDelete(LoginRequiredMixin, generic.DeleteView):
 
 
 class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
-    paginate_by = 100
+    paginate_by = 25
     model = PredictingResult
     template_name = "predicting_target/predict_result.html"
     context_object_name = 'result_rows'
@@ -142,16 +142,15 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
         else:
             return PredictingResult.objects.all()
 
-
-class PredictResultSamplingByLabelListView(LoginRequiredMixin, generic.ListView):
-    paginate_by = 100
-    model = PredictingResult
-    template_name = "predicting_target/predict_result.html"
-    context_object_name = 'result_rows'
-
-    def get_queryset(self):
-        label_name = self.kwargs['label_name']
-        return PredictingResult.objects.filter(label_name=label_name)
+    def get_context_data(self, **kwargs):
+        label_name = self.request.GET.dict().get("label_name")
+        context = super(PredictResultSamplingListView, self).get_context_data(**kwargs)
+        # todo 待測試multi-label時的狀況
+        context['exist_labels'] = sorted([labels[0] for labels in set(PredictingResult.objects.values_list("label_name"))])
+        context['current_label'] = label_name
+        context['predicting_target'] = PredictingTarget.objects.get(pk=self.kwargs.get('pk'))
+        context['predicting_job'] = PredictingJob.objects.get(pk=self.kwargs.get('job_id'))
+        return context
 
 
 def start_job(request, pk):

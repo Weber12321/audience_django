@@ -11,7 +11,7 @@ from core.audience.audience_worker import AudienceWorker
 from core.audience.models.base_model import SuperviseModel
 from core.dao.input_example import InputExample
 from core.helpers.data_helpers import chunks, get_opview_data_rows
-from modeling_jobs.tasks import load_model
+from modeling_jobs.tasks import get_model
 from predicting_jobs.models import PredictingJob, PredictingTarget, JobStatus, ApplyingModel, PredictingResult, Source
 
 
@@ -62,8 +62,8 @@ def get_target_data(predicting_target: PredictingTarget, fetch_size: int = 1000,
 def get_models(applying_models: List[ApplyingModel]) -> List[SuperviseModel]:
     model_list = []
     for applying_model in applying_models:
-        model = load_model(applying_model.modeling_job)
-        model.load()
+        model = get_model(applying_model.modeling_job)
+        # print(model.model_dir_name)
         model_list.append(model)
         # print(model.__str__())
     return model_list

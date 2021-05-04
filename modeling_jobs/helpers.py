@@ -50,9 +50,9 @@ def insert_csv_to_db(file, job_id):
         if label:
             if len(ls := job.label_set.filter(name=label)) > 0:
                 l = ls.first()
-                doc.labels.add(l)
+                doc.label.add(l)
             else:
-                doc.labels.create(name=label, labeling_job_id=job.id)
+                doc.label.create(name=label, labeling_job_id=job.id)
     return result
 
 

@@ -75,13 +75,14 @@
                     <tr>
                         <td>{{ job.id }}</td>
                         <td><a href="{% url 'modeling_jobs:job-detail' job.id %}">{{ job.name }}</a></td>
-                        <td>{{ job.get_model_type_display }}</td>
+                        <td>{{ job.get_model_name_display }}</td>
                         <td>{{ job.is_multi_label }}</td>
                         <td><a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a></td>
                         <td>{{ job.created_at|date:"SHORT_DATE_FORMAT" }}</td>
                         <td>{{ job.created_by }}</td>
                         <td>
                             <button id="train-btn-{{ job.id }}" class="btn btn-info btn-sm"
+                                    {% if not job.is_trainable %}hidden{% endif %}
                                     onclick="train_model({{ job.id }},'{% url 'modeling_jobs:training-model' job.id %}')">
                                 開始訓練
                             </button>
@@ -96,7 +97,8 @@
                                 動作
                             </button>
                             <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                <button id="test-btn-{{ job.id }}" class="dropdown-item modify_btn" hidden
+                                <button id="test-btn-{{ job.id }}" class="dropdown-item modify_btn"
+                                        {% if job.is_trainable %}hidden{% endif %}
                                         data-toggle="modal" data-target="#test-ext-data-{{ job.id }}">
                                     上傳額外測試資料
                                 </button>
@@ -142,35 +144,43 @@
             })
         }
 
-        function set_row_done_display(job_id, details) {
-            $('#state-' + job_id).text("完成").attr('data-original-title', details)
+        function set_row_done_display(job_id, details, is_trainable) {
+            $('#state-' + job_id).text("完成").attr('data-original-title', details);
             $('#train-btn-' + job_id)
                 .text("重新訓練")
-                .removeClass("disabled")
-            $('#test-btn-' + job_id).attr("hidden", false)
+                .removeClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", false);
+            }
         }
 
-        function set_row_processing_display(job_id, details) {
-            $('#state-' + job_id).text("處理中").attr('data-original-title', details)
+        function set_row_processing_display(job_id, details, is_trainable) {
+            $('#state-' + job_id).text("處理中").attr('data-original-title', details);
             $('#train-btn-' + job_id)
                 .text("訓練中")
-                .addClass("disabled")
-            $('#test-btn-' + job_id).attr("hidden", true)
+                .addClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", true);
+            }
         }
 
-        function set_row_wait_display(job_id, details) {
-            $('#state-' + job_id).text("等待中").attr('data-original-title', details)
+        function set_row_wait_display(job_id, details, is_trainable) {
+            $('#state-' + job_id).text("等待中").attr('data-original-title', details);
             $('#train-btn-' + job_id)
                 .text("開始訓練")
-                .removeClass("disabled")
-            $('#test-btn-' + job_id).attr("hidden", true)
+                .removeClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", true);
+            }
         }
 
-        function set_row_error_display(job_id, details) {
+        function set_row_error_display(job_id, details, is_trainable) {
             $('#state-' + job_id).text("錯誤").attr('data-original-title', details);
             $('#train-btn-' + job_id).text("重試")
-                .removeClass("disabled")
-            $('#test-btn-' + job_id).attr("hidden", true)
+                .removeClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", true);
+            }
         }
 
         function get_progress(url) {
@@ -179,7 +189,7 @@
             })
         }
 
-        function update_progress(job_id, url) {
+        function update_progress(job_id, url, is_trainable) {
             {#var state = "wait"#}
             get_progress(url).done(function (result) {
                 let timeout = 10000
@@ -191,18 +201,18 @@
                 $(elem_id).text(state)
                 switch (state) {
                     case 'done':
-                        set_row_done_display(job_id, details)
+                        set_row_done_display(job_id, details, is_trainable)
                         break
                     case 'wait':
-                        set_row_wait_display(job_id, details)
+                        set_row_wait_display(job_id, details, is_trainable)
                         break
                     case 'processing':
                         timeout = 1000
-                        set_row_processing_display(job_id, details)
+                        set_row_processing_display(job_id, details, is_trainable)
                         break
                     default:
                         console.log(state)
-                        set_row_error_display(job_id, details)
+                        set_row_error_display(job_id, details, is_trainable)
                 }
 
                 setTimeout(function () {
@@ -212,7 +222,8 @@
             });
         }
         {% for job in modeling_jobs %}
-            update_progress({{ job.id }}, "{% url 'modeling_jobs:api-job-progress' job.id %}")
+            update_progress({{ job.id }}, "{% url 'modeling_jobs:api-job-progress' job.id %}", Boolean('{{ job.is_trainable }}') == 'True'
+            )
         {% endfor %}
     </script>
 {% endblock %}

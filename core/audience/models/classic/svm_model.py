@@ -4,7 +4,7 @@ import jieba
 import joblib
 from sklearn import svm
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, accuracy_score
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
 import numpy as np
@@ -91,7 +91,6 @@ class SvmModel(SuperviseModel):
         return predict_labels, predict_logits
 
     def eval(self, examples, y_true):
-
         for index, y in enumerate(y_true):
             y_true[index] = y
 
@@ -99,8 +98,10 @@ class SvmModel(SuperviseModel):
             predict_labels, predict_logits = self.predict(examples)
             if self.is_multi_label:
                 y_true = self.mlb.transform(y_true)
-                acc = get_multi_accuracy(y_true, predict_labels)
-                report = classification_report(y_true, predict_labels, output_dict=True)
+                y_pre = self.mlb.transform(predict_labels)
+                # acc = get_multi_accuracy(y_true, predict_labels)
+                acc = accuracy_score(y_true, y_pre)
+                report = classification_report(y_true, y_pre, output_dict=True, target_names=self.mlb.classes)
                 report['accuracy'] = acc
             else:
                 report = classification_report(y_true, predict_labels, output_dict=True)

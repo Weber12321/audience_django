@@ -49,6 +49,7 @@ class ApplyingModel(models.Model):
         unique_together = ('predicting_job', 'modeling_job',)
         verbose_name = "應用模型"
         verbose_name_plural = "應用模型列表"
+        ordering = ('priority', 'created_at',)
 
     def get_absolute_url(self):
         return reverse('predicting_jobs:job-detail', kwargs={'pk': self.predicting_job_id})

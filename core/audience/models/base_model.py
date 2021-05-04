@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 from pathlib import Path
-from typing import List, Tuple, Iterable
+from typing import List, Tuple, Iterable, Dict, Any
 
 from sklearn.metrics import classification_report
 
@@ -16,7 +16,7 @@ class SuperviseModel(ABC):
     注意：若有不同類型的模型或輸出方式，請另外設計不同的Interface並繼承之。
     """
 
-    def __init__(self, model_dir_name: str, feature: Features = Features.CONTENT):
+    def __init__(self, model_dir_name: str, feature: Features = Features.CONTENT, **kwargs):
         self.model = None
         self.model_dir_name = Path(model_dir_name)
         self.feature = feature if isinstance(feature, Features) else Features(feature)
@@ -54,7 +54,7 @@ class RuleBaseModel(ABC):
     此模型為規則模型，無需訓練，需指定與編輯模型規則，命中規則就回傳該標籤
     """
 
-    def __init__(self, model_dir_name: str, feature: Features = Features.CONTENT):
+    def __init__(self, model_dir_name: str, feature: Features = Features.CONTENT, **kwargs):
         self.rules = None
         self.model_dir_name = Path(model_dir_name)
         self.feature = feature if isinstance(feature, Features) else Features(feature)
@@ -72,7 +72,7 @@ class RuleBaseModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def load(self):
+    def load(self, rules: Dict[str, Any]):
         raise NotImplementedError
 
 
@@ -82,8 +82,8 @@ class DummyModel(SuperviseModel):
     """
 
     def __init__(self, model_dir_name="DummyModel", dummy_message="This is a DUMMY model.", is_multi_label=False,
-                 feature: Features = Features.CONTENT):
-        super().__init__(model_dir_name, feature=feature)
+                 feature: Features = Features.CONTENT, **kwargs):
+        super().__init__(model_dir_name, feature=feature, **kwargs)
         self.dummy_message = dummy_message
         self.is_multi_label = is_multi_label
 
@@ -93,9 +93,13 @@ class DummyModel(SuperviseModel):
     def predict(self, examples: Iterable[InputExample]):
         contents = [getattr(example, self.feature.value) for example in examples]
         if self.is_multi_label:
-            return [(("dummy_label", 1.0), ("dummy label 2", 0.8)) for content in contents]
+            labels = [("dummy_label", "dummy_label 2") for content in contents]
+            rs = [(("dummy_label", 0.6), ("dummy_label 2", 0.8)) for content in contents]
+            return labels, rs
         else:
-            return [(("dummy_label", 0.6), ("dummy label 2", 0.3), ("dummy label 2", 0.1)) for content in contents]
+            labels = ["dummy_label" for content in contents]
+            rs = [(("dummy_label", 0.6), ("dummy_label 2", 0.4)) for content in contents]
+            return labels, rs
 
     def eval(self, examples: Iterable[InputExample], y_true):
         report = classification_report(y_true, y_true, output_dict=True)
