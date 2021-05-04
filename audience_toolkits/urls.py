@@ -29,7 +29,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     url(r'^static/(?P<path>.*)$', static.serve,
-        {'document_root': settings.STATIC_ROOT}, name='static'),
+        {'document_root': 'static'}, name='static'),
 ]
 urlpatterns = [
     url('^audience/', include(urlpatterns)),
