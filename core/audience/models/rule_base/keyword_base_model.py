@@ -57,7 +57,9 @@ class KeywordModel(RuleBaseModel):
 
 
 if __name__ == '__main__':
-    kw = KeywordModel('')
+    kw_cls = KeywordModel
+    print(kw_cls, kw_cls.__class__.__base__, kw_cls.__name__)
+    kw = kw_cls('')
     print(kw.__class__.__base__)
     test_rules = {"male": ["小弟我"], "female": ["小妹我"], "married": ["我老婆"]}
     kw.load(test_rules)

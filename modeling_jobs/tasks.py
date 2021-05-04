@@ -89,9 +89,11 @@ def create_ext_data(job: LabelingJob, uploaded_file, remove_old_data=True):
 
 def get_model(job: ModelingJob, model_path=None):
     # if job.model_path is None and model_path is None:
-    model_path = f"{job.id}_{job.name}"
+
     if job.model_name in settings.ML_MODELS:
         model_cls = get_model_class(job.model_name)
+        if issubclass(model_cls, RuleBaseModel):
+            model_path = f"{job.id}_{job.name}"
         model: Union[SuperviseModel, RuleBaseModel] = model_cls(
             model_dir_name=model_path if model_path else job.model_path,
             feature=job.feature)
