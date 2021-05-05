@@ -26,6 +26,8 @@ SECRET_KEY = 'gemt7w)9ay($n(wbnj0*7t2g-f@^*q$z2-fuob)drj&0mkc=ls'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+URL_PREFIX = '/audience'
+
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -97,8 +99,6 @@ DATABASES = {
 #     }
 # }
 
-FILE_PATH_FIELD_DIRECTORY = 'upload_files'
-MODEL_PATH_FIELD_DIRECTORY = 'model_files'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -135,8 +135,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
-LOGIN_REDIRECT_URL = '/labeling_jobs'
-LOGOUT_REDIRECT_URL = '/'
+LOGIN_URL = URL_PREFIX + '/accounts/login/'
+LOGIN_REDIRECT_URL = URL_PREFIX + '/dashboard/'
+LOGOUT_REDIRECT_URL = URL_PREFIX + '/'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
@@ -144,7 +145,6 @@ STATICFILES_DIRS = [
 
 # tmp files
 UPLOAD_FILE_DIRECTORY = 'upload_files'
-
 # ======================================
 #           django-Q settings
 # ======================================
@@ -162,6 +162,7 @@ Q_CLUSTER = {
 #     ML Model Settings Task settings
 # ======================================
 
+MODEL_PATH_FIELD_DIRECTORY = 'model_files'
 ML_MODELS = {
     "DUMMY_MODEL": {
         'verbose_name': '假模型',
