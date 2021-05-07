@@ -24,10 +24,12 @@
                             <div class="card-body">
                                 <div class="card-title font-weight-bold text-dark">
                                     <small>#{{ labeling_job.id }}</small> {{ labeling_job.name }}
-                                    {% if labeling_job.is_multi_label %}
-                                        <span class="badge badge-success float-right">多標籤</span>
+                                    {% if labeling_job.job_data_type == 'supervise_model' %}
+                                        <span class="badge badge-success float-right">{{ labeling_job.get_job_data_type_display }}</span>
+                                    {% elif labeling_job.job_data_type == 'rule_base' %}
+                                        <span class="badge badge-primary float-right">{{ labeling_job.get_job_data_type_display }}</span>
                                     {% else %}
-                                        <span class="badge badge-primary float-right">單標籤</span>
+                                        <span class="badge badge-secondary float-right">{{ labeling_job.get_job_data_type_display }}</span>
                                     {% endif %}
                                 </div>
                                 <h6 class="card-subtitle mb-2 text-muted"><small class="text-muted">
@@ -49,7 +51,7 @@
                                 <p class="card-text">{{ labeling_job.description }}</p>
 
                                 <a class="mr-1 card-link" href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">檢視任務細節</a>
-                                {% if labeling_job.document_set.all and labeling_job.label_set.all %}
+                                {% if labeling_job.job_data_type == 'supervise_model' and labeling_job.document_set.count and labeling_job.label_set.count %}
                                     <a class="mr-1 card-link text-success"
                                        href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
                                 {% endif %}

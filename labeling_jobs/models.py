@@ -60,6 +60,9 @@ class LabelingJob(models.Model):
     def get_ext_test_set(self):
         return self.document_set.filter(document_type=Document.TypeChoices.EXT_TEST, labels__isnull=False)
 
+    def get_labels_dict(self):
+        return {label_object.name: label_object for label_object in self.label_set.all()}
+
 
 class Label(models.Model):
     class TypeChoices(models.TextChoices):

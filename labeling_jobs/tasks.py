@@ -27,7 +27,7 @@ def import_csv_data_task(upload_job: UploadFileJob):
     upload_job.save()
     try:
         file = upload_job.file
-        create_documents(file, upload_job.labeling_job)
+        create_documents(file, upload_job.labeling_job, update_labels=True)
         upload_job.job_status = UploadFileJob.JobStatus.DONE
     except Exception as e:
         print(e)
@@ -36,7 +36,8 @@ def import_csv_data_task(upload_job: UploadFileJob):
         upload_job.save()
 
 
-def create_documents(file, job: LabelingJob, required_fields=None, document_type: Document.TypeChoices = None):
+def create_documents(file, job: LabelingJob, required_fields=None, document_type: Document.TypeChoices = None,
+                     update_labels: bool = False):
     if required_fields is None:
         required_fields = ['title', 'author', 's_area_id', 'content', 'label']
 
@@ -80,15 +81,22 @@ def create_documents(file, job: LabelingJob, required_fields=None, document_type
 
     job.document_set.bulk_create(doc_bulk_list)
     documents = job.document_set.filter(hash_num=hash_num)
+
+    job_labels_dict = job.get_labels_dict()
     for index, doc in enumerate(documents):
         label = labels[index]
-        if label:
-            label = ",".join(set(label.split(',')))
-            if len(ls := job.label_set.filter(name=label)) > 0:
-                _label = ls.first()
-                doc.labels.add(_label)
-            else:
-                doc.labels.create(name=label, labeling_job_id=job.id)
+
+        if label is not None:
+            for _label_name in label.split(','):
+                _label_name = _label_name.strip()
+                label_object = job_labels_dict.get(_label_name, None)
+                # print(_label_name, label_object)
+                if label_object:
+                    doc.labels.add(label_object)
+                elif update_labels:
+                    doc.labels.create(name=_label_name, labeling_job_id=job.id)
+                    doc.save()
+                    job_labels_dict = job.get_labels_dict()
     return documents.count()
 
 
