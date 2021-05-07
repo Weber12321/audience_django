@@ -6,11 +6,6 @@
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="dropdown mb-4">
-
-            {% if labeling_job.document_set.count and labeling_job.label_set.count %}
-                <a class="btn btn-success"
-                   href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
-            {% endif %}
             <button class="btn btn-primary dropdown-toggle" type="button"
                     id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
                     aria-expanded="false">
@@ -35,7 +30,7 @@
     <div class="mb-2">
         <small><strong>{{ labeling_job.created_by }}</strong> created this job at
             <strong>{{ labeling_job.created_at }}</strong></small>
-{#        <span class="badge badge-success">規則模型</span>#}
+        {#        <span class="badge badge-success">規則模型</span>#}
     </div>
 {% endblock %}
 {% block page_description %}<p class="mb-4">{{ labeling_job.description }}</p>{% endblock %}
@@ -116,7 +111,7 @@
                                 </div>
                             </div>
                         </a href="{% url 'labeling_jobs:label-update' labeling_job.id label.id %}"
-                          >
+                        >
                     </div>
                 {% empty %}
                     <div class="col-lg-6 mb-4">

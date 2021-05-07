@@ -203,12 +203,17 @@ def result_page(request, modeling_job_id):
 def get_progress(request, pk):
     job = ModelingJob.objects.get(pk=pk)
     if job.get_model_type() == RuleBaseModel.__name__:
-        if job.jobRef.job_data_type != LabelingJob.JobDataTypes.RULE_BASE_MODEL:
-            job.error_message = "Data type error, RuleBaseModel need rules in labeling job, not labeled data (SUPERVISE_MODEL)."
-            job.job_status = ModelingJob.JobStatus.ERROR
-            job.save()
+        if job.jobRef:
+            if job.jobRef.job_data_type != LabelingJob.JobDataTypes.RULE_BASE_MODEL:
+                job.error_message = "Data type error, RuleBaseModel need rules in labeling job, not labeled data (SUPERVISE_MODEL)."
+                job.job_status = ModelingJob.JobStatus.ERROR
+                job.save()
+            else:
+                job.job_status = ModelingJob.JobStatus.DONE
+                job.save()
         else:
-            job.job_status = ModelingJob.JobStatus.DONE
+            job.error_message = "No labeling job reference error."
+            job.job_status = ModelingJob.JobStatus.ERROR
             job.save()
     elif job.get_model_type() == SuperviseModel.__name__:
         if job.jobRef.job_data_type != LabelingJob.JobDataTypes.SUPERVISE_MODEL:
