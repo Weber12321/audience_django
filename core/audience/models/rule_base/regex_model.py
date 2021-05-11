@@ -9,8 +9,8 @@ from core.dao.input_example import Features, InputExample
 
 
 class RegexModel(RuleBaseModel):
-    def __init__(self, model_dir_name, feature=Features.CONTENT):
-        super().__init__(model_dir_name=model_dir_name, feature=feature)
+    def __init__(self, model_dir_name, feature=Features.CONTENT, na_tag=None, **kwargs):
+        super().__init__(model_dir_name=model_dir_name, feature=feature, na_tag=na_tag, **kwargs)
         self.mlb: Optional[MultiLabelBinarizer] = None
         self.patterns: Optional[Dict] = None
 
