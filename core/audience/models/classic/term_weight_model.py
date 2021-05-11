@@ -22,8 +22,8 @@ class TermWeightModel(SuperviseModel):
         TERM = "term"
         WEIGHT = "weight"
 
-    def __init__(self, model_dir_name, feature=Features.CONTENT):
-        super().__init__(model_dir_name=model_dir_name, feature=feature)
+    def __init__(self, model_dir_name, feature=Features.CONTENT, na_tag=None, **kwargs):
+        super().__init__(model_dir_name=model_dir_name, feature=feature, na_tag=na_tag, **kwargs)
         self.dict_file_name = "term_dict.csv"
         print(self.__class__.__name__)
         self.label_term_weights = defaultdict(dict)
@@ -38,22 +38,47 @@ class TermWeightModel(SuperviseModel):
         :param y_true:
         :return:
         """
-        x_train = self.convert_feature(examples, update_vectorizer=True)
-        feature_list = self.vectorizer.get_feature_names()
-        self.mlb = MultiLabelBinarizer(classes=list(set(y_true)))
+        if isinstance(y_true[0], str):
+            classes = list(set(y_true))
+            y_true = [[y] for y in y_true]
+        else:
+            classes = set()
+            for _y_pred in y_true:
+                for y in _y_pred:
+                    # print(y)
+                    classes.add(y)
+            classes = list(classes)
+        self.mlb = MultiLabelBinarizer(classes=classes)
         self.mlb.fit(y_true)
-        print(self.mlb.classes)
-
+        print(self.mlb.classes_)
         # start training
         ovr_class_features = defaultdict(list)
-        for label in set(y_true):
-            tmp_y = [_y_true if _y_true == label else 'other' for _y_true in y_true]
+        for label in self.mlb.classes_:
+            tmp_y = []
+            tmp_x_examples = []
+            for idx, _y_true in enumerate(y_true):
+                if isinstance(_y_true, list):
+                    for y in _y_true:
+                        tmp_y.append(y if y == label else "other")
+                        tmp_x_examples.append(examples[idx])
+                else:
+                    tmp_y.append(_y_true)
+                    tmp_x_examples.append(examples[idx])
+
+            x_train = self.convert_feature(examples, update_vectorizer=True)
+            feature_list = self.vectorizer.get_feature_names()
             label_term_dict = class_feature_importance(x_train, tmp_y, feature_list)
             ovr_class_features[label] = label_term_dict.get(label)
         self.label_term_weights = ovr_class_features
-        self.save()
+        return self.save()
 
     def predict(self, examples: List[InputExample]):
+        """
+
+        :param examples:
+        :param na_tag: 如果沒有被預測到任何標籤， 就會被轉換為指定標籤
+        :return:
+        """
         if not self.label_term_weights:
             raise ValueError(f"模型尚未被讀取，請嘗試執行 ' load() ' 方法讀取模型。")
         matched_keyword = []
@@ -76,13 +101,14 @@ class TermWeightModel(SuperviseModel):
                     if avg_score > self.threshold:
                         _result_label.append(cls)
             matched_keyword.append(match_kw)
+            if self.na_tag and len(_result_label) == 0:
+                _result_label.append(self.na_tag)
             result_labels.append(_result_label)
         return result_labels, matched_keyword
 
     def eval(self, examples: List[InputExample], y_true):
-        for index, y in enumerate(y_true):
-            y_true[index] = y
-
+        if isinstance(y_true[0], str):
+            y_true = [[y] for y in y_true]
         if self.label_term_weights and self.mlb:
             predict_labels, first_matched_keyword = self.predict(examples)
             if isinstance(y_true[0], str):
@@ -101,13 +127,14 @@ class TermWeightModel(SuperviseModel):
         if not self.model_dir_name.exists():
             self.model_dir_name.mkdir(exist_ok=True)
         output_file = (self.model_dir_name / self.dict_file_name).__str__()
-        print(output_file)
+        # print(output_file)
         with open(output_file, 'w') as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow([self.DictHeaders.LABEL.value, self.DictHeaders.TERM.value, self.DictHeaders.WEIGHT.value])
             for label, term_weights in self.label_term_weights.items():
                 for term, score in term_weights:
                     writer.writerow([label, term, score])
+        return self.model_dir_name
 
     def load(self):
         self.label_term_weights.clear()
@@ -180,7 +207,7 @@ if __name__ == '__main__':
             # print(row)
             examples.append(InputExample(id_=_id, **row))
     y_true = [example.label for example in examples]
-    model = TermWeightModel(model_dir_name=model_dir / 'test')
+    model = TermWeightModel(model_dir_name=model_dir / 'test', na_tag='一般')
     model.fit(examples, y_true)
     print(examples[1].content)
     print(model.predict(examples)[0][1])

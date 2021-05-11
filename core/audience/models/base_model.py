@@ -16,10 +16,13 @@ class SuperviseModel(ABC):
     注意：若有不同類型的模型或輸出方式，請另外設計不同的Interface並繼承之。
     """
 
-    def __init__(self, model_dir_name: str, feature: Features = Features.CONTENT, **kwargs):
+    def __init__(self, model_dir_name: str, feature: Features = Features.CONTENT, na_tag=None, **kwargs):
         self.model = None
         self.model_dir_name = Path(model_dir_name)
         self.feature = feature if isinstance(feature, Features) else Features(feature)
+        self.is_multi_label = True
+        self.na_tag = na_tag
+        print('na_tag:', self.na_tag, '(If model predict noting, it will be the default prediction)')
 
     @abstractmethod
     def fit(self, examples: Iterable[InputExample], y_true):
@@ -54,10 +57,12 @@ class RuleBaseModel(ABC):
     此模型為規則模型，無需訓練，需指定與編輯模型規則，命中規則就回傳該標籤
     """
 
-    def __init__(self, model_dir_name: str, feature: Features = Features.CONTENT, **kwargs):
+    def __init__(self, model_dir_name: str, feature: Features = Features.CONTENT, na_tag=None, **kwargs):
         self.patterns = None
         self.model_dir_name = Path(model_dir_name)
         self.feature = feature if isinstance(feature, Features) else Features(feature)
+        self.na_tag = na_tag
+        print('na_tag:', self.na_tag, '(If model predict noting, it will be the default prediction)')
 
     @abstractmethod
     def predict(self, examples: Iterable[InputExample]) -> List[Tuple[Tuple]]:

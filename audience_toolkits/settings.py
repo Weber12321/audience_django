@@ -184,6 +184,10 @@ ML_MODELS = {
         'verbose_name': '正則表達式比對',
         'module': 'core.audience.models.rule_base.regex_model.RegexModel',
     },
+    "TERM_WEIGHT_MODEL": {
+        'verbose_name': '關鍵字權重',
+        'module': 'core.audience.models.classic.term_weight_model.TermWeightModel',
+    },
 }
 
 # ======================================

@@ -25,8 +25,8 @@ class ModelingJob(models.Model):
     name = models.CharField(max_length=100, verbose_name="模型名稱")
     description = models.CharField(max_length=100, verbose_name="模型敘述")
     is_multi_label = models.BooleanField(verbose_name="是否為多標籤")
-    model_name = models.CharField(max_length=50, choices=model_choices)
-    feature = models.CharField(max_length=50, choices=feature_choices, default='content')
+    model_name = models.CharField(max_length=50, choices=model_choices, verbose_name="模型類型")
+    feature = models.CharField(max_length=50, choices=feature_choices, default='content', verbose_name="特徵欄位")
     jobRef = models.ForeignKey(LabelingJob, verbose_name="使用資料", on_delete=models.SET_NULL, blank=True, null=True)
     job_status = models.CharField(max_length=20, verbose_name="模型訓練狀態", default=JobStatus.WAIT,
                                   choices=JobStatus.choices)
@@ -35,7 +35,7 @@ class ModelingJob(models.Model):
                                        choices=JobStatus.choices)
     model_path = models.CharField(max_length=100, verbose_name="模型存放位置", blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="建立者")
 
     def __str__(self):
         return self.name

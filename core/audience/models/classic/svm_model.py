@@ -14,8 +14,8 @@ from core.helpers.model_helpers import get_multi_accuracy, load_joblib
 
 
 class SvmModel(SuperviseModel):
-    def __init__(self, model_dir_name, is_multi_label=False, feature=Features.CONTENT):
-        super().__init__(model_dir_name, feature=feature)
+    def __init__(self, model_dir_name, is_multi_label=False, feature=Features.CONTENT, **kwargs):
+        super().__init__(model_dir_name, feature=feature, **kwargs)
         self.available_features = {
             Features.TITLE,
             Features.CONTENT,

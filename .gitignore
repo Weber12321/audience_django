@@ -1,8 +1,10 @@
 # Created by https://www.gitignore.io
 ### project ###
 upload_files
+model_files/
 modeling_jobs/models
 *.pkl
+*.csv
 
 ### OSX ###
 .DS_Store
@@ -11,7 +13,6 @@ modeling_jobs/models
 
 # Icon must end with two \r
 Icon
-
 
 # Thumbnails
 ._*
