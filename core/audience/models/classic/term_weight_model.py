@@ -12,7 +12,7 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from audience_toolkits import settings
-from core.audience.models.base_model import SuperviseModel
+from core.audience.models.base_model import SuperviseModel, MODEL_ROOT
 from core.dao.input_example import InputExample, Features
 
 
@@ -124,9 +124,10 @@ class TermWeightModel(SuperviseModel):
             raise ValueError(f"模型尚未被訓練，或模型尚未被讀取。若模型已被訓練與儲存，請嘗試執行 ' load() ' 方法讀取模型。")
 
     def save(self):
-        if not self.model_dir_name.exists():
-            self.model_dir_name.mkdir(exist_ok=True)
-        output_file = (self.model_dir_name / self.dict_file_name).__str__()
+        tmp_model_dir = MODEL_ROOT / self.model_dir_name
+        if not tmp_model_dir.exists():
+            tmp_model_dir.mkdir(parents=True, exist_ok=True)
+        output_file = (tmp_model_dir / self.dict_file_name).__str__()
         # print(output_file)
         with open(output_file, 'w') as csv_file:
             writer = csv.writer(csv_file)
