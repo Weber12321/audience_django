@@ -189,7 +189,7 @@ class Rule(models.Model):
     class MatchType(models.TextChoices):
         START = ('start', '比對開頭')
         END = ('end', '比對結尾')
-        EXACTLY = ('exactly', '完全一至')
+        EXACTLY = ('exactly', '完全一致')
         PARTIALLY = ('partially', '部分吻合')
 
     labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE)
