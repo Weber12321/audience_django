@@ -3,6 +3,11 @@
 {% block title %}資料標記任務{% endblock %}
 {% block nav_title %}資料標記任務{% endblock %}
 {% block page_title %}任務列表{% endblock %}
+{% block page_description %}
+    <p>此部分可以設定 <span class="badge badge-success">監督式學習模型</span> 、 <span
+            class="badge badge-secondary">正則表達式模型</span> 與 <span class="badge badge-primary">關鍵字規則模型</span>
+        相關任務資料，並應用於後續的 <a href="{% url 'modeling_jobs:index' %}">模型訓練任務</a>中。</p>
+{% endblock %}
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -68,10 +73,6 @@
             </div>
         </div>
         <div class="col-md-3">
-            <p>此部分可以設定 <span class="badge badge-success">監督式學習模型</span> 、 <span
-                    class="badge badge-secondary">正則表達式模型</span> 與 <span class="badge badge-primary">關鍵字規則模型</span>
-                相關任務資料，並應用於後續的 <a href="{% url 'modeling_jobs:index' %}">模型訓練任務</a>中。</p>
-            <hr>
             <div class="h5"><span class="badge badge-success">監督式學習模型</span></div>
             <p>藉由帶有標籤的文本資料，讓機器自動學習文本中重要的特徵，此類型的資料必要欄位為：</p>
             <ul>
