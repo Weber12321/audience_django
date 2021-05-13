@@ -6,7 +6,7 @@
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <a class="ml-auto" href="{% url 'labeling_jobs:job-create' %}">建立新任務</a>
+            <a class="ml-auto btn btn-outline-warning" href="{% url 'labeling_jobs:job-create' %}">建立新任務</a>
         </div>
     {% endif %}
 {% endblock %}
@@ -14,56 +14,87 @@
     <!-- Page Heading -->
 
     <div class="row">
-        <div class="col">
-            {% if labeling_jobs %}
-                <div class="card-columns">
+        <div class="col-md-9">
+            <div class="row">
+                {% if labeling_jobs %}
                     {% for labeling_job in labeling_jobs %}
-
-                        <div class="card mb-4">
-                            <!-- Card Body -->
-                            <div class="card-body">
-                                <div class="card-title font-weight-bold text-dark">
-                                    <small>#{{ labeling_job.id }}</small> {{ labeling_job.name }}
-                                    {% if labeling_job.job_data_type == 'supervise_model' %}
-                                        <span class="badge badge-success float-right">{{ labeling_job.get_job_data_type_display }}</span>
-                                    {% elif labeling_job.job_data_type == 'rule_base' %}
-                                        <span class="badge badge-primary float-right">{{ labeling_job.get_job_data_type_display }}</span>
-                                    {% else %}
-                                        <span class="badge badge-secondary float-right">{{ labeling_job.get_job_data_type_display }}</span>
-                                    {% endif %}
-                                </div>
-                                <h6 class="card-subtitle mb-2 text-muted"><small class="text-muted">
-                                    <strong>由 {{ labeling_job.created_by.username }}</strong>
-                                    於 {{ labeling_job.created_at }} 建立。</small>
-                                </h6>
-                                <p class="card-text">
-                                    {% for label in labeling_job.label_set.all %}
-                                        {% if ',' not in label.name %}
-                                            <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
-                                                  data-toggle="tooltip" data-placement="top"
-                                                  title="{{ label.description }}">
+                        <div class="col-md-6 mb-2">
+                            <div class="card">
+                                <!-- Card Body -->
+                                <div class="card-body">
+                                    <div class="card-title font-weight-bold text-dark">
+                                        <small>#{{ labeling_job.id }}</small> {{ labeling_job.name }}
+                                        {% if labeling_job.job_data_type == 'supervise_model' %}
+                                            <span class="badge badge-success float-right">{{ labeling_job.get_job_data_type_display }}</span>
+                                        {% elif labeling_job.job_data_type == 'rule_base' %}
+                                            <span class="badge badge-primary float-right">{{ labeling_job.get_job_data_type_display }}</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary float-right">{{ labeling_job.get_job_data_type_display }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <h6 class="card-subtitle mb-2 text-muted"><small class="text-muted">
+                                        <strong>由 {{ labeling_job.created_by.username }}</strong>
+                                        於 {{ labeling_job.created_at }} 建立。</small>
+                                    </h6>
+                                    <p class="card-text">
+                                        {% for label in labeling_job.label_set.all %}
+                                            {% if ',' not in label.name %}
+                                                <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
+                                                      data-toggle="tooltip" data-placement="top"
+                                                      title="{{ label.description }}">
                                             <i class="fas fa-tag"></i> {{ label }}
                                         </span>
-                                        {% endif %}
-                                    {% endfor %}
-                                    {% resetcycle %}
-                                </p>
-                                <p class="card-text">{{ labeling_job.description }}</p>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% resetcycle %}
+                                    </p>
+                                    <p class="card-text">{{ labeling_job.description }}</p>
 
-                                <a class="mr-1 card-link" href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">檢視任務細節</a>
-                                {% if labeling_job.job_data_type == 'supervise_model' and labeling_job.document_set.count and labeling_job.label_set.count %}
-                                    <a class="mr-1 card-link text-success"
-                                       href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
-                                {% endif %}
+                                    <a class="mr-1 card-link"
+                                       href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">檢視任務細節</a>
+                                    {% if labeling_job.job_data_type == 'supervise_model' and labeling_job.document_set.count and labeling_job.label_set.count %}
+                                        <a class="mr-1 card-link text-success"
+                                           href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
+                                    {% endif %}
 
+                                </div>
                             </div>
                         </div>
 
                     {% endfor %}
-                </div>
-            {% else %}
-                <p>目前沒有標記任務</p>
-            {% endif %}
+                {% else %}
+                    <p>目前沒有標記任務</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-3">
+            <p>此部分可以設定 <span class="badge badge-success">監督式學習模型</span> 、 <span
+                    class="badge badge-secondary">正則表達式模型</span> 與 <span class="badge badge-primary">關鍵字規則模型</span>
+                相關任務資料，並應用於後續的 <a href="{% url 'modeling_jobs:index' %}">模型訓練任務</a>中。</p>
+            <hr>
+            <div class="h5"><span class="badge badge-success">監督式學習模型</span></div>
+            <p>藉由帶有標籤的文本資料，讓機器自動學習文本中重要的特徵，此類型的資料必要欄位為：</p>
+            <ul>
+                <li>OpView下載的資料欄位</li>
+                <li>標籤欄位</li>
+            </ul>
+            <small><a href="https://zh.wikipedia.org/wiki/监督学习" target="_blank">wiki</a></small>
+            <hr>
+            <div class="h5"><span class="badge badge-primary">關鍵字規則模型</span></div>
+            <p>藉由關鍵字比對文本內容，可設定「開頭」、「結尾」、「部分命中」以及「完全一致」比對內容，例如可用於比對來源、作者名稱等應用，必要欄位為：</p>
+            <ul>
+                <li>關鍵字</li>
+                <li>比對方式</li>
+                <li>標籤欄位</li>
+            </ul>
+            <hr>
+            <div class="h5"><span class="badge badge-secondary">正則表達式模型</span></div>
+            <p>藉由正則表達式（regex）比對文本內容，屬於較進階的規則比對方法，此類型的資料必要欄位為：</p>
+            <ul>
+                <li>regex規則式</li>
+                <li>標籤欄位</li>
+            </ul>
+            <small><a href="https://zh.wikipedia.org/wiki/正则表达式" target="_blank">wiki</a></small>
         </div>
     </div>
 {% endblock %}
