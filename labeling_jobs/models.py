@@ -10,7 +10,7 @@ from audience_toolkits import settings
 class LabelingJob(models.Model):
     class DataTypes(models.TextChoices):
         SUPERVISE_MODEL = ("supervise_model", "監督式學習模型")
-        RULE_BASE_MODEL = ("rule_base", "規則模型")
+        RULE_BASE_MODEL = ("rule_base", "關鍵字規則模型")
         REGEX_MODEL = ("regex", "正則表達式模型")
         TERM_WEIGHT_MODEL = ("term_weight", "詞彙權重模型")
 
