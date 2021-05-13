@@ -32,8 +32,10 @@ class LabelingJobDetailView(LoginRequiredMixin, generic.DetailView):
     # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
 
     def get_template_names(self):
-        if self.object.job_data_type == LabelingJob.JobDataTypes.RULE_BASE_MODEL:
-            return 'labeling_jobs/rule_labeling_job_detail.html'
+        if self.object.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
+            return 'rules/keyword_job_detail.html'
+        elif self.object.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
+            return 'rules/regex_job_detail.html'
         else:
             return 'labeling_jobs/labeling_job_detail.html'
 
@@ -181,7 +183,7 @@ class LabelUpdate(LoginRequiredMixin, generic.UpdateView):
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
         pk = self.kwargs.get('pk')
-        if self.object.labeling_job.job_data_type == LabelingJob.JobDataTypes.RULE_BASE_MODEL:
+        if self.object.labeling_job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
             return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
         else:
             return reverse_lazy('labeling_jobs:label-detail', kwargs={"job_id": job_id, "pk": pk})

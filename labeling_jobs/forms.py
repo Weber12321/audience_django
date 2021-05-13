@@ -60,7 +60,23 @@ class RuleForm(forms.ModelForm):
     class Meta:
         model = Rule
         fields = "__all__"
-        exclude = ['labeling_job', 'created_at', 'created_by']
+        exclude = ['labeling_job', 'created_at', 'created_by', 'rule_type']
+
+
+class RegexForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        labeling_job_id = kwargs.pop('labeling_job_id', None)
+        super(RegexForm, self).__init__(*args, **kwargs)
+        if labeling_job_id:
+            self.fields['label'].queryset = Label.objects.filter(
+                labeling_job_id=labeling_job_id)
+        else:
+            self.fields['label'].queryset = self.instance.labeling_job.label_set.all()
+
+    class Meta:
+        model = Rule
+        fields = "__all__"
+        exclude = ['labeling_job', 'created_at', 'created_by', 'match_type', 'score', 'rule_type']
 
 
 class DocumentForm(forms.ModelForm):
