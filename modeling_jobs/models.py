@@ -4,6 +4,7 @@ from typing import Union, List, NamedTuple
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import F
 from django.urls import reverse
 
 from audience_toolkits import settings
@@ -111,8 +112,23 @@ class EvalPrediction(models.Model):
         return prediction == ground_truth
 
     def __str__(self):
-        return f"doc_id={self.document.id}, prediction={self.prediction_labels.all()}, ground_truth={self.document.labels.all()}"
+        return f"doc_id={self.document.id}, " \
+               f"prediction={self.prediction_labels.all()}, " \
+               f"ground_truth={self.document.labels.all()}"
 
     class Meta:
         verbose_name = "驗證標記"
         verbose_name_plural = "驗證標記列表"
+
+
+class TermWeight(models.Model):
+    modeling_job = models.ForeignKey(ModelingJob, on_delete=models.CASCADE, verbose_name="模型訓練任務")
+    term = models.CharField(max_length=20, verbose_name="詞彙")
+    weight = models.FloatField(verbose_name="權重分數")
+    label = models.ForeignKey(Label, on_delete=models.CASCADE, verbose_name="所屬標籤")
+
+    class Meta:
+        verbose_name = "詞彙權重"
+        verbose_name_plural = "詞彙權重列表"
+        ordering = ('modeling_job', 'label', F('weight').desc(nulls_last=True), 'term')
+        unique_together = ("modeling_job", "term", "label")

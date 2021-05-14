@@ -38,7 +38,7 @@
             <div class="card mb-4">
                 <div class="card-header">模型資訊</div>
                 <div class="card-body">
-                    <p>模型類型： {{ job.model_name }}</p>
+                    <p>模型類型： {{ job.get_model_name_display }}</p>
                 </div>
             </div>
             <div class="card mb-4">
@@ -80,6 +80,67 @@
                         </div>
                     </div>
                 {% endwith %}
+            </div>
+
+            <div class="card mb-4">
+                <div class="card mb-4">
+                    <div class="card-header py-3 d-flex justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">詞彙權重列表</h6>
+                        <span class="card-link">
+{#                            <a href="{% url 'labeling_jobs:rule-add' labeling_job.id %}">新增規則</a>#}
+                        </span>
+                    </div>
+                    <div class="card-body">
+
+                        <ul class="nav nav-pills mb-4" id="myTab" role="tablist">
+                            {% for label in job.jobRef.label_set.all %}
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link  {% if forloop.first %} active {% endif %}"
+                                       id="label-{{ label.name }}-tab" data-toggle="tab"
+                                       href="#label-{{ label.name }}" role="tab"
+                                       aria-controls="home" aria-selected="true">{{ label.name }}
+                                        ({{ label.termweight_set.count }})</a>
+                                </li>
+
+                            {% empty %}
+                                沒有設定標籤
+                            {% endfor %}
+                        </ul>
+                        <div class="tab-content" id="myTabContent">
+                            {% for label in job.jobRef.label_set.all %}
+                                <div class="tab-pane {% if forloop.first %} fade show active {% endif %}"
+                                     id="label-{{ label.name }}" role="tabpanel"
+                                     aria-labelledby="label-{{ label.name }}-tab">
+                                    <div class="list-group">
+                                        {% for term_weights in label.termweight_set.all %}
+                                            <div class="list-group-item list-group-item-action">
+                                                <div class="d-flex justify-content-between">
+{#                                                    <small>#}
+{#                                                        {{ term_weights.get_rule_type_display }}#}
+{#                                                        - {{ term_weights.get_match_type_display }}#}
+{#                                                    </small>#}
+{#                                                    <span class="d-flex justify-content-end">#}
+{#                                                        <a class="btn btn-link btn-sm text-secondary ml-2"#}
+{#                                                           href="{% url 'labeling_jobs:rule-update' labeling_job.id rule.id %}">編輯</a>#}
+{#                                                        <a class="btn btn-link btn-sm text-danger ml-2"#}
+{#                                                           href="{% url 'labeling_jobs:rule-delete' labeling_job.id rule.id %}">刪除</a>#}
+{#                                                    </span>#}
+                                                </div>
+                                                <div class="d-flex w-100 justify-content-between">
+                                                    <h5 class="mb-1">{{ term_weights.term }}</h5>
+                                                    <small>{{ term_weights.weight }}</small>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                            {% empty %}
+                                沒有設定標籤
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">

@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
@@ -14,7 +14,7 @@ from core.audience.models.base_model import RuleBaseModel, SuperviseModel
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm
 from .helpers import insert_csv_to_db, parse_report
-from .models import ModelingJob, Report
+from .models import ModelingJob, Report, TermWeight
 from .tasks import train_model_task, testing_model_via_ext_data_task
 import json
 

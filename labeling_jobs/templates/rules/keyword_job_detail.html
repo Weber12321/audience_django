@@ -110,8 +110,7 @@
                                     <div class="text-white-50 small">{{ label.description }}</div>
                                 </div>
                             </div>
-                        </a href="{% url 'labeling_jobs:label-update' labeling_job.id label.id %}"
-                        >
+                        </a>
                     </div>
                 {% empty %}
                     <div class="col-lg-6 mb-4">
@@ -150,7 +149,8 @@
                                     {% for rule in label.rule_set.all %}
                                         <div class="list-group-item list-group-item-action">
                                             <div class="d-flex justify-content-between">
-                                                <small>{{ rule.get_rule_type_display }} - {{ rule.get_match_type_display }}</small>
+                                                <small>{{ rule.get_rule_type_display }}
+                                                    - {{ rule.get_match_type_display }}</small>
                                                 <span class="d-flex justify-content-end">
                                                     <a class="btn btn-link btn-sm text-secondary ml-2"
                                                        href="{% url 'labeling_jobs:rule-update' labeling_job.id rule.id %}">編輯</a>
