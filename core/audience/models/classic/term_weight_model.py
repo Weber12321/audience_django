@@ -2,7 +2,7 @@ import csv
 from collections import defaultdict
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Iterable
+from typing import List, Optional, Iterable, Dict, Tuple
 
 import jieba
 import numpy
@@ -26,7 +26,7 @@ class TermWeightModel(SuperviseModel):
         super().__init__(model_dir_name=model_dir_name, feature=feature, na_tag=na_tag, **kwargs)
         self.dict_file_name = "term_dict.csv"
         print(self.__class__.__name__)
-        self.label_term_weights = defaultdict(dict)
+        self.label_term_weights: Dict[str, List[Tuple[str, float]]] = defaultdict(List)
         self.mlb: Optional[MultiLabelBinarizer] = None
         self.vectorizer = None
         self.threshold = 0.55
@@ -76,7 +76,6 @@ class TermWeightModel(SuperviseModel):
         """
 
         :param examples:
-        :param na_tag: 如果沒有被預測到任何標籤， 就會被轉換為指定標籤
         :return:
         """
         if not self.label_term_weights:
@@ -137,14 +136,17 @@ class TermWeightModel(SuperviseModel):
                     writer.writerow([label, term, score])
         return self.model_dir_name
 
-    def load(self):
+    def load(self, label_term_weights: Dict[str, List[Tuple[str, float]]] = None):
         self.label_term_weights.clear()
-        with open(self.model_dir_name / self.dict_file_name, newline='') as csv_file:
-            for row in csv.DictReader(csv_file):
-                label = row.get(self.DictHeaders.LABEL.value)
-                term = row.get(self.DictHeaders.TERM.value)
-                weight = row.get(self.DictHeaders.WEIGHT.value)
-                self.label_term_weights[label][term] = weight
+        if label_term_weights is None:
+            with open(self.model_dir_name / self.dict_file_name, newline='') as csv_file:
+                for row in csv.DictReader(csv_file):
+                    label: str = row.get(self.DictHeaders.LABEL.value)
+                    term: str = row.get(self.DictHeaders.TERM.value)
+                    weight: float = float(row.get(self.DictHeaders.WEIGHT.value))
+                    self.label_term_weights[label].append((term, weight))
+        else:
+            self.label_term_weights = label_term_weights
 
         self.mlb = MultiLabelBinarizer(classes=list(self.label_term_weights.keys()))
         self.mlb.fit([[label] for label in list(self.label_term_weights.keys())])
@@ -178,7 +180,7 @@ class TermWeightModel(SuperviseModel):
         return x_features
 
 
-def class_feature_importance(x, y, feature_list, use_scaler=True):
+def class_feature_importance(x, y, feature_list, use_scaler=True) -> Dict[str, List[Tuple[str, float]]]:
     clf = SGDClassifier(loss='log', penalty='elasticnet', l1_ratio=0.9, learning_rate='optimal', n_iter_no_change=10,
                         shuffle=True, n_jobs=3, fit_intercept=True, class_weight='balanced')
     clf.fit(x, y)
@@ -206,7 +208,7 @@ if __name__ == '__main__':
     with open(test_file, 'r') as f:
         for _id, row in enumerate(csv.DictReader(f, dialect=csv.QUOTE_ALL, delimiter='\t')):
             # print(row)
-            examples.append(InputExample(id_=_id, **row))
+            examples.append(InputExample(id_=str(_id), **row))
     y_true = [example.label for example in examples]
     model = TermWeightModel(model_dir_name=model_dir / 'test', na_tag='一般')
     model.fit(examples, y_true)

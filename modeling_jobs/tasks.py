@@ -1,12 +1,13 @@
 import json
 from collections import defaultdict
-from typing import List, Union
+from typing import List, Union, Dict, Tuple
 
 from django.db import IntegrityError
 from django.db.models import QuerySet
 
 from audience_toolkits import settings
 from core.audience.models.base_model import SuperviseModel, RuleBaseModel
+from core.audience.models.classic.term_weight_model import TermWeightModel
 from core.dao.input_example import Features, InputExample
 from core.helpers.model_helpers import get_model_class
 from labeling_jobs.models import Document, LabelingJob, Label
@@ -25,6 +26,8 @@ def train_model_task(job: ModelingJob):
             contents, y_true = get_examples_and_labels(train_set)
             job.model_path = model.fit(examples=contents, y_true=y_true)
 
+            if isinstance(model, TermWeightModel):
+                create_term_weights(job, model.label_term_weights)
             # get train set report
             eval_dataset(model=model, dataset_type=Document.TypeChoices.TRAIN, dataset=train_set, job=job)
         elif isinstance(model, RuleBaseModel):
@@ -55,6 +58,8 @@ def testing_model_via_ext_data_task(uploaded_file, job: ModelingJob, remove_old_
         create_ext_data(uploaded_file=uploaded_file, job=job.jobRef, remove_old_data=remove_old_data)
         print(job.model_name, job.model_path, job.is_multi_label)
         model = get_model(job)
+        if isinstance(model, TermWeightModel):
+            model.load(get_term_weights(job))
         # get ext test set report
         eval_dataset(model=model, dataset_type=Document.TypeChoices.EXT_TEST, dataset=job.jobRef.get_ext_test_set(),
                      job=job)
@@ -117,6 +122,23 @@ def get_rules(job: LabelingJob):
     for rule in job.rule_set.all():
         rules[rule.label.name] = rule.content
     return rules
+
+
+def create_term_weights(job: ModelingJob, label_term_weight: Dict[str, List[Tuple[str, float]]]):
+    job.termweight_set.all().delete()
+    label_dict = job.jobRef.get_labels_dict()
+    for label_str, term_weights in label_term_weight.items():
+        for term, weight in term_weights:
+            if label_str in label_dict:
+                job.termweight_set.create(term=term, weight=weight, label=label_dict.get(label_str))
+    job.save()
+
+
+def get_term_weights(job: ModelingJob) -> Dict[str, Dict[str, float]]:
+    label_term_weight: Dict[str, Dict[str, float]] = defaultdict(dict)
+    for term_weight in job.termweight_set.all():
+        label_term_weight[term_weight.label.name][term_weight.term] = term_weight.weight
+    return label_term_weight
 
 
 def eval_dataset(model, job: ModelingJob, dataset, dataset_type: Document.TypeChoices):
