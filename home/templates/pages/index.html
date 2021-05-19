@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block nav_title %}
-    DashBoard
+    說明書
 {% endblock %}
 {% block page_title %}
     Audience Toolkits 族群訓練工具包
@@ -9,46 +9,101 @@
     藉由此工具，您可以從0開始訓練一個屬於你的機器學習模型，並且進一步應用至OpView的族群標籤。
 {% endblock %}
 {% block content %}
-    <div class="row">
-        <div class="col-12 mt-5">
-            <div class="h5">此工具包包含以下任務工具：</div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-lg-4 mb-4">
-            <div class="card bg-primary text-white shadow">
+    <div class="row mt-4 mb-2">
+        <div class="col-lg-8 col-md-12 mb-4">
+
+            <!-- card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-secondary">什麼是Audience族群標籤</h6>
+                </div>
                 <div class="card-body">
-                    <a class="h5 text-white card-title" href="{% url 'labeling_jobs:index' %}">
-                        資料標記任務
-                    </a>
-                    <div class="text-white-50 mt-2">
-                        在這裡您可以建立、描述，並管理您想進行的資料標記任務，完成的標記任務可以在「模型訓練任務」中使用。
-                    </div>
+
+                    <h5 class="card-title">Step 1.</h5>
+                    <p>在這裡您可以建立、描述，並管理您想進行的資料標記任務，完成的標記任務可以在「模型訓練任務」中使用。</p>
+                    <h5 class="card-title">Step 1.</h5>
+                    <p>在這裡您可以建立、描述，並管理您想進行的資料標記任務，完成的標記任務可以在「模型訓練任務」中使用。</p>
+                </div>
+            </div>
+
+            <!-- card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-secondary">如何製作族群標籤</h6>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Step 1.</h5>
+                    <p>在這裡您可以建立、描述，並管理您想進行的資料標記任務，完成的標記任務可以在「模型訓練任務」中使用。</p>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Step 1.</h5>
+                    <p>在這裡您可以建立、描述，並管理您想進行的資料標記任務，完成的標記任務可以在「模型訓練任務」中使用。</p>
+                    <h5 class="card-title">Step 1.</h5>
+                    <p>在這裡您可以建立、描述，並管理您想進行的資料標記任務，完成的標記任務可以在「模型訓練任務」中使用。</p>
                 </div>
             </div>
         </div>
-        <div class="col-lg-4 mb-4">
-            <div class="card bg-dark text-white shadow">
-                <div class="card-body">
-                    <a class="h5 text-white card-title" href="{% url 'modeling_jobs:index' %}">
-                    模型訓練任務
-                    </a>
-                    <div class="text-white-50 mt-2">
-                        在這裡您可以使用「資料標記任務」中完成的資料來建立、訓練，並驗證您的機器學習模型。
+        <div class="col-lg-4 col-md-12 md-4">
+            <div class="col-12 mb-4">
+                <h5>可用工具</h5>
+                <p>此工具包將製作流程分為三種任務工具：</p>
+                <!-- card -->
+                <div class="card shadow h-100 py-2 mb-4">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-3">
+                                <div class="font-weight-bold text-primary text-uppercase mb-1">
+                                    資料標記任務
+                                </div>
+                                <div class="mb-0 text-gray-800 font-weight-light">
+                                    在這裡您可以建立、描述，並管理您想進行的資料標記任務，完成的標記任務可以在「模型訓練任務」中使用。
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-tags fa-4x text-gray-300"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4">
-            <div class="card bg-danger text-white shadow">
-                <div class="card-body">
-                    <a class="h5 text-white card-title" href="{% url 'predicting_jobs:index' %}">
-                    族群貼標任務
-                    </a>
-                    <div class="text-white-50 mt-2">
-                        在這裡您可以藉由選擇「模型訓練任務」中您的模型，並挑選應用的資料範圍，建立族群貼標任務。
+
+                <!-- card -->
+                <div class="card shadow h-100 py-2 mb-4">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-3">
+                                <div class="font-weight-bold text-success text-uppercase mb-1">
+                                    模型訓練任務
+                                </div>
+                                <div class="mb-0 text-gray-800 font-weight-light">
+                                    在這裡您可以使用「資料標記任務」中完成的資料來建立、訓練，並驗證您的機器學習模型。
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-layer-group fa-4x text-gray-300"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- card -->
+                <div class="card shadow h-100 py-2 mb-4">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-3">
+                                <div class="font-weight-bold text-info text-uppercase mb-1">
+                                    族群貼標任務
+                                </div>
+                                <div class="mb-0 text-gray-800 font-weight-light">
+                                    在這裡您可以藉由選擇「模型訓練任務」中您的模型，並挑選應用的資料範圍，建立族群貼標任務。
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-id-card fa-4x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

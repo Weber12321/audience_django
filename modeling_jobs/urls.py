@@ -22,4 +22,9 @@ urlpatterns = [
     path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),
     # report curd
     path('<int:job_id>/report/<int:pk>', views.ReportDetail.as_view(), name="report-detail"),
+
+    # term weight curd
+    path('<int:job_id>/term_weight/add', views.TermWeightCreate.as_view(), name="term-weight-add"),
+    path('<int:job_id>/term_weight/<int:pk>/update', views.TermWeightUpdate.as_view(), name="term-weight-update"),
+    path('<int:job_id>/term_weight/<int:pk>/delete', views.TermWeightDelete.as_view(), name="term-weight-delete"),
 ]

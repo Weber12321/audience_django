@@ -43,47 +43,105 @@
             </div>
             <div class="card mb-4">
                 {% with labeling_job=job.jobRef %}
-                    {% if labeling_job %}
-
-                        <div class="card-header">訓練資料</div>
-                        <div class="card-body">
-                            <div class="card-title">使用資料：#{{ labeling_job.id }} <a
-                                    href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">{{ labeling_job.name }}</a>
-                            </div>
-
-                            <div class="card-title">資料數量：</div>
-                            <div class="table-responsive mt-2">
-                                <table class="table table-bordered">
-                                    <thead>
-                                    <tr>
-                                        <th scope="col"></th>
-                                        <th scope="col">訓練集</th>
-                                        <th scope="col">驗證集</th>
-                                        <th scope="col">測試集</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {% for label in labeling_job.label_set.all %}
-                                        <tr>
-                                            <td>{{ label.name }}</td>
-                                            <td>{{ label.show_train_set_count }}</td>
-                                            <td>{{ label.show_dev_set_count }}</td>
-                                            <td>{{ label.show_test_set_count }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                    <tr class="table-active">
-                                        <td>總計</td>
-                                        <td>{{ labeling_job.get_train_set.count }}</td>
-                                        <td>{{ labeling_job.get_dev_set.count }}</td>
-                                        <td>{{ labeling_job.get_test_set.count }}</td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                    <div class="card-header">訓練資料</div>
+                    <div class="card-body">
+                        <div class="card-title">使用資料：#{{ labeling_job.id }} <a
+                                href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">{{ labeling_job.name }}</a>
                         </div>
 
-                    {% endif %}
+                        <div class="card-title">資料數量：</div>
+                        <div class="table-responsive mt-2">
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th scope="col"></th>
+                                    <th scope="col">訓練集</th>
+                                    <th scope="col">驗證集</th>
+                                    <th scope="col">測試集</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for label in labeling_job.label_set.all %}
+                                    <tr>
+                                        <td>{{ label.name }}</td>
+                                        <td>{{ label.show_train_set_count }}</td>
+                                        <td>{{ label.show_dev_set_count }}</td>
+                                        <td>{{ label.show_test_set_count }}</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr class="table-active">
+                                    <td>總計</td>
+                                    <td>{{ labeling_job.get_train_set.count }}</td>
+                                    <td>{{ labeling_job.get_dev_set.count }}</td>
+                                    <td>{{ labeling_job.get_test_set.count }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 {% endwith %}
+            </div>
+
+            <div class="card mb-4">
+                <div class="card mb-4">
+                    <div class="card-header py-3 d-flex justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">詞彙權重列表</h6>
+                        <span class="card-link">
+                            <a href="{% url 'modeling_jobs:term-weight-add' job.id %}">新增規則</a>
+                        </span>
+                    </div>
+                    <div class="card-body">
+
+                        <ul class="nav nav-pills mb-4" id="myTab" role="tablist">
+                            {% for label in job.jobRef.label_set.all %}
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link  {% if forloop.first %} active {% endif %}"
+                                       id="label-{{ label.name }}-tab" data-toggle="tab"
+                                       href="#label-{{ label.name }}" role="tab"
+                                       aria-controls="home" aria-selected="true">{{ label.name }}
+                                        ({{ label.termweight_set.count }})</a>
+                                </li>
+
+                            {% empty %}
+                                沒有設定標籤
+                            {% endfor %}
+                        </ul>
+                        <div class="tab-content" id="myTabContent">
+                            {% for label in job.jobRef.label_set.all %}
+                                <div class="tab-pane {% if forloop.first %} fade show active {% endif %}"
+                                     id="label-{{ label.name }}" role="tabpanel"
+                                     aria-labelledby="label-{{ label.name }}-tab">
+                                    <div class="list-group">
+                                        {% for term_weight in label.termweight_set.all %}
+                                            <div class="list-group-item list-group-item-action">
+                                                <div class="d-flex w-100 justify-content-between">
+                                                    <h5 class="mb-1">{{ term_weight.term }}</h5>
+                                                    <span>{{ term_weight.weight }}</span>
+                                                </div>
+
+                                                <div class="d-flex justify-content-between">
+                                                    <small>
+                                                        {#                                                        {{ term_weight.get_rule_type_display }}#}
+                                                        {#                                                        - {{ term_weight.get_match_type_display }}#}
+                                                    </small>
+                                                    <span class="d-flex justify-content-end">
+                                                        <a class="btn btn-link btn-sm text-secondary ml-2"
+                                                           href="{% url 'modeling_jobs:term-weight-update' job.id term_weight.id %}"><small>編輯</small></a>
+                                                        <a class="btn btn-link btn-sm text-danger ml-2"
+                                                           href="{% url 'modeling_jobs:term-weight-delete' job.id term_weight.id %}"><small>刪除</small></a>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                            {% empty %}
+                                沒有設定標籤
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">

@@ -12,7 +12,7 @@ from django_q.tasks import AsyncTask
 
 from core.audience.models.base_model import RuleBaseModel, SuperviseModel
 from labeling_jobs.models import LabelingJob, Document
-from .forms import ModelingJobForm
+from .forms import ModelingJobForm, TermWeightForm
 from .helpers import insert_csv_to_db, parse_report
 from .models import ModelingJob, Report, TermWeight
 from .tasks import train_model_task, testing_model_via_ext_data_task
@@ -36,6 +36,13 @@ class JobDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'job'
     # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
     template_name = 'modeling_jobs/detail.html'
+
+    def get_template_names(self):
+        print(self.object.model_name)
+        if self.object.model_name == "TERM_WEIGHT_MODEL":
+            return 'modeling_jobs/term_weight_detail.html'
+        else:
+            return 'modeling_jobs/detail.html'
 
 
 class JobCreateView(LoginRequiredMixin, generic.CreateView):
@@ -225,3 +232,44 @@ def get_progress(request, pk):
         'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
+
+
+class TermWeightUpdate(LoginRequiredMixin, generic.UpdateView):
+    model = TermWeight
+    form_class = TermWeightForm
+    template_name = 'term_weights/update_form.html'
+
+
+class TermWeightCreate(LoginRequiredMixin, generic.CreateView):
+    form_class = TermWeightForm
+    template_name = 'term_weights/add_form.html'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['modeling_job_id'] = self.kwargs.get('job_id')
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.modeling_job_id = self.kwargs.get('job_id')
+        return super(TermWeightCreate, self).form_valid(form)
+
+    def get_success_url(self):
+        job_id = self.kwargs.get('job_id')
+        return reverse_lazy('modeling_job_id:job-detail', kwargs={"pk": job_id})
+
+
+class TermWeightDelete(LoginRequiredMixin, generic.DeleteView):
+    model = TermWeight
+    # success_url = reverse_lazy('predicting_jobs:index')
+    template_name = 'term_weights/confirm_delete_form.html'
+
+    def post(self, request, *args, **kwargs):
+        if "cancel" in request.POST:
+            print(request.POST)
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return super(TermWeightDelete, self).post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        job_id = self.kwargs.get('job_id')
+        return reverse_lazy('modeling_job_id:job-detail', kwargs={"pk": job_id})
