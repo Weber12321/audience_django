@@ -19,8 +19,7 @@
                    href="{% url 'labeling_jobs:job-docs' labeling_job.id %}">文章列表</a>
                 <a class="dropdown-item"
                    href="{% url 'labeling_jobs:label-add' labeling_job.id %}?next={{ request.path }}">新增標籤</a>
-                <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:job-update' labeling_job.id %}?next={{ request.path }}">修改</a>
+                <a class="dropdown-item" href="" data-toggle="modal" data-target="#exampleModal">修改</a>
                 <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' labeling_job.id %}">刪除</a>
             </div>
         </div>
@@ -221,4 +220,28 @@
 
         </div>
 
+
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">修改任務資訊</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form method="post" class="">{% csrf_token %}
+                        <div class="modal-body">
+                            {{ error }}
+                            {{ form.as_p }}
+                        </div>
+                        <div class="modal-footer">
+                            <input type="hidden" name="next" value="{{ next }}">
+                            <input type="submit" class="btn btn-primary" value="送出">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 {% endblock %}

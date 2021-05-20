@@ -16,20 +16,46 @@ from .models import LabelingJob, UploadFileJob, Document, Label, Rule
 from .tasks import import_csv_data_task, generate_datasets_task
 
 
-class IndexView(LoginRequiredMixin, generic.ListView):
-    queryset = LabelingJob.objects.order_by('-created_at')
-    # generic.ListView use default template_name = '<app name>/<model name>_list.html'
-    template_name = 'labeling_jobs/index.html'
-    context_object_name = 'labeling_jobs'
-    # def get_queryset(self):
-    #     return Job.objects.order_by('-created_at')
+# class IndexView(LoginRequiredMixin, generic.ListView):
+#     queryset = LabelingJob.objects.order_by('-created_at')
+#     # generic.ListView use default template_name = '<app name>/<model name>_list.html'
+#     template_name = 'labeling_jobs/index.html'
+#     context_object_name = 'labeling_jobs'
+#     # def get_queryset(self):
+#     #     return Job.objects.order_by('-created_at')
 
 
-class LabelingJobDetailView(LoginRequiredMixin, generic.DetailView):
+class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
     model = LabelingJob
-    context_object_name = 'labeling_job'
+    form_class = LabelingJobForm
+    template_name = 'labeling_jobs/index.html'
 
-    # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["labeling_jobs"] = self.model.objects.order_by('-created_at')
+        return context
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('labeling_jobs:index')
+
+
+class LabelingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
+    model = LabelingJob
+    form_class = LabelingJobForm
+    template_name = 'labeling_jobs/labeling_job_form.html'
+
+    def get_success_url(self):
+        _pk = self.kwargs['pk']
+        return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': _pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["labeling_job"] = self.model.objects.get(pk=self.kwargs['pk'])
+        return context
 
     def get_template_names(self):
         if self.object.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
@@ -40,26 +66,31 @@ class LabelingJobDetailView(LoginRequiredMixin, generic.DetailView):
             return 'labeling_jobs/labeling_job_detail.html'
 
 
-class LabelingJobCreate(LoginRequiredMixin, generic.CreateView):
-    form_class = LabelingJobForm
-    template_name = 'labeling_jobs/labeling_job_form.html'
+# class LabelingJobCreate(LoginRequiredMixin, generic.CreateView):
+#     form_class = LabelingJobForm
+#     template_name = 'labeling_jobs/labeling_job_form.html'
+#
+#     def form_valid(self, form):
+#         form.instance.created_by = self.request.user
+#         return super().form_valid(form)
+#
+#     def get_success_url(self):
+#         return reverse_lazy('labeling_jobs:index')
 
-    def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
 
-    def get_success_url(self):
-        return reverse_lazy('labeling_jobs:index')
-
-
-class LabelingJobUpdate(LoginRequiredMixin, generic.UpdateView):
-    model = LabelingJob
-    form_class = LabelingJobForm
-    template_name = 'labeling_jobs/labeling_job_form.html'
-
-    def get_success_url(self):
-        _pk = self.kwargs['pk']
-        return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': _pk})
+# class LabelingJobUpdate(LoginRequiredMixin, generic.UpdateView):
+#     model = LabelingJob
+#     form_class = LabelingJobForm
+#     template_name = 'labeling_jobs/labeling_job_form.html'
+#
+#     def get_success_url(self):
+#         _pk = self.kwargs['pk']
+#         return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': _pk})
+#
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context["labeling_job"] = self.model.objects.get(pk=self.kwargs['pk'])
+#         return context
 
 
 class LabelingJobDelete(LoginRequiredMixin, generic.DeleteView):

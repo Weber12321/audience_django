@@ -4,10 +4,10 @@ from . import views
 
 app_name = 'labeling_jobs'
 urlpatterns = [
-    path('', views.IndexView.as_view(), name='index'),
-    path('<int:pk>/', views.LabelingJobDetailView.as_view(), name='job-detail'),
-    path('create/', views.LabelingJobCreate.as_view(), name='job-create'),
-    path('<int:pk>/update/', views.LabelingJobUpdate.as_view(), name='job-update'),
+    path('', views.IndexAndCreateView.as_view(), name='index'),
+    path('<int:pk>/', views.LabelingJobDetailAndUpdateView.as_view(), name='job-detail'),
+    # path('create/', views.LabelingJobCreate.as_view(), name='job-create'),
+    # path('<int:pk>/update/', views.LabelingJobUpdate.as_view(), name='job-update'),
     path('<int:pk>/delete/', views.LabelingJobDelete.as_view(), name='job-delete'),
     path('<int:pk>/documents', views.LabelingJobDocumentsView.as_view(), name="job-docs"),
     path('<int:job_id>/document/<int:pk>', views.DocumentDetailView.as_view(), name="doc-detail"),
