@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}{{ labeling_job.name }} | 資料標記任務{% endblock %}
-{% block nav_title %}資料標記任務{% endblock %}
+{% block title %}{{ labeling_job.name }} | 資料準備任務{% endblock %}
+{% block nav_title %}{{ labeling_job.get_job_data_type_display }}{% endblock %}
 {% block page_title %}{{ labeling_job.name }}{% endblock %}
 {% block page_functions %}
     {% if user.is_staff %}
@@ -19,7 +19,8 @@
                    href="{% url 'labeling_jobs:job-docs' labeling_job.id %}">文章列表</a>
                 <a class="dropdown-item"
                    href="{% url 'labeling_jobs:label-add' labeling_job.id %}?next={{ request.path }}">新增標籤</a>
-                <a class="dropdown-item" href="" data-toggle="modal" data-target="#exampleModal">修改</a>
+                <a class="dropdown-item" href="" data-toggle="modal" data-target="#jobFormModal">修改</a>
+                <a class="dropdown-item" href="" data-toggle="modal" data-target="#labelFormModal">新增標籤</a>
                 <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' labeling_job.id %}">刪除</a>
             </div>
         </div>
@@ -96,20 +97,30 @@
             <!-- label list -->
             <div class="row">
                 <div class="col-lg-12">
-                    <div class="h5">標籤列表</div>
+                    <div class="d-flex justify-content-between">
+                        <h6 class="h5">標籤列表</h6>
+                        <span class="card-link">
+                <a href="" data-toggle="modal" data-target="#labelFormModal">新增標籤</a>
+                        </span>
+                    </div>
                     <hr>
                 </div>
                 {% for label in labeling_job.label_set.all %}
                     <div class="col-lg-6 mb-4">
-                        <a href="{% url 'labeling_jobs:label-update' labeling_job.id label.id %}"
-                           class="text-white">
-                            <div class="card bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %} text-white shadow">
-                                <div class="card-body">
-                                    {{ label.name }}
-                                    <div class="text-white-50 small">{{ label.description }}</div>
-                                </div>
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="h5 d-flex justify-content-start text-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}">{{ label.name }}</div>
+                                <div class="text-secondary small">
+                                    {% if label.description %}{{ label.description }}{% else %}
+                                        請按編輯添加標籤說明。{% endif %}</div>
+                                <span class="d-flex justify-content-end">
+                                        <a class="btn btn-link text-secondary btn-sm ml-2"
+                                           href="{% url 'labeling_jobs:label-update' labeling_job.id label.id %}">編輯</a>
+                                        <a class="btn btn-link text-danger btn-sm ml-2"
+                                           href="{% url 'labeling_jobs:label-delete' labeling_job.id label.id %}">刪除</a>
+                                </span>
                             </div>
-                        </a>
+                        </div>
                     </div>
                 {% empty %}
                     <div class="col-lg-6 mb-4">
@@ -148,8 +159,7 @@
                                     {% for rule in label.rule_set.all %}
                                         <div class="list-group-item list-group-item-action">
                                             <div class="d-flex justify-content-between">
-                                                <small>{{ rule.get_rule_type_display }}
-                                                    - {{ rule.get_match_type_display }}</small>
+                                                <small>{{ rule.get_rule_type_display }}</small>
                                                 <span class="d-flex justify-content-end">
                                                     <a class="btn btn-link btn-sm text-secondary ml-2"
                                                        href="{% url 'labeling_jobs:rule-update' labeling_job.id rule.id %}">編輯</a>
@@ -214,34 +224,53 @@
             </div>
         </div>
 
-        <!-- Content Row -->
-
-        <div class="row">
-
-        </div>
+    </div>
 
 
-        <!-- Modal -->
-        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">修改任務資訊</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <form method="post" class="">{% csrf_token %}
-                        <div class="modal-body">
-                            {{ error }}
-                            {{ form.as_p }}
-                        </div>
-                        <div class="modal-footer">
-                            <input type="hidden" name="next" value="{{ next }}">
-                            <input type="submit" class="btn btn-primary" value="送出">
-                        </div>
-                    </form>
+    <!-- Modal -->
+    <div class="modal fade" id="jobFormModal" tabindex="-1" aria-labelledby="jobFormModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jobFormModalLabel">修改任務資訊</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
+                <form method="post" class="">{% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {{ form.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
+    <!-- label create Modal -->
+    <div class="modal fade" id="labelFormModal" tabindex="-1" aria-labelledby="labelFormModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="labelFormModalLabel">新增標籤</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" action="{% url 'labeling_jobs:label-add' labeling_job.id %}">{% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {{ label_form.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock %}

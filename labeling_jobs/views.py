@@ -2,7 +2,7 @@ import re
 from random import shuffle
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy, reverse
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
@@ -11,7 +11,6 @@ from django_q.tasks import AsyncTask
 
 from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm
 from .models import LabelingJob, UploadFileJob, Document, Label, Rule
-
 # Create your views here.
 from .tasks import import_csv_data_task, generate_datasets_task
 
@@ -46,15 +45,18 @@ class LabelingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["labeling_job"] = self.model.objects.get(pk=self.kwargs['pk'])
+        label_form = LabelForm({'labeling_job': context.get("labeling_job").id, 'target_amount': 200})
+        print(label_form.fields)
+        context["label_form"] = label_form
         return context
 
     def get_template_names(self):
         if self.object.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-            return 'rules/keyword_job_detail.html'
+            return 'job_detail/keyword_job_detail.html'
         elif self.object.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
-            return 'rules/regex_job_detail.html'
+            return 'job_detail/regex_job_detail.html'
         else:
-            return 'labeling_jobs/labeling_job_detail.html'
+            return 'job_detail/supervise_job_detail.html'
 
 
 class LabelingJobDelete(LoginRequiredMixin, generic.DeleteView):
@@ -71,6 +73,7 @@ class LabelingJobDelete(LoginRequiredMixin, generic.DeleteView):
 
 
 class LabelingJobDocumentsView(SingleObjectMixin, generic.ListView):
+    object: LabelingJob
     paginate_by = 10
     model = LabelingJob
 
@@ -91,6 +94,7 @@ class LabelingJobDocumentsView(SingleObjectMixin, generic.ListView):
 
 
 class LabelingRandomDocumentView(SingleObjectMixin, generic.ListView):
+    object: LabelingJob
     paginate_by = 1
     model = LabelingJob
     template_name = 'labeling_jobs/labeling_form.html'
@@ -140,7 +144,6 @@ class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
     template_name = 'labeling_jobs/file_upload_form.html'
 
     def get_success_url(self):
-        from labeling_jobs.tasks import sample_task
         # 利用django-q實作非同步上傳
         a = AsyncTask(import_csv_data_task, upload_job=self.object, group='upload_documents')
         a.run()
@@ -178,10 +181,10 @@ class LabelUpdate(LoginRequiredMixin, generic.UpdateView):
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
         pk = self.kwargs.get('pk')
-        if self.object.labeling_job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-            return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
-        else:
-            return reverse_lazy('labeling_jobs:label-detail', kwargs={"job_id": job_id, "pk": pk})
+        # if self.object.labeling_job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
+        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+        # else:
+        #     return reverse_lazy('labeling_jobs:label-detail', kwargs={"job_id": job_id, "pk": pk})
 
 
 class LabelCreate(LoginRequiredMixin, generic.CreateView):
@@ -216,6 +219,7 @@ class LabelDelete(LoginRequiredMixin, generic.DeleteView):
 
 
 class LabelDetail(SingleObjectMixin, generic.ListView):
+    object: LabelingJob
     paginate_by = 10
     model = LabelingJob
 
@@ -286,5 +290,5 @@ class DocumentDetailView(LoginRequiredMixin, generic.DetailView):
         context = super().get_context_data(**kwargs)
         referer = self.request.META.get('HTTP_REFERER')
         if referer:
-            context['next'] = re.sub('^https?:\/\/[\w.:]+', '', referer)
+            context['next'] = re.sub(r'^https?://[\w.:]+', '', referer)
         return context

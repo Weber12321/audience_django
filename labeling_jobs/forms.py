@@ -35,8 +35,9 @@ class LabelingJobForm(forms.ModelForm):
 class LabelForm(forms.ModelForm):
     class Meta:
         model = Label
-        fields = ["name", "description", "target_amount"]
+        fields = ["labeling_job", "name", "description", "target_amount"]
         widgets = {
+            'labeling_job': forms.NumberInput(attrs={'class': 'form-control', 'hidden': True}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
             'created_by': forms.TextInput(attrs={'hidden': True})
