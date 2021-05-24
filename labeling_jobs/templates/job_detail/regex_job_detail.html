@@ -132,7 +132,9 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">規則列表</h6>
-                    <span class="card-link"><a href="{% url 'labeling_jobs:rule-add' labeling_job.id %}">新增規則</a></span>
+                    <span class="card-link">
+                <a href="" data-toggle="modal" data-target="#regexFormModal">新增規則</a>
+                    </span>
                 </div>
                 <div class="card-body">
 
@@ -264,6 +266,35 @@
                     <div class="modal-body">
                         {{ error }}
                         {{ label_form.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- rule create Modal -->
+    <div class="modal fade" id="regexFormModal" tabindex="-1" aria-labelledby="regexFormModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="regexFormModalLabel">新增規則</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" action="{% url 'labeling_jobs:rule-add' labeling_job.id %}">{% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {% for field in regex_form %}
+                            <div class="form-group">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {{ field.errors }}
+                            </div>
+                        {% endfor %}
                     </div>
                     <div class="modal-footer">
                         <input type="hidden" name="next" value="{{ next }}">

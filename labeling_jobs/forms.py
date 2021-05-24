@@ -37,7 +37,7 @@ class LabelForm(forms.ModelForm):
         model = Label
         fields = ["labeling_job", "name", "description", "target_amount"]
         widgets = {
-            'labeling_job': forms.NumberInput(attrs={'class': 'form-control', 'hidden': True}),
+            'labeling_job': forms.Select(attrs={'class': 'form-control', 'disabled': True}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
             'created_by': forms.TextInput(attrs={'hidden': True})
@@ -50,24 +50,38 @@ class LabelForm(forms.ModelForm):
 
 class RuleForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        labeling_job_id = kwargs.pop('labeling_job_id', None)
+        labeling_job_id = kwargs.pop('labeling_job', None)
         super(RuleForm, self).__init__(*args, **kwargs)
+
+        labeling_job_id = self.data.get('labeling_job', labeling_job_id)
+
         if labeling_job_id:
             self.fields['label'].queryset = Label.objects.filter(
                 labeling_job_id=labeling_job_id)
         else:
+            print(self.data)
             self.fields['label'].queryset = self.instance.labeling_job.label_set.all()
 
     class Meta:
         model = Rule
         fields = "__all__"
-        exclude = ['labeling_job', 'created_at', 'created_by', 'rule_type']
+        exclude = ['created_at', 'created_by', 'rule_type']
+        widgets = {
+            'labeling_job': forms.Select(attrs={'class': 'form-control', 'disabled': True}),
+            'content': forms.TextInput(attrs={'class': 'form-control', 'rows': 3}),
+            'label': forms.Select(attrs={'class': 'form-control'}),
+            'match_type': forms.Select(attrs={'class': 'form-control'}),
+            'score': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
 
 
 class RegexForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        labeling_job_id = kwargs.pop('labeling_job_id', None)
+        labeling_job_id = kwargs.pop('labeling_job', None)
         super(RegexForm, self).__init__(*args, **kwargs)
+
+        labeling_job_id = self.data.get('labeling_job', labeling_job_id)
+
         if labeling_job_id:
             self.fields['label'].queryset = Label.objects.filter(
                 labeling_job_id=labeling_job_id)
@@ -77,7 +91,12 @@ class RegexForm(forms.ModelForm):
     class Meta:
         model = Rule
         fields = "__all__"
-        exclude = ['labeling_job', 'created_at', 'created_by', 'match_type', 'score', 'rule_type']
+        exclude = ['created_at', 'created_by', 'match_type', 'score', 'rule_type']
+        widgets = {
+            'labeling_job': forms.Select(attrs={'class': 'form-control', 'disabled': True}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'label': forms.Select(attrs={'class': 'form-control'}),
+        }
 
 
 class DocumentForm(forms.ModelForm):

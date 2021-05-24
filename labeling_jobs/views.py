@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
 
-from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm
+from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm
 from .models import LabelingJob, UploadFileJob, Document, Label, Rule
 # Create your views here.
 from .tasks import import_csv_data_task, generate_datasets_task
@@ -44,10 +44,23 @@ class LabelingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["labeling_job"] = self.model.objects.get(pk=self.kwargs['pk'])
-        label_form = LabelForm({'labeling_job': context.get("labeling_job").id, 'target_amount': 200})
+        context["labeling_job"] = self.object
+
+        # label form for modal
+        label_form = LabelForm({'labeling_job': self.object.id, 'target_amount': 200})
         print(label_form.fields)
         context["label_form"] = label_form
+
+        # rule form for keyword rule job
+        if self.object.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
+            rule_form = RuleForm({'labeling_job': self.object.id, 'score': 1})
+            context["rule_form"] = rule_form
+
+        # rule form for regex rule job
+        if self.object.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
+            regex_form = RegexForm({'labeling_job': self.object.id})
+            context["regex_form"] = regex_form
+
         return context
 
     def get_template_names(self):
@@ -244,6 +257,12 @@ class RuleUpdate(LoginRequiredMixin, generic.UpdateView):
     form_class = RuleForm
     template_name = 'rules/update_form.html'
 
+    def get_form_class(self):
+        if self.object.labeling_job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
+            return RegexForm
+        else:
+            return RuleForm
+
 
 class RuleCreate(LoginRequiredMixin, generic.CreateView):
     form_class = RuleForm
@@ -251,8 +270,22 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['labeling_job_id'] = self.kwargs.get('job_id')
+        kwargs['labeling_job'] = self.kwargs.get('job_id')
         return kwargs
+
+    def get_form_class(self):
+        job = LabelingJob.objects.get(pk=self.kwargs.get('job_id'))
+        if job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
+            return RegexForm
+        else:
+            return RuleForm
+
+    def get_initial(self):
+        initial = super(RuleCreate, self).get_initial()
+        # Copy the dictionary so we don't accidentally change a mutable dict
+        initial = initial.copy()
+        initial['labeling_job'] = self.kwargs.get('job_id')
+        return initial
 
     def form_valid(self, form):
         form.instance.labeling_job_id = self.kwargs.get('job_id')
