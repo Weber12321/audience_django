@@ -281,10 +281,28 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form method="post" enctype="multipart/form-data"
-                      action="{% url 'labeling_jobs:upload-job-create' labeling_job.id %}">
-                    {% csrf_token %}
-                    <div class="modal-body">
+                <div class="modal-body">
+                    <p>檔案格式接受 <code>*.csv</code> ，Microsoft Excel格式的檔案可直接<a
+                            href="https://support.microsoft.com/zh-tw/office/%E5%8C%AF%E5%85%A5%E6%88%96%E5%8C%AF%E5%87%BA%E6%96%87%E5%AD%97-txt-%E6%88%96-csv-%E6%AA%94%E6%A1%88-%E6%A9%9F%E5%99%A8%E7%BF%BB%E8%AD%AF-5250ac4c-663c-47ce-937b-339e391393ba"
+                            target="_blank">匯出</a>成此類型的檔案。</p>
+                    <ul>
+                        <li>
+                            OpView資料下載欄位
+                            <div><small>（可多選，欄位名稱需一樣才讀取得到，對不到的欄位會略過。）</small></div>
+                            <ul>
+                                <li><code>標題</code></li>
+                                <li><code>內容</code></li>
+                                <li><code>來源</code></li>
+                                <li><code>來源網站</code></li>
+                                <li><code>作者</code></li>
+                            </ul>
+                        </li>
+                        <li><code>標籤</code></li>
+                    </ul>
+                    <hr>
+                    <form method="post" enctype="multipart/form-data"
+                          action="{% url 'labeling_jobs:upload-job-create' labeling_job.id %}">
+                        {% csrf_token %}
                         {{ error }}
                         {% for field in upload_file_form %}
                             <div class="form-group">
@@ -293,12 +311,12 @@
                                 {{ field.errors }}
                             </div>
                         {% endfor %}
-                    </div>
-                    <div class="modal-footer">
-                        <input type="hidden" name="next" value="{{ next }}">
-                        <input type="submit" class="btn btn-primary" value="送出">
-                    </div>
-                </form>
+                        <div class="modal-footer">
+                            <input type="hidden" name="next" value="{{ next }}">
+                            <input type="submit" class="btn btn-primary" value="送出">
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
