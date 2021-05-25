@@ -48,8 +48,12 @@ class LabelingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
 
         # label form for modal
         label_form = LabelForm({'labeling_job': self.object.id, 'target_amount': 200})
-        print(label_form.fields)
         context["label_form"] = label_form
+
+        # upload file form for modal
+        upload_file_form = UploadFileJobForm({'labeling_job': self.object.id, })
+        print(upload_file_form.fields)
+        context["upload_file_form"] = upload_file_form
 
         # rule form for keyword rule job
         if self.object.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
@@ -318,7 +322,7 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
         return initial
 
     def form_valid(self, form):
-        print(form)
+        # print(form)
         form.instance.labeling_job_id = self.kwargs.get('job_id')
         return super(RuleCreate, self).form_valid(form)
 
@@ -338,7 +342,7 @@ class RuleDelete(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
-            print(request.POST)
+            # print(request.POST)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return super(RuleDelete, self).post(request, *args, **kwargs)

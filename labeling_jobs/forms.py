@@ -8,22 +8,26 @@ class UploadFileJobForm(forms.ModelForm):
         model = UploadFileJob
         fields = '__all__'
         exclude = ['labeling_job', 'job_status', 'created_by']
+        widgets = {
+            'file': forms.FileInput(attrs={'class': '.form-control-file.', }),
+        }
 
 
 class LabelingJobForm(forms.ModelForm):
     class Meta:
         model = LabelingJob
         fields = "__all__"
-        exclude = ['created_by']
+        exclude = ['created_by', 'is_multi_label']
         # last_job_id = 0  # LabelingJob.objects.last().id if LabelingJob.objects.last() is not None else 0
-        # widgets = {
-        #     'name': forms.TextInput(attrs={'class': 'form-control',
-        #                                    'value': f'Jab'}),
-        #     'description': forms.Textarea(attrs={'class': 'form-control'}),
-        #     'job_type': forms.Textarea(attrs={'class': 'form-control'}),
-        #     'is_multi_label': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        #     'created_by': forms.TextInput(attrs={'hidden': True})
-        # }
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control',
+                                           'value': f'Jab'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+            'job_type': forms.Textarea(attrs={'class': 'form-control'}),
+            'is_multi_label': forms.CheckboxInput(attrs={'class': 'custom-switch'}),
+            'job_data_type': forms.Select(attrs={'class': 'form-control'}),
+            'created_by': forms.TextInput(attrs={'hidden': True})
+        }
         # labels = {
         #     'name': '任務名稱',
         #     'job_type': '任務類型',
@@ -65,13 +69,6 @@ class RuleForm(forms.ModelForm):
             if labeling_job_id:
                 self.fields['label'].queryset = Label.objects.filter(
                     labeling_job_id=labeling_job_id)
-            # else:
-            #     # print(self.data)
-            #     self.fields['label'].queryset = self.instance.labeling_job.label_set.all()
-
-    # def clean(self):
-    #     print(self.data)
-    #     super().clean()
 
     class Meta:
         model = Rule
