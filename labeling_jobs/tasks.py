@@ -48,8 +48,9 @@ def import_csv_data_task(upload_job: UploadFileJob):
     upload_job.save()
     try:
         file = upload_job.file
-        if upload_job.labeling_job.job_data_type == LabelingJob.DataTypes.SUPERVISE_MODEL:
-            create_documents(file, upload_job.labeling_job, update_labels=True)
+        if upload_job.labeling_job.job_data_type in {LabelingJob.DataTypes.SUPERVISE_MODEL,
+                                                     LabelingJob.DataTypes.TERM_WEIGHT_MODEL}:
+            create_documents(file, upload_job.labeling_job, update_labels=True, required_fields=DOCUMENT_FIELDS_MAPPING)
         elif upload_job.labeling_job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
             create_rules(file, upload_job.labeling_job, update_labels=True,
                          required_fields=RULE_FIELDS_MAPPING.values())
