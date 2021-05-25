@@ -232,12 +232,12 @@ class LabelDelete(LoginRequiredMixin, generic.DeleteView):
 
 
 class LabelDetail(SingleObjectMixin, generic.ListView):
-    object: LabelingJob
+    object: Label
     paginate_by = 10
-    model = LabelingJob
+    model = Label
 
     # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
-    template_name = 'labels/label_detail.html'
+    template_name = 'documents/label_document_detail.html'
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(queryset=Label.objects.all())
@@ -246,10 +246,31 @@ class LabelDetail(SingleObjectMixin, generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['label'] = self.object
+        labeling_job = self.object.labeling_job
+        # rule form for keyword rule job
+        if labeling_job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
+            rule_form = RuleForm({'labeling_job': labeling_job.id, 'score': 1, 'label': self.object.id})
+            context["rule_form"] = rule_form
+
+        # rule form for regex rule job
+        if labeling_job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
+            regex_form = RegexForm({'labeling_job': labeling_job.id, 'label': self.object.id})
+            context["rule_form"] = regex_form
         return context
 
+    def get_template_names(self):
+        if self.object.labeling_job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
+                                                      LabelingJob.DataTypes.REGEX_MODEL}:
+            return 'rules/label_rule_detail.html'
+        else:
+            return 'documents/label_document_detail.html'
+
     def get_queryset(self):
-        return self.object.document_set.order_by('pk')
+        if self.object.labeling_job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
+                                                      LabelingJob.DataTypes.REGEX_MODEL}:
+            return self.object.rule_set.all()
+        else:
+            return self.object.document_set.order_by('pk')
 
 
 class RuleUpdate(LoginRequiredMixin, generic.UpdateView):
@@ -270,30 +291,44 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['labeling_job'] = self.kwargs.get('job_id')
+        kwargs['labeling_job_id'] = self.kwargs.get('job_id')
         return kwargs
+
+    # def post(self, request, *args, **kwargs):
+    #     print(request.POST.getlist)
+    #     super(RuleCreate, self).post(request)
 
     def get_form_class(self):
         job = LabelingJob.objects.get(pk=self.kwargs.get('job_id'))
         if job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
             return RegexForm
-        else:
+        elif job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
             return RuleForm
+        else:
+            raise ValueError(f"job {job} is not a rule-base job.")
 
     def get_initial(self):
         initial = super(RuleCreate, self).get_initial()
         # Copy the dictionary so we don't accidentally change a mutable dict
         initial = initial.copy()
         initial['labeling_job'] = self.kwargs.get('job_id')
+        label_id = self.kwargs.get("label_id")
+        if label_id:
+            initial['label'] = self.kwargs.get('label_id')
         return initial
 
     def form_valid(self, form):
+        print(form)
         form.instance.labeling_job_id = self.kwargs.get('job_id')
         return super(RuleCreate, self).form_valid(form)
 
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
-        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+        label_id = self.kwargs.get("label_id")
+        if label_id:
+            return reverse_lazy('labeling_jobs:label-detail', kwargs={"job_id": job_id, 'pk': label_id})
+        else:
+            return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
 
 
 class RuleDelete(LoginRequiredMixin, generic.DeleteView):
@@ -309,8 +344,9 @@ class RuleDelete(LoginRequiredMixin, generic.DeleteView):
             return super(RuleDelete, self).post(request, *args, **kwargs)
 
     def get_success_url(self):
+        label_id = self.object.label.id
         job_id = self.kwargs.get('job_id')
-        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+        return reverse_lazy('labeling_jobs:label-detail', kwargs={"job_id": job_id, 'pk': label_id})
 
 
 class DocumentDetailView(LoginRequiredMixin, generic.DetailView):

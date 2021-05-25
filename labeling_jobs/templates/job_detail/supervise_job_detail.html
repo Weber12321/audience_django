@@ -19,11 +19,9 @@
             <div class="dropdown-menu animated--fade-in"
                  aria-labelledby="dropdownMenuButton">
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:upload-job-create' labeling_job.id %}?next={{ request.path }}">上傳檔案</a>
+                   href="{% url 'labeling_jobs:upload-job-create' labeling_job.id %}?next={{ request.path }}">上傳訓練資料</a>
                 <a class="dropdown-item"
                    href="{% url 'labeling_jobs:job-docs' labeling_job.id %}">文章列表</a>
-                <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:label-add' labeling_job.id %}?next={{ request.path }}">新增標籤</a>
                 <a class="dropdown-item" href="" data-toggle="modal" data-target="#exampleModal">修改</a>
                 <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' labeling_job.id %}">刪除</a>
             </div>
@@ -123,9 +121,20 @@
                         <div class="card shadow">
                             <div class="card-body">
                                 <div class="h5 d-flex justify-content-start text-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}">{{ label.name }}</div>
-                                <div class="text-secondary small">
+                                <div class="text-secondary small mb-4">
                                     {% if label.description %}{{ label.description }}{% else %}
                                         請按編輯添加標籤說明。{% endif %}</div>
+                                <div>
+                                    <h4 class="small font-weight-bold">進度
+                                        <span class="float-right"><small> {{ label.show_document_amount }}/{{ label.target_amount }}</small> {{ label.show_progress_percentage }}%</span>
+                                    </h4>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}"
+                                             role="progressbar" style="width: {{ label.show_progress_percentage }}%"
+                                             aria-valuenow="label.show_progress_percentage"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
                                 <span class="d-flex justify-content-end">
                                         <a class="btn btn-link text-info btn-sm ml-2"
                                            href="{% url 'labeling_jobs:label-detail' labeling_job.id label.id %}">查看資料</a>
@@ -142,26 +151,6 @@
                         沒有設定標籤
                     </div>
                 {% endfor %}
-            </div>
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">標記進度</h6>
-                </div>
-                <div class="card-body">
-                    {% for label in labeling_job.label_set.all %}
-                        <h4 class="small font-weight-bold">{{ label.name }}
-                            <span class="float-right"><small> {{ label.show_document_amount }}/{{ label.target_amount }}</small> {{ label.show_progress_percentage }}%</span>
-                        </h4>
-                        <div class="progress mb-4">
-                            <div class="progress-bar bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}"
-                                 role="progressbar" style="width: {{ label.show_progress_percentage }}%"
-                                 aria-valuenow="label.show_progress_percentage"
-                                 aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    {% empty %}
-                        沒有設定標籤
-                    {% endfor %}
-                </div>
             </div>
         </div>
 
@@ -289,7 +278,13 @@
                 <form method="post" action="{% url 'labeling_jobs:label-add' labeling_job.id %}">{% csrf_token %}
                     <div class="modal-body">
                         {{ error }}
-                        {{ label_form.as_p }}
+                        {% for field in label_form %}
+                            <div class="form-group">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {{ field.errors }}
+                            </div>
+                        {% endfor %}
                     </div>
                     <div class="modal-footer">
                         <input type="hidden" name="next" value="{{ next }}">

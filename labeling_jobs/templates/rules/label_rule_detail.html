@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}任務{% endblock %}
+{% block nav_title %}
+    資料準備任務
+{% endblock %}
+{% block page_title %}「{{ label.name }}」的規則列表{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+        <div class="dropdown mb-4">
+            <a class="btn btn-primary" href="{% url 'labeling_jobs:job-detail' label.labeling_job.id %}">上一頁</a>
+            <button class="btn btn-primary dropdown-toggle" type="button"
+                    id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false">
+                操作
+            </button>
+            <div class="dropdown-menu animated--fade-in"
+                 aria-labelledby="dropdownMenuButton">
+                <a class="dropdown-item"
+                   href="{% url 'labeling_jobs:label-update' label.labeling_job.id label.id %}?next={{ request.path }}">修改</a>
+                <a class="dropdown-item"
+                   href="{% url 'labeling_jobs:label-delete' label.labeling_job.id label.id %}">刪除</a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+{% block page_info %}
+{% endblock %}
+{% block page_description %}
+    <p>{{ label.description }}</p>
+{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+
+            <div class="row mb-4">
+                <div class="col-lg-12">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="h5">規則列表</h6>
+                        <span class="card-link">
+                    <a href="" data-toggle="modal" data-target="#ruleFormModal"
+                       class="btn btn-sm btn-outline-primary ml-2">新增規則</a>
+                </span>
+                    </div>
+                    <hr>
+                </div>
+            </div>
+            {% if page_obj %}
+                <div class="list-group shadow">
+                    {% for rule in page_obj %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between">
+                                <small>{{ rule.get_rule_type_display }}
+                                    - {{ rule.get_match_type_display }}</small>
+                                <span class="d-flex justify-content-end">
+                                    <a class="btn btn-link btn-sm text-secondary ml-2"
+                                       href="{% url 'labeling_jobs:rule-update' rule.labeling_job.id rule.id %}">編輯</a>
+                                    <a class="btn btn-link btn-sm text-danger ml-2"
+                                       href="{% url 'labeling_jobs:rule-delete' rule.labeling_job.id rule.id %}">刪除</a>
+                                </span>
+                            </div>
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ rule.content }}</h5>
+                                <small>{{ rule.created_at }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+                <p>沒有設定標籤</p>
+            {% endif %}
+
+
+        </div>
+
+        <div class="col-lg-4 mb-4">
+
+            <!-- Pending Requests Card Example -->
+            <div class="col-lg-12 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    規則數量
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ label.show_document_amount }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="col-12 pagination text-center">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}">上一頁</a>
+                {% endif %}
+
+                <span class="current">
+                     {{ page_obj.number }} / {{ paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">下一頁</a>
+                {% endif %}
+            </span>
+    </div>
+    <!-- rule create Modal -->
+    <div class="modal fade" id="ruleFormModal" tabindex="-1" aria-labelledby="ruleFormModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ruleFormModalLabel">新增規則</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post"
+                      action="{% url 'labeling_jobs:label-rule-add' label.labeling_job.id label.id %}">{% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {% for field in rule_form %}
+                            <div class="form-group">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {{ field.errors }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
