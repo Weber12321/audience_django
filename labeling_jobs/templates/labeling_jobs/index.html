@@ -84,65 +84,83 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="h5"><span class="badge badge-success">監督式學習模型</span></div>
-            <p>藉由帶有標籤的文本資料，讓機器自動學習文本中重要的特徵，此類型的資料必要欄位為：</p>
-            <ul>
-                <li>
-                    <code>OpView資料下載欄位</code>
-                    <div><small>（擇一，欄位名稱需一樣才讀取得到）</small></div>
+            <h4>各種模型需要的資料</h4>
+            <div class="card shadow mb-2">
+                <div class="card-body">
+                    <div class="card-title font-weight-bold">監督式學習模型</div>
+                    <p>藉由帶有標籤的文本資料，讓機器自動學習文本中重要的特徵，此類型的資料必要欄位為：</p>
                     <ul>
-                        <li><code>標題</code></li>
-                        <li><code>內容</code></li>
-                        <li><code>來源</code></li>
-                        <li><code>來源網站</code></li>
-                        <li><code>作者</code></li>
+                        <li>
+                            <code>OpView資料下載欄位</code>
+                            <div><small>（擇一，欄位名稱需一樣才讀取得到）</small></div>
+                            <ul>
+                                <li><code>標題</code></li>
+                                <li><code>內容</code></li>
+                                <li><code>來源</code></li>
+                                <li><code>來源網站</code></li>
+                                <li><code>作者</code></li>
+                            </ul>
+                        </li>
+                        <li><code>標籤</code></li>
                     </ul>
-                </li>
-                <li><code>標籤</code></li>
-            </ul>
-            <small><a href="https://zh.wikipedia.org/wiki/监督学习" target="_blank">什麼是監督式學習？</a></small>
-            <hr>
-            <div class="h5"><span class="badge badge-primary">關鍵字規則模型</span></div>
-            <p>藉由關鍵字比對文本內容，可設定 <code>開頭</code> 、 <code>結尾</code> 、 <code>部分命中</code> 以及 <code>完全一致</code>
-                比對內容，例如可用於比對來源、作者名稱等應用，必要欄位為：</p>
-            <ul>
-                <li><code>關鍵字</code></li>
-                <li><code>判斷式</code>
-                    <div><small>(可複選， <code>,</code> 逗號分隔)</small></div>
+                    <small><a href="https://zh.wikipedia.org/wiki/监督学习" target="_blank">什麼是監督式學習？</a></small>
+                </div>
+            </div>
+
+            <div class="card shadow mb-2">
+                <div class="card-body ">
+                    <div class="card-title font-weight-bold">關鍵字規則模型</div>
+                    <p>藉由關鍵字比對文本內容，可設定 <code>開頭</code> 、 <code>結尾</code> 、 <code>部分命中</code> 以及 <code>完全一致</code>
+                        比對內容，例如可用於比對來源、作者名稱等應用，必要欄位為：</p>
                     <ul>
-                        <li><code>START</code> 比對開頭</li>
-                        <li><code>END</code> 比對結尾</li>
-                        <li><code>PARTIALLY</code> 部分吻合</li>
-                        <li><code>EXACTLY</code> 完全一致</li>
+                        <li><code>關鍵字</code></li>
+                        <li><code>判斷式</code>
+                            <div><small>(可複選， <code>,</code> 逗號分隔)</small></div>
+                            <ul>
+                                <li><code>START</code> 比對開頭</li>
+                                <li><code>END</code> 比對結尾</li>
+                                <li><code>PARTIALLY</code> 部分吻合</li>
+                                <li><code>EXACTLY</code> 完全一致</li>
+                            </ul>
+                        </li>
+                        <li><code>標籤</code></li>
                     </ul>
-                </li>
-                <li><code>標籤</code></li>
-            </ul>
-            <hr>
-            <div class="h5"><span class="badge badge-info">正則表達式模型</span></div>
-            <p>藉由正則表達式（regex）比對文本內容，屬於較進階的規則比對方法，此類型的資料必要欄位為：</p>
-            <ul>
-                <li><code>規則式</code></li>
-                <li><code>標籤</code></li>
-            </ul>
-            <small><a href="https://zh.wikipedia.org/wiki/正则表达式" target="_blank">什麼是regex?</a></small>
-            <hr>
-            <div class="h5"><span class="badge badge-secondary">詞彙權重模型</span></div>
-            <p>與監督式學習相似，差別在於此類型的模型會產生各類別重要的 <code>詞彙</code> 以及 <code>詞彙權重分數</code> ，實際貼標時會將分數做加總，總分超過門檻值就會貼上標籤：</p>
-            <ul>
-                <li>
-                    <code>OpView資料下載欄位</code>
-                    <div><small>（擇一，欄位名稱需一樣才讀取得到）</small></div>
+                </div>
+            </div>
+
+            <div class="card shadow mb-2">
+                <div class="card-body">
+                    <div class="card-title font-weight-bold">正則表達式模型</div>
+                    <p>藉由正則表達式（regex）比對文本內容，屬於較進階的規則比對方法，此類型的資料必要欄位為：</p>
                     <ul>
-                        <li><code>標題</code></li>
-                        <li><code>內容</code></li>
-                        <li><code>來源</code></li>
-                        <li><code>來源網站</code></li>
-                        <li><code>作者</code></li>
+                        <li><code>規則式</code></li>
+                        <li><code>標籤</code></li>
                     </ul>
-                </li>
-                <li><code>標籤</code></li>
-            </ul>
+                    <small><a href="https://zh.wikipedia.org/wiki/正则表达式" target="_blank">什麼是regex?</a></small>
+                </div>
+            </div>
+
+            <div class="card shadow mb-2">
+                <div class="card-body">
+                    <div class="card-title font-weight-bold">詞彙權重模型</div>
+                    <p>與監督式學習相似，差別在於此類型的模型會產生各類別重要的 <code>詞彙</code> 以及 <code>詞彙權重分數</code> ，實際貼標時會將分數做加總，總分超過門檻值就會貼上標籤：
+                    </p>
+                    <ul>
+                        <li>
+                            <code>OpView資料下載欄位</code>
+                            <div><small>（擇一，欄位名稱需一樣才讀取得到）</small></div>
+                            <ul>
+                                <li><code>標題</code></li>
+                                <li><code>內容</code></li>
+                                <li><code>來源</code></li>
+                                <li><code>來源網站</code></li>
+                                <li><code>作者</code></li>
+                            </ul>
+                        </li>
+                        <li><code>標籤</code></li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
     <!-- Modal -->
