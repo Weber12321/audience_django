@@ -138,9 +138,8 @@ def doc_label_update(request, job_id):
     next_page = request.POST.get("next", None)
     labels = [Label.objects.get(pk=label_id) for label_id in label_ids]
     doc = Document.objects.get(id=doc_id)
-    doc.label.clear()
     for label in labels:
-        doc.label.add(label)
+        doc.labels.add(label)
     doc.save()
     if next_page:
         return HttpResponseRedirect(next_page)

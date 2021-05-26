@@ -107,13 +107,13 @@
                 比對內容，例如可用於比對來源、作者名稱等應用，必要欄位為：</p>
             <ul>
                 <li><code>關鍵字</code></li>
-                <li><code>比對方式</code>
+                <li><code>判斷式</code>
                     <div><small>(可複選， <code>,</code> 逗號分隔)</small></div>
                     <ul>
-                        <li><code>開頭</code></li>
-                        <li><code>結尾</code></li>
-                        <li><code>部分命中</code></li>
-                        <li><code>完全一致</code></li>
+                        <li><code>START</code> 比對開頭</li>
+                        <li><code>END</code> 比對結尾</li>
+                        <li><code>PARTIALLY</code> 部分吻合</li>
+                        <li><code>EXACTLY</code> 完全一致</li>
                     </ul>
                 </li>
                 <li><code>標籤</code></li>
@@ -122,7 +122,7 @@
             <div class="h5"><span class="badge badge-info">正則表達式模型</span></div>
             <p>藉由正則表達式（regex）比對文本內容，屬於較進階的規則比對方法，此類型的資料必要欄位為：</p>
             <ul>
-                <li><code>regex規則式</code></li>
+                <li><code>規則式</code></li>
                 <li><code>標籤</code></li>
             </ul>
             <small><a href="https://zh.wikipedia.org/wiki/正则表达式" target="_blank">什麼是regex?</a></small>

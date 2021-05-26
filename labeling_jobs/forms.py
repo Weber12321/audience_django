@@ -41,7 +41,7 @@ class LabelForm(forms.ModelForm):
         model = Label
         fields = ["labeling_job", "name", "description", "target_amount"]
         widgets = {
-            'labeling_job': forms.Select(attrs={'class': 'form-control', 'disabled': True}),
+            'labeling_job': forms.Select(attrs={'class': 'form-control', 'disabled': False}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
             'target_amount': forms.NumberInput(attrs={'class': 'form-control'}),

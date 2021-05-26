@@ -1,6 +1,7 @@
 import codecs
 import csv
 import hashlib
+from collections import defaultdict
 from datetime import datetime
 from random import shuffle
 from time import sleep
@@ -9,25 +10,28 @@ from typing import List
 import cchardet
 from labeling_jobs.models import LabelingJob, Document, UploadFileJob, Label, Rule
 
+# 以下的key都須與rule的欄位相同，才能比對的到資料
 RULE_FIELDS_MAPPING = {
     'content': '字詞',
-    'match_types': '判斷式',
+    'match_type': '判斷式',
     'label': '標籤',
     'score': '分數',
 }
 
 REGEX_FIELDS_MAPPING = {
-    'content': '規則',
+    'content': '規則式',
     'label': '標籤',
 }
 
+# 以下的key都須與document的欄位相同，才能比對的到資料
 DOCUMENT_FIELDS_MAPPING = {
-    's_area_id': '頻道ID',
+    's_id': '來源',
+    's_area_id': '來源網站',
     'title': '標題',
     'author': '作者',
-    'content': '內文',
+    'content': '內容',
     'label': '標籤',
-    'post_time': '發文時間',
+    'post_time': '發佈時間',
 }
 
 
@@ -51,14 +55,11 @@ def import_csv_data_task(upload_job: UploadFileJob):
         if upload_job.labeling_job.job_data_type in {LabelingJob.DataTypes.SUPERVISE_MODEL,
                                                      LabelingJob.DataTypes.TERM_WEIGHT_MODEL}:
             create_documents(file, upload_job.labeling_job, update_labels=True, required_fields=DOCUMENT_FIELDS_MAPPING)
-        elif upload_job.labeling_job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-            create_rules(file, upload_job.labeling_job, update_labels=True,
-                         required_fields=RULE_FIELDS_MAPPING.values())
-        elif upload_job.labeling_job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
-            create_regex(file, upload_job.labeling_job, update_labels=True,
-                         required_fields=REGEX_FIELDS_MAPPING.values())
+        elif upload_job.labeling_job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
+                                                       LabelingJob.DataTypes.REGEX_MODEL}:
+            create_rules(file, upload_job.labeling_job, update_labels=True)
         else:
-            raise NotImplementedError
+            raise ValueError(f'Unknown job_data_type {upload_job.labeling_job}.')
         upload_job.job_status = UploadFileJob.JobStatus.DONE
     except Exception as e:
         print(e)
@@ -67,71 +68,65 @@ def import_csv_data_task(upload_job: UploadFileJob):
         upload_job.save()
 
 
-def read_csv_file(file, required_fields=None):
-    if required_fields is None:
-        required_fields = ['title', 'author', 's_area_id', 'content', 'label']
-
+def read_csv_file(file, required_fields):
     delimiters = [',', '\t']
     encoding = cchardet.detect(file.read())['encoding']
     file.seek(0)
-    csv_file = header = None
+    csv_file = header = exist_field = None
     for delimiter in delimiters:
         csv_file = csv.DictReader(codecs.iterdecode(file, encoding), skipinitialspace=True,
                                   delimiter=delimiter,
                                   quoting=csv.QUOTE_ALL)
         header = csv_file.fieldnames
-        if len(set(required_fields).intersection(header)) > 0:
-            break
-    if csv_file is None or header is None:
+        print(header)
+        if isinstance(required_fields, dict):
+            if len(set(required_fields.keys()).intersection(header)) > 0:
+                exist_field = set(required_fields.keys()).intersection(header)
+                break
+            elif len(set(required_fields.values()).intersection(header)) > 0:
+                exist_field = set(required_fields.values()).intersection(header)
+                break
+        else:
+            if len(set(required_fields).intersection(header)) > 0:
+                exist_field = set(required_fields).intersection(header)
+                break
+    if csv_file is None or exist_field is None:
         raise ValueError(f"csv欄位讀取錯誤，請確認所使用的欄位分隔符號是否屬於於「{' or '.join(delimiters)}」其中一種。")
+
     return csv_file
 
 
-def create_regex(file, job: LabelingJob, required_fields=None, update_labels: bool = False):
-    csv_rows = read_csv_file(file, required_fields)
-    rule_bulk_list = []
-    job_labels_dict = job.get_labels_dict()
-    for index, row in enumerate(csv_rows):
-        regex_fields = {}
-        for field in RULE_FIELDS_MAPPING.keys():
-            regex_fields[field] = row.get(RULE_FIELDS_MAPPING.get(field, ''), None)
-        label_str: str = regex_fields.get('label', None)
-        content = regex_fields.get('content', None)
-        score = regex_fields.get('score')
-
-        if label_str in job_labels_dict:
-            label_obj = job_labels_dict.get(label_str)
-        elif update_labels:
-            job.label_set.create(name=label_str, labeling_job=job)
-            job.save()
-            job_labels_dict = job.get_labels_dict()
-            label_obj = job_labels_dict.get(label_str)
-        else:
-            continue
-        job_labels_dict = job.get_labels_dict()
-        rule = Rule(score=score if score else 1,
-                    content=content,
-                    rule_type=Rule.RuleType.REGEX,
-                    labeling_job=job,
-                    label=label_obj)
-        rule_bulk_list.append(rule)
-
-    job.rule_set.bulk_create(rule_bulk_list, ignore_conflicts=True)
-
-
 def create_rules(file, job: LabelingJob, required_fields=None, update_labels: bool = False):
+    if job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
+        required_fields = RULE_FIELDS_MAPPING if not required_fields else required_fields
+        rule_type = Rule.RuleType.KEYWORD
+    elif job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
+        required_fields = REGEX_FIELDS_MAPPING if not required_fields else required_fields
+        rule_type = Rule.RuleType.REGEX
+    else:
+        raise ValueError(f'Job {job} is not a rule base job.')
     csv_rows = read_csv_file(file, required_fields)
     rule_bulk_list = []
     job_labels_dict = job.get_labels_dict()
-    for index, row in enumerate(csv_rows):
-        row_fields = {}
-        for field in RULE_FIELDS_MAPPING.keys():
-            row_fields[field] = row.get(RULE_FIELDS_MAPPING.get(field, ''), None)
-        label_str: str = row_fields.get('label', None)
-        match_types_str = row_fields.get('match_types', None)
-        content = row_fields.get('content', None)
-        score = row_fields.get('score')
 
+    exist_fields = set(Rule.__dict__.keys()).intersection(required_fields.keys())
+    for index, row in enumerate(csv_rows):
+        data = defaultdict(str)
+        for _field in exist_fields:
+            field_data = row.get(_field, None) or row.get(required_fields.get(_field), None)
+            if _field == 'score':
+                field_data = field_data if field_data else 1
+            data[_field] = field_data
+        label_str: str = data.get('label', None)
+        match_types_str = data.get('match_type', None)
+        content = data.get('content', None)
+        score = data.get('score', 1)
+
+        # 若沒有比對字詞或規則就不建立
+        if content is None:
+            continue
+
+        # 取得Label物件
         if label_str in job_labels_dict:
             label_obj = job_labels_dict.get(label_str)
         elif update_labels:
@@ -141,24 +136,33 @@ def create_rules(file, job: LabelingJob, required_fields=None, update_labels: bo
             label_obj = job_labels_dict.get(label_str)
         else:
             continue
-        if match_types_str:
-            if match_types_str.__contains__(','):
-                match_types = match_types_str.split(',')
+
+        if job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
+            if match_types_str:
+                if match_types_str.__contains__(','):
+                    match_types = match_types_str.split(',')
+                else:
+                    match_types = [match_types_str]
             else:
-                match_types = [match_types_str]
-        else:
-            continue
-        job_labels_dict = job.get_labels_dict()
-        for match_type in match_types:
-            if match_type not in Rule.MatchType:
-                print(match_type)
-                continue
-            # print(label_obj.id, content, match_type, label_obj.name)
-            rule = Rule(match_type=Rule.MatchType(match_type),
-                        score=score if score else 1,
+                match_types = [Rule.MatchType.PARTIALLY]
+
+            for match_type in match_types:
+                if match_type not in Rule.MatchType:
+                    match_type = Rule.MatchType.PARTIALLY
+
+                rule = Rule(match_type=Rule.MatchType(match_type),
+                            score=score,
+                            content=content,
+                            labeling_job=job,
+                            rule_type=rule_type,
+                            label=label_obj)
+                print(rule.label, rule.match_type, rule.score, rule.content)
+                rule_bulk_list.append(rule)
+        elif job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
+            rule = Rule(score=score,
                         content=content,
+                        rule_type=rule_type,
                         labeling_job=job,
-                        rule_type=Rule.RuleType.KEYWORD,
                         label=label_obj)
             rule_bulk_list.append(rule)
 
@@ -167,7 +171,10 @@ def create_rules(file, job: LabelingJob, required_fields=None, update_labels: bo
 
 def create_documents(file, job: LabelingJob, required_fields=None, document_type: Document.TypeChoices = None,
                      update_labels: bool = False):
+    if required_fields is None:
+        required_fields = DOCUMENT_FIELDS_MAPPING
     csv_rows = read_csv_file(file, required_fields)
+    print(csv_rows.fieldnames)
 
     now = datetime.now()
     dt_string = now.strftime("%Y/%m/%d %H:%M:%S")
@@ -179,19 +186,23 @@ def create_documents(file, job: LabelingJob, required_fields=None, document_type
     hash_num = m.hexdigest()
 
     labels = []
-
+    exist_fields = set(Document.__dict__.keys()).intersection(DOCUMENT_FIELDS_MAPPING.keys())
+    print(exist_fields)
     for index, row in enumerate(csv_rows):
-        doc = Document(title=row.get("title", ""),
-                       author=row.get("author", ""),
-                       s_area_id=row.get("s_area_id", ""),
-                       content=row.get("content", ""),
-                       post_time=row.get("post_time", None),
-                       labeling_job_id=job.id,
-                       hash_num=hash_num)
+        data = defaultdict(str)
+        for field in exist_fields:
+            if field == 'post_time':
+                _row = row.get(field, None) or row.get(DOCUMENT_FIELDS_MAPPING.get(field), None)
+                _row = datetime.strptime(_row, "%Y/%m/%d %H:%M:%S") if _row else _row
+            else:
+                _row = row.get(field, None) or row.get(DOCUMENT_FIELDS_MAPPING.get(field), 'Unknown')
+            data[field] = _row
+        doc = Document(labeling_job_id=job.id,
+                       hash_num=hash_num, **data)
         if document_type:
             doc.document_type = document_type
         doc_bulk_list.append(doc)
-        labels.append(row.get("label", None))
+        labels.append(row.get("label", None) or row.get(DOCUMENT_FIELDS_MAPPING.get("label"), ''))
 
     job.document_set.bulk_create(doc_bulk_list)
     documents = job.document_set.filter(hash_num=hash_num)
