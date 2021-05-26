@@ -216,8 +216,8 @@ CONNECT_RETRIES = 3
 # 若要新增AVAILABLE_FIELDS請同步調整 core.dao.input_example，key必須與InputExample對齊（會以getattr(key必須與InputExample對齊, key)取值）。
 AVAILABLE_FIELDS = {
     'id': '文章id',
-    's_id': '來源id',
-    's_area_id': '頻道id',
+    's_id': '來源',
+    's_area_id': '來源網站',
     'title': '標題',
     'author': '作者',
     'content': '內文',

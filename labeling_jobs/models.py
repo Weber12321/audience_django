@@ -28,7 +28,7 @@ class LabelingJob(models.Model):
         verbose_name_plural = "資料標記工作列表"
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.get_job_data_type_display()})"
 
     def get_absolute_url(self):
         return reverse('labeling_jobs:labeling-job-create', kwargs={'pk': self.pk})
