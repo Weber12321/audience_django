@@ -22,7 +22,7 @@
                 {#                   href="{% url 'labeling_jobs:upload-job-create' labeling_job.id %}?next={{ request.path }}">上傳訓練資料</a>#}
                 <a class="dropdown-item"
                    href="{% url 'labeling_jobs:job-docs' labeling_job.id %}">文章列表</a>
-                <a class="dropdown-item" href="" data-toggle="modal" data-target="#exampleModal">修改</a>
+                <a class="dropdown-item" href="" data-toggle="modal" data-target="#jobUpdateModal">修改</a>
                 <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' labeling_job.id %}">刪除</a>
             </div>
         </div>
@@ -248,11 +248,11 @@
         </div>
     </div>
     <!-- Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal fade" id="jobUpdateModal" tabindex="-1" aria-labelledby="jobUpdateModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">修改任務資訊</h5>
+                    <h5 class="modal-title" id="jobUpdateModalLabel">修改任務資訊</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>

@@ -11,6 +11,7 @@ from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
 
 from core.audience.models.base_model import RuleBaseModel, SuperviseModel
+from core.audience.models.rule_base.regex_model import RegexModel
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm, TermWeightForm
 from .helpers import insert_csv_to_db, parse_report
@@ -19,30 +20,43 @@ from .tasks import train_model_task, testing_model_via_ext_data_task
 import json
 
 
-class IndexView(LoginRequiredMixin, ListView):
+class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
     model = ModelingJob
     template_name = "modeling_jobs/index.html"
-    context_object_name = 'modeling_jobs'
+    form_class = ModelingJobForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['ml_model_list'] = [choice[0] for choice in ModelingJob.model_choices]
+        context['ml_model_list'] = [choice[0] for choice in ModelingJob.__model_choices__]
         context['job_list'] = LabelingJob.objects.all()
+        context["modeling_jobs"] = self.model.objects.order_by('-created_at')
         return context
 
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
 
-class JobDetailView(LoginRequiredMixin, generic.DetailView):
+
+class JobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     model = ModelingJob
-    context_object_name = 'job'
-    # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
-    template_name = 'modeling_jobs/detail.html'
+    form_class = ModelingJobForm
+    template_name = 'job_details/detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["job"] = self.object
+        return context
 
     def get_template_names(self):
         print(self.object.model_name)
         if self.object.model_name == "TERM_WEIGHT_MODEL":
-            return 'modeling_jobs/term_weight_detail.html'
+            return 'job_details/term_weight_detail.html'
         else:
-            return 'modeling_jobs/detail.html'
+            return 'job_details/detail.html'
+
+    def get_success_url(self):
+        _pk = self.kwargs['pk']
+        return reverse_lazy('modeling_jobs:job-detail', kwargs={'pk': _pk})
 
 
 class JobCreateView(LoginRequiredMixin, generic.CreateView):
@@ -209,10 +223,19 @@ def result_page(request, modeling_job_id):
 
 def get_progress(request, pk):
     job = ModelingJob.objects.get(pk=pk)
+    # 處理規則模型，因為不用訓練，所以只需要確認資料類型
     if job.get_model_type() == RuleBaseModel.__name__:
         if job.jobRef:
-            if job.jobRef.job_data_type != LabelingJob.DataTypes.RULE_BASE_MODEL:
-                job.error_message = "Data type error, RuleBaseModel need rules in labeling job, not labeled data (SUPERVISE_MODEL)."
+            # 如果是一般的RuleBase
+            if job.model_name == LabelingJob.DataTypes.RULE_BASE_MODEL.name \
+                    and job.jobRef.job_data_type != LabelingJob.DataTypes.RULE_BASE_MODEL:
+                job.error_message = f"Data type error, RuleBaseModel need rules in labeling job, not labeled data ({job.jobRef.job_data_type})."
+                job.job_status = ModelingJob.JobStatus.ERROR
+                job.save()
+            # Regex
+            elif job.model_name == "REGEX_MODEL" \
+                    and job.jobRef.job_data_type != LabelingJob.DataTypes.REGEX_MODEL:
+                job.error_message = f"Data type error, RegexModel need regex in labeling job, not labeled data ({job.jobRef.job_data_type})."
                 job.job_status = ModelingJob.JobStatus.ERROR
                 job.save()
             else:
@@ -222,9 +245,10 @@ def get_progress(request, pk):
             job.error_message = "No labeling job reference error."
             job.job_status = ModelingJob.JobStatus.ERROR
             job.save()
+
     elif job.get_model_type() == SuperviseModel.__name__:
         if job.jobRef.job_data_type != LabelingJob.DataTypes.SUPERVISE_MODEL:
-            job.error_message = "Data type error, SuperviseModel need labeled data in labeling job, not rules (RULE_BASE_MODEL)."
+            job.error_message = "Data type error, SuperviseModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
             job.job_status = ModelingJob.JobStatus.ERROR
             job.save()
     response_data = {

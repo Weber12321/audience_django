@@ -2,213 +2,247 @@
 {% load result_extras %}
 {% block nav_title %} 模型建立任務 {% endblock %}
 {% block page_title %}
-    模型建立任務列表
+    任務列表
 {% endblock %}
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <a class="ml-auto" href="{% url 'modeling_jobs:job-create' %}">建立新任務</a>
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#jobCreateModal">
+                建立新任務
+            </button>
         </div>
     {% endif %}
 {% endblock %}
 {% block content %}
 
     <!--test model CSV Modal-->
-    {% for job in modeling_jobs %}
-        <div class="modal fade" id="test-ext-data-{{ job.id }}" tabindex="-1" role="dialog"
-             aria-labelledby="exampleModalLabel"
-             aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">使用額外測試集</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form action="{% url 'modeling_jobs:api-ext-testing-model' job.id %}" method="post"
-                              enctype="multipart/form-data">
-                            <div class="form-group">
-                                <label class="col-form-label" for="test_csv_file">輸入檔案(.csv) : </label>
-                                <input type="file" id="test_csv_file" name="ext_test_file" accept=".csv"
-                                       class="csv_file" required>
-                            </div>
-                            <label hidden>
-                                <input type="text" hidden name="job_id" value="{{ job.id }}">
-                            </label>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary">
-                                    上傳
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    {% endfor %}
+    {#    {% for job in modeling_jobs %}#}
+    {#        <div class="modal fade" id="test-ext-data-{{ job.id }}" tabindex="-1" role="dialog"#}
+    {#             aria-labelledby="exampleModalLabel"#}
+    {#             aria-hidden="true">#}
+    {#            <div class="modal-dialog" role="document">#}
+    {#                <div class="modal-content">#}
+    {#                    <div class="modal-header">#}
+    {#                        <h5 class="modal-title">使用額外測試集</h5>#}
+    {#                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">#}
+    {#                            <span aria-hidden="true">&times;</span>#}
+    {#                        </button>#}
+    {#                    </div>#}
+    {#                    <div class="modal-body">#}
+    {#                        <form action="{% url 'modeling_jobs:api-ext-testing-model' job.id %}" method="post"#}
+    {#                              enctype="multipart/form-data">#}
+    {#                            <div class="form-group">#}
+    {#                                <label class="col-form-label" for="test_csv_file">輸入檔案(.csv) : </label>#}
+    {#                                <input type="file" id="test_csv_file" name="ext_test_file" accept=".csv"#}
+    {#                                       class="csv_file" required>#}
+    {#                            </div>#}
+    {#                            <label hidden>#}
+    {#                                <input type="text" hidden name="job_id" value="{{ job.id }}">#}
+    {#                            </label>#}
+    {#                            <div class="modal-footer">#}
+    {#                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>#}
+    {#                                <button type="submit" class="btn btn-primary">#}
+    {#                                    上傳#}
+    {#                                </button>#}
+    {#                            </div>#}
+    {#                        </form>#}
+    {#                    </div>#}
+    {#                </div>#}
+    {#            </div>#}
+    {#        </div>#}
+    {#    {% endfor %}#}
 
 
     <!--main-->
     <div class="row">
-    <div class="col-9">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>id</th>
-                <th scope="col">模型名稱</th>
-                <th scope="col">模型類型</th>
-                <th scope="col">是否為多標籤</th>
-                <th scope="col">使用資料</th>
-                <th scope="col">建立時間</th>
-                <th scope="col">建立者</th>
-                <th scope="col">訓練模型</th>
-                <th>訓練狀態</th>
-                <th scope="col">編輯</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for job in modeling_jobs %}
-                <tr>
-                    <td>{{ job.id }}</td>
-                    <td><a href="{% url 'modeling_jobs:job-detail' job.id %}">{{ job.name }}</a></td>
-                    <td>{{ job.get_model_name_display }}</td>
-                    <td>{{ job.is_multi_label }}</td>
-                    <td>
-                        {% if job.jobRef %}
-                            <a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a>
-                        {% else %}
-                            無
-                        {% endif %}
-                    </td>
-                    <td>{{ job.created_at|date:"SHORT_DATE_FORMAT" }}</td>
-                    <td>{{ job.created_by }}</td>
-                    <td>
-                        <button id="train-btn-{{ job.id }}" class="btn btn-info btn-sm"
-                                {% if not job.is_trainable %}hidden{% endif %}
-                                onclick="train_model({{ job.id }},'{% url 'modeling_jobs:training-model' job.id %}')">
-                            開始訓練
-                        </button>
-                    </td>
-                    <td>
+        <div class="col-lg-9">
+            <div class="card shadow">
+                <div class="card-body py-4">
+                    <table class="table">
+                        <thead class="thead-light">
+                        <tr>
+                            <th>id</th>
+                            <th scope="col">模型名稱</th>
+                            <th scope="col">模型類型</th>
+                            <th scope="col">使用資料</th>
+                            <th scope="col">建立時間</th>
+                            <th scope="col">建立者</th>
+                            <th>訓練狀態</th>
+                            <th scope="col">編輯</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for job in modeling_jobs %}
+                            <tr>
+                                <td>{{ job.id }}</td>
+                                <td><a href="{% url 'modeling_jobs:job-detail' job.id %}">{{ job.name }}</a></td>
+                                <td>{{ job.get_model_name_display }}</td>
+                                <td>
+                                    {% if job.jobRef %}
+                                        <a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a>
+                                    {% else %}
+                                        無
+                                    {% endif %}
+                                </td>
+                                <td>{{ job.created_at|date:"SHORT_DATE_FORMAT" }}</td>
+                                <td>{{ job.created_by }}</td>
+                                {#                            <td>#}
+                                {#                                <button id="train-btn-{{ job.id }}" class="btn btn-info btn-sm shadow-lg"#}
+                                {#                                        {% if not job.is_trainable %}hidden{% endif %}#}
+                                {#                                        onclick="train_model({{ job.id }},'{% url 'modeling_jobs:training-model' job.id %}')">#}
+                                {#                                    開始訓練#}
+                                {#                                </button>#}
+                                {#                            </td>#}
+                                <td>
                             <span id="state-{{ job.id }}" data-toggle="tooltip" data-placement="top"
                                   title="無錯誤訊息"></span>
-                    </td>
-                    <td>
-                        <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle btn-sm"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            動作
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                            <button id="test-btn-{{ job.id }}" class="dropdown-item modify_btn"
-                                    {% if job.is_trainable and not job.jobRef %}hidden{% endif %}
-                                    data-toggle="modal" data-target="#test-ext-data-{{ job.id }}">
-                                上傳額外測試資料
-                            </button>
-                            <a class="dropdown-item modify_btn"
-                               href="{% url 'modeling_jobs:job-update' job.id %}">
-                                修改模型
-                            </a>
-                            <a class="dropdown-item delete_btn"
-                               href="{% url 'modeling_jobs:job-delete' job.id %}">刪除</a>
-                        </div>
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                                </td>
+                                <td>
+                                    <button id="btnGroupDrop1" type="button"
+                                            class="btn btn-success dropdown-toggle btn-sm shadow-lg"
+                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        動作
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+
+                                        <button id="train-btn-{{ job.id }}"
+                                                class="dropdown-item"
+                                                {% if not job.is_trainable %}hidden{% endif %}
+                                                onclick="train_model({{ job.id }},'{% url 'modeling_jobs:training-model' job.id %}')">
+                                            開始訓練
+                                        </button>
+                                        <button id="test-btn-{{ job.id }}" class="dropdown-item modify_btn"
+                                                {% if job.is_trainable and not job.jobRef %}hidden{% endif %}
+                                                data-toggle="modal" data-target="#test-ext-data-{{ job.id }}">
+                                            上傳額外測試資料
+                                        </button>
+                                        <a class="dropdown-item modify_btn"
+                                           href="{% url 'modeling_jobs:job-update' job.id %}">
+                                            修改模型
+                                        </a>
+                                        <a class="dropdown-item delete_btn"
+                                           href="{% url 'modeling_jobs:job-delete' job.id %}">刪除</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <h4>模型建立流程</h4>
+            <p>
+                每種不同的模型都有其各自的建立方式，以下會說明各種類型的建立條件與做法：
+            </p>
+            <div class="card shadow mb-2">
+                <div class="card-body">
+                    <div class="card-title font-weight-bold">監督式學習模型</div>
+                    <p>藉由帶有標籤的文本資料，讓機器自動學習文本中重要的特徵，此類型的資料必要欄位為：</p>
+                    <ul>
+                        <li>
+                            <code>OpView資料下載欄位</code>
+                            <div><small>（擇一，欄位名稱需一樣才讀取得到）</small></div>
+                            <ul>
+                                <li><code>標題</code></li>
+                                <li><code>內容</code></li>
+                                <li><code>來源</code></li>
+                                <li><code>來源網站</code></li>
+                                <li><code>作者</code></li>
+                            </ul>
+                        </li>
+                        <li><code>標籤</code></li>
+                    </ul>
+                    <small><a href="https://zh.wikipedia.org/wiki/监督学习" target="_blank">什麼是監督式學習？</a></small>
+                </div>
+            </div>
+
+            <div class="card shadow mb-2">
+                <div class="card-body ">
+                    <div class="card-title font-weight-bold">關鍵字規則模型</div>
+                    <p>藉由關鍵字比對文本內容，可設定 <code>開頭</code> 、 <code>結尾</code> 、 <code>部分命中</code> 以及 <code>完全一致</code>
+                        比對內容，例如可用於比對來源、作者名稱等應用，必要欄位為：</p>
+                    <ul>
+                        <li><code>關鍵字</code></li>
+                        <li><code>判斷式</code>
+                            <div><small>(可複選， <code>,</code> 逗號分隔)</small></div>
+                            <ul>
+                                <li><code>START</code> 比對開頭</li>
+                                <li><code>END</code> 比對結尾</li>
+                                <li><code>PARTIALLY</code> 部分吻合</li>
+                                <li><code>EXACTLY</code> 完全一致</li>
+                            </ul>
+                        </li>
+                        <li><code>標籤</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow mb-2">
+                <div class="card-body">
+                    <div class="card-title font-weight-bold">正則表達式模型</div>
+                    <p>藉由正則表達式（regex）比對文本內容，屬於較進階的規則比對方法，此類型的資料必要欄位為：</p>
+                    <ul>
+                        <li><code>規則式</code></li>
+                        <li><code>標籤</code></li>
+                    </ul>
+                    <small><a href="https://zh.wikipedia.org/wiki/正则表达式" target="_blank">什麼是regex?</a></small>
+                </div>
+            </div>
+
+            <div class="card shadow mb-2">
+                <div class="card-body">
+                    <div class="card-title font-weight-bold">詞彙權重模型</div>
+                    <p>與監督式學習相似，差別在於此類型的模型會產生各類別重要的 <code>詞彙</code> 以及 <code>詞彙權重分數</code> ，實際貼標時會將分數做加總，總分超過門檻值就會貼上標籤：
+                    </p>
+                    <ul>
+                        <li>
+                            <code>OpView資料下載欄位</code>
+                            <div><small>（擇一，欄位名稱需一樣才讀取得到）</small></div>
+                            <ul>
+                                <li><code>標題</code></li>
+                                <li><code>內容</code></li>
+                                <li><code>來源</code></li>
+                                <li><code>來源網站</code></li>
+                                <li><code>作者</code></li>
+                            </ul>
+                        </li>
+                        <li><code>標籤</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="col-md-3">
-        <h4>模型建立流程</h4>
-        <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dignissimos dolore illo iusto minima nulla
-            soluta tempore temporibus, voluptate? Atque aut consectetur cupiditate dicta dolor esse maiores maxime
-            neque tempore voluptas.
-        </p>
-        <div class="card shadow mb-2">
-            <div class="card-body">
-                <div class="card-title font-weight-bold">監督式學習模型</div>
-                <p>藉由帶有標籤的文本資料，讓機器自動學習文本中重要的特徵，此類型的資料必要欄位為：</p>
-                <ul>
-                    <li>
-                        <code>OpView資料下載欄位</code>
-                        <div><small>（擇一，欄位名稱需一樣才讀取得到）</small></div>
-                        <ul>
-                            <li><code>標題</code></li>
-                            <li><code>內容</code></li>
-                            <li><code>來源</code></li>
-                            <li><code>來源網站</code></li>
-                            <li><code>作者</code></li>
-                        </ul>
-                    </li>
-                    <li><code>標籤</code></li>
-                </ul>
-                <small><a href="https://zh.wikipedia.org/wiki/监督学习" target="_blank">什麼是監督式學習？</a></small>
-            </div>
-        </div>
-
-        <div class="card shadow mb-2">
-            <div class="card-body ">
-                <div class="card-title font-weight-bold">關鍵字規則模型</div>
-                <p>藉由關鍵字比對文本內容，可設定 <code>開頭</code> 、 <code>結尾</code> 、 <code>部分命中</code> 以及 <code>完全一致</code>
-                    比對內容，例如可用於比對來源、作者名稱等應用，必要欄位為：</p>
-                <ul>
-                    <li><code>關鍵字</code></li>
-                    <li><code>判斷式</code>
-                        <div><small>(可複選， <code>,</code> 逗號分隔)</small></div>
-                        <ul>
-                            <li><code>START</code> 比對開頭</li>
-                            <li><code>END</code> 比對結尾</li>
-                            <li><code>PARTIALLY</code> 部分吻合</li>
-                            <li><code>EXACTLY</code> 完全一致</li>
-                        </ul>
-                    </li>
-                    <li><code>標籤</code></li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="card shadow mb-2">
-            <div class="card-body">
-                <div class="card-title font-weight-bold">正則表達式模型</div>
-                <p>藉由正則表達式（regex）比對文本內容，屬於較進階的規則比對方法，此類型的資料必要欄位為：</p>
-                <ul>
-                    <li><code>規則式</code></li>
-                    <li><code>標籤</code></li>
-                </ul>
-                <small><a href="https://zh.wikipedia.org/wiki/正则表达式" target="_blank">什麼是regex?</a></small>
-            </div>
-        </div>
-
-        <div class="card shadow mb-2">
-            <div class="card-body">
-                <div class="card-title font-weight-bold">詞彙權重模型</div>
-                <p>與監督式學習相似，差別在於此類型的模型會產生各類別重要的 <code>詞彙</code> 以及 <code>詞彙權重分數</code> ，實際貼標時會將分數做加總，總分超過門檻值就會貼上標籤：
-                </p>
-                <ul>
-                    <li>
-                        <code>OpView資料下載欄位</code>
-                        <div><small>（擇一，欄位名稱需一樣才讀取得到）</small></div>
-                        <ul>
-                            <li><code>標題</code></li>
-                            <li><code>內容</code></li>
-                            <li><code>來源</code></li>
-                            <li><code>來源網站</code></li>
-                            <li><code>作者</code></li>
-                        </ul>
-                    </li>
-                    <li><code>標籤</code></li>
-                </ul>
+    <!-- Modal -->
+    <div class="modal fade" id="jobCreateModal" tabindex="-1" aria-labelledby="jobCreateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jobCreateModalLabel">建立任務</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" class="">{% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {% for field in form %}
+                            <div class="form-group">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {{ field.errors }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-
-    <script>
-
-
-    </script>
 {% endblock %}
 
 {% block custom_script %}

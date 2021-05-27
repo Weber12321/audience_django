@@ -177,7 +177,7 @@ ML_MODELS = {
         'module': 'core.audience.models.classic.random_forest_model.RandomForestModel',
     },
     "KEYWORD_MODEL": {
-        'verbose_name': '關鍵字比對',
+        'verbose_name': '關鍵字規則',
         'module': 'core.audience.models.rule_base.keyword_base_model.KeywordModel',
     },
     "REGEX_MODEL": {

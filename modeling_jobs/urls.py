@@ -4,8 +4,8 @@ from . import views
 
 app_name = 'modeling_jobs'
 urlpatterns = [
-    path('', views.IndexView.as_view(), name='index'),
-    path('<int:pk>/', views.JobDetailView.as_view(), name='job-detail'),
+    path('', views.IndexAndCreateView.as_view(), name='index'),
+    path('<int:pk>/', views.JobDetailAndUpdateView.as_view(), name='job-detail'),
     path('create', views.JobCreateView.as_view(), name='job-create'),
     path('<int:pk>/update', views.JobUpdateView.as_view(), name='job-update'),
     path('<int:pk>/delete', views.JobDeleteView.as_view(), name='job-delete'),
