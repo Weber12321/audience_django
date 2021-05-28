@@ -164,10 +164,10 @@ Q_CLUSTER = {
 
 MODEL_PATH_FIELD_DIRECTORY = 'model_files'
 ML_MODELS = {
-    "DUMMY_MODEL": {
-        'verbose_name': '假模型',
-        'module': 'core.audience.models.base_model.DummyModel',
-    },
+    # "DUMMY_MODEL": {
+    #     'verbose_name': '假模型',
+    #     'module': 'core.audience.models.base_model.DummyModel',
+    # },
     "SVM_MODEL": {
         'verbose_name': 'SVM',
         'module': 'core.audience.models.classic.svm_model.SvmModel',

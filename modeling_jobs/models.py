@@ -47,7 +47,10 @@ class ModelingJob(models.Model):
 
     def get_model_type(self):
         model_cls = get_model_class(self.model_name)
-        return model_cls.__base__.__name__
+        if model_cls:
+            return model_cls.__base__.__name__
+        else:
+            return None
 
     def is_trainable(self):
         model_cls = get_model_class(self.model_name)

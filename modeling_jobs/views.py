@@ -27,7 +27,8 @@ class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['ml_model_list'] = [choice[0] for choice in ModelingJob.__model_choices__]
+        context['ml_model_list'] = [choice[1] for choice in ModelingJob.__model_choices__]
+        print(ModelingJob.__model_choices__)
         context['job_list'] = LabelingJob.objects.all()
         context["modeling_jobs"] = self.model.objects.order_by('-created_at')
         return context
