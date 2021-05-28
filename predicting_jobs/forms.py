@@ -33,12 +33,8 @@ class PredictingTargetForm(forms.ModelForm):
             "source": forms.Select(attrs={'class': 'form-control'}),
             "min_content_length": forms.NumberInput(attrs={'class': 'form-control'}),
             "max_content_length": forms.NumberInput(attrs={'class': 'form-control'}),
-            "begin_post_time": forms.SelectDateWidget(attrs={
-                'class': 'form-control',
-            }),
-            "end_post_time": forms.SelectDateWidget(attrs={
-                'class': 'form-control',
-            }),
+            "begin_post_time": forms.SelectDateWidget(attrs={'class': 'mr-1'}),
+            "end_post_time": forms.SelectDateWidget(attrs={'class': 'mr-1'}),
         }
 
 
