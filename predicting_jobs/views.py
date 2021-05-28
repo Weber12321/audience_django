@@ -39,6 +39,11 @@ class PredictingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["predicting_job"] = self.object
+
+        apply_model_form = ApplyingModelForm({'predicting_job': self.object, 'priority': 0})
+        context["apply_model_form"] = apply_model_form
+        predicting_target_form = PredictingTargetForm({'predicting_job': self.object})
+        context["predicting_target_form"] = predicting_target_form
         return context
 
     def get_success_url(self):

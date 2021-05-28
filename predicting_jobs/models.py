@@ -37,9 +37,9 @@ class PredictingJob(models.Model):
 
 
 class ApplyingModel(models.Model):
-    predicting_job = models.ForeignKey(PredictingJob, on_delete=models.CASCADE)
+    predicting_job = models.ForeignKey(PredictingJob, on_delete=models.CASCADE, verbose_name="族群貼標任務")
     modeling_job = models.ForeignKey(ModelingJob, verbose_name="應用模型任務", on_delete=models.CASCADE)
-    priority = models.IntegerField(default=0)
+    priority = models.IntegerField(default=0, verbose_name="優先度")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
 
     def __str__(self):
