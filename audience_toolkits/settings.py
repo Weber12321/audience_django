@@ -129,7 +129,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
@@ -164,10 +164,10 @@ Q_CLUSTER = {
 
 MODEL_PATH_FIELD_DIRECTORY = 'model_files'
 ML_MODELS = {
-    "DUMMY_MODEL": {
-        'verbose_name': '假模型',
-        'module': 'core.audience.models.base_model.DummyModel',
-    },
+    # "DUMMY_MODEL": {
+    #     'verbose_name': '假模型',
+    #     'module': 'core.audience.models.base_model.DummyModel',
+    # },
     "SVM_MODEL": {
         'verbose_name': 'SVM',
         'module': 'core.audience.models.classic.svm_model.SvmModel',
@@ -177,7 +177,7 @@ ML_MODELS = {
         'module': 'core.audience.models.classic.random_forest_model.RandomForestModel',
     },
     "KEYWORD_MODEL": {
-        'verbose_name': '關鍵字比對',
+        'verbose_name': '關鍵字規則',
         'module': 'core.audience.models.rule_base.keyword_base_model.KeywordModel',
     },
     "REGEX_MODEL": {
@@ -216,8 +216,8 @@ CONNECT_RETRIES = 3
 # 若要新增AVAILABLE_FIELDS請同步調整 core.dao.input_example，key必須與InputExample對齊（會以getattr(key必須與InputExample對齊, key)取值）。
 AVAILABLE_FIELDS = {
     'id': '文章id',
-    's_id': '來源id',
-    's_area_id': '頻道id',
+    's_id': '來源',
+    's_area_id': '來源網站',
     'title': '標題',
     'author': '作者',
     'content': '內文',

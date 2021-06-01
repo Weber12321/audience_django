@@ -18,8 +18,7 @@
                     操作
                 </button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                    <a class="dropdown-item"
-                       href="{% url 'predicting_jobs:job-update' predicting_job.id %}?next={{ request.path }}">修改</a>
+                    <a class="dropdown-item" href="" data-toggle="modal" data-target="#jobUpdateModal">修改</a>
                     <a class="dropdown-item" href="{% url 'predicting_jobs:job-delete' predicting_job.id %}">刪除</a>
                 </div>
             </div>
@@ -39,11 +38,11 @@
     <!-- Content Row -->
     <div class="row">
         <div class="col-md-6 mb-4">
-            <div class="card">
+            <div class="card shadow">
                 <div class="card-header">應用模型列表</div>
                 <div class="card-body">
-                    <div class="card-link mb-4"><a
-                            href="{% url 'predicting_jobs:job-applying-model-add' predicting_job.id %}">新增模型</a></div>
+                    <div class="card-link mb-4">
+                        <a href="" data-toggle="modal" data-target="#applyingModelModal">新增模型</a></div>
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
@@ -90,7 +89,7 @@
             </div>
         </div>
         <div class="col-md-6 mb-4">
-            <div class="card">
+            <div class="card shadow">
                 <div class="card-header">預測資料範圍列表</div>
                 <div class="card-body">
                     <div class="card-link mb-4">
@@ -143,11 +142,65 @@
         <!-- label summary card -->
 
     </div>
-
+    <!-- Modal -->
+    <div class="modal fade" id="jobUpdateModal" tabindex="-1" aria-labelledby="jobUpdateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jobUpdateModalLabel">修改任務資訊</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" class="">{% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {{ form.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- applying model Modal -->
+    <div class="modal fade" id="applyingModelModal" tabindex="-1" aria-labelledby="applyingModelModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="applyingModelModalLabel">新增應用模型</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" class=""
+                      action="{% url 'predicting_jobs:job-applying-model-add' predicting_job.id %}">{% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {{ apply_model_form.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block custom_script %}
     <script>
+
+        $(function () {
+            $("#datetimepicker1").datetimepicker({
+                format: 'DD/MM/YYYY HH:mm',
+            });
+        });
+
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {

@@ -37,9 +37,9 @@ class PredictingJob(models.Model):
 
 
 class ApplyingModel(models.Model):
-    predicting_job = models.ForeignKey(PredictingJob, on_delete=models.CASCADE)
+    predicting_job = models.ForeignKey(PredictingJob, on_delete=models.CASCADE, verbose_name="族群貼標任務")
     modeling_job = models.ForeignKey(ModelingJob, verbose_name="應用模型任務", on_delete=models.CASCADE)
-    priority = models.IntegerField(default=0)
+    priority = models.IntegerField(default=0, verbose_name="優先度")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
 
     def __str__(self):
@@ -87,8 +87,8 @@ class PredictingTarget(models.Model):
     name = models.CharField(max_length=100, verbose_name="預測目標名稱")
     description = models.TextField(verbose_name="定義與說明")
     source = models.ForeignKey(Source, verbose_name="預測資料源", on_delete=models.SET_NULL, null=True, blank=True)
-    begin_post_time = models.DateTimeField(verbose_name="起始發文時間")
-    end_post_time = models.DateTimeField(verbose_name="結束發文時間")
+    begin_post_time = models.DateField(verbose_name="起始發文時間")
+    end_post_time = models.DateField(verbose_name="結束發文時間")
     min_content_length = models.IntegerField(verbose_name='最小文章長度', default=10)
     max_content_length = models.IntegerField(verbose_name='最大文章長度', default=2000)
     job_status = models.CharField(max_length=20, verbose_name="任務狀態", default=JobStatus.WAIT, choices=JobStatus.choices)

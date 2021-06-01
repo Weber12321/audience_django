@@ -28,7 +28,7 @@ class LabelingJob(models.Model):
         verbose_name_plural = "資料標記工作列表"
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.get_job_data_type_display()}資料)"
 
     def get_absolute_url(self):
         return reverse('labeling_jobs:labeling-job-create', kwargs={'pk': self.pk})
@@ -120,8 +120,8 @@ class Document(models.Model):
     labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     title = models.CharField(max_length=512, verbose_name="標題", blank=True)
     author = models.CharField(max_length=200, verbose_name="作者", blank=True)
-    s_id = models.CharField(max_length=100, verbose_name="來源id", blank=True)
-    s_area_id = models.CharField(max_length=100, verbose_name="頻道id", blank=True)
+    s_id = models.CharField(max_length=100, verbose_name="來源", blank=True)
+    s_area_id = models.CharField(max_length=100, verbose_name="來源網站", blank=True)
     content = models.TextField(verbose_name="內文", blank=True)
     post_time = models.DateTimeField(verbose_name="發布時間", blank=True, null=True)
     labels = models.ManyToManyField(Label, verbose_name="正確標籤", blank=True)

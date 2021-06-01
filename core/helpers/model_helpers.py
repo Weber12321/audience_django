@@ -31,5 +31,8 @@ def get_model_class(name: str):
     :param name: 設定中的模組名稱
     :return: AudienceModel Class
     """
-    mod_path, class_name = settings.ML_MODELS.get(name).get('module').rsplit(sep='.', maxsplit=1)
-    return getattr(importlib.import_module(mod_path), class_name)
+    if name in settings.ML_MODELS:
+        mod_path, class_name = settings.ML_MODELS.get(name).get('module').rsplit(sep='.', maxsplit=1)
+        return getattr(importlib.import_module(mod_path), class_name)
+    else:
+        return None

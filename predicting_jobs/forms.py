@@ -25,19 +25,26 @@ class PredictingTargetForm(forms.ModelForm):
     class Meta:
         model = PredictingTarget
         fields = '__all__'
-        exclude = ['predicting_job', 'error_message']
-        # widgets = {
-        #     "begin_post_time": forms.DateTimeInput(attrs={'type': 'datetime-local'}, input_formats='%Y-%m-%d'),
-        #     "end_post_time": forms.DateTimeInput(attrs={'type': 'datetime-local'}, input_formats='%Y-%m-%d')
-        # }
+        exclude = ['error_message', 'job_status']
+        widgets = {
+            "predicting_job": forms.Select(attrs={'class': 'form-control'}),
+            "name": forms.TextInput(attrs={'class': 'form-control'}),
+            "description": forms.Textarea(attrs={'class': 'form-control'}),
+            "source": forms.Select(attrs={'class': 'form-control'}),
+            "min_content_length": forms.NumberInput(attrs={'class': 'form-control'}),
+            "max_content_length": forms.NumberInput(attrs={'class': 'form-control'}),
+            "begin_post_time": forms.SelectDateWidget(attrs={'class': 'mr-1'}),
+            "end_post_time": forms.SelectDateWidget(attrs={'class': 'mr-1'}),
+        }
 
 
 class ApplyingModelForm(forms.ModelForm):
     class Meta:
         model = ApplyingModel
         fields = '__all__'
-        exclude = ['predicting_job']
+        exclude = []
         widgets = {
-            "begin_post_time": forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            "end_post_time": forms.DateTimeInput(attrs={'type': 'datetime-local'})
+            "predicting_job": forms.Select(attrs={'class': 'form-control'}),
+            "modeling_job": forms.Select(attrs={'class': 'form-control'}),
+            "priority": forms.NumberInput(attrs={'class': 'form-control'}),
         }

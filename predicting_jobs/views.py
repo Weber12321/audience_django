@@ -12,17 +12,43 @@ from predicting_jobs.tasks import predict_task
 import json
 
 
-class IndexView(LoginRequiredMixin, generic.ListView):
+class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
+    model = PredictingJob
     queryset = PredictingJob.objects.order_by('-created_at')
     template_name = "index.html"
     context_object_name = 'predicting_jobs'
+    form_class = PredictingJobForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["predicting_jobs"] = PredictingJob.objects.order_by('-created_at')
+        return context
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
 
 
-class PredictingJobDetailView(LoginRequiredMixin, generic.DetailView):
+class PredictingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     model = PredictingJob
     context_object_name = 'predicting_job'
     # generic.DetailView use default template_name =  <app name>/<model name>_detail.html
     template_name = 'predicting_jobs/detail.html'
+    form_class = PredictingJobForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["predicting_job"] = self.object
+
+        apply_model_form = ApplyingModelForm({'predicting_job': self.object, 'priority': 0})
+        context["apply_model_form"] = apply_model_form
+        predicting_target_form = PredictingTargetForm({'predicting_job': self.object})
+        context["predicting_target_form"] = predicting_target_form
+        return context
+
+    def get_success_url(self):
+        _pk = self.kwargs['pk']
+        return reverse_lazy('predicting_jobs:job-detail', kwargs={'pk': _pk})
 
 
 class PredictingJobCreate(LoginRequiredMixin, generic.CreateView):
@@ -146,7 +172,8 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
         label_name = self.request.GET.dict().get("label_name")
         context = super(PredictResultSamplingListView, self).get_context_data(**kwargs)
         # todo 待測試multi-label時的狀況
-        context['exist_labels'] = sorted([labels[0] for labels in set(PredictingResult.objects.values_list("label_name"))])
+        context['exist_labels'] = sorted(
+            [labels[0] for labels in set(PredictingResult.objects.values_list("label_name"))])
         context['current_label'] = label_name
         context['predicting_target'] = PredictingTarget.objects.get(pk=self.kwargs.get('pk'))
         context['predicting_job'] = PredictingJob.objects.get(pk=self.kwargs.get('job_id'))

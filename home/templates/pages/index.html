@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block nav_title %}
-    DashBoard
+    說明書
 {% endblock %}
 {% block page_title %}
     Audience Toolkits 族群訓練工具包
@@ -9,46 +9,173 @@
     藉由此工具，您可以從0開始訓練一個屬於你的機器學習模型，並且進一步應用至OpView的族群標籤。
 {% endblock %}
 {% block content %}
-    <div class="row">
-        <div class="col-12 mt-5">
-            <div class="h5">此工具包包含以下任務工具：</div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-lg-4 mb-4">
-            <div class="card bg-primary text-white shadow">
+    <div class="row mt-4 mb-2">
+        <div class="col-lg-8 col-md-12 mb-4">
+
+            <!-- card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-danger">什麼是Audience族群標籤</h6>
+                </div>
                 <div class="card-body">
-                    <a class="h5 text-white card-title" href="{% url 'labeling_jobs:index' %}">
-                        資料標記任務
-                    </a>
-                    <div class="text-white-50 mt-2">
-                        在這裡您可以建立、描述，並管理您想進行的資料標記任務，完成的標記任務可以在「模型訓練任務」中使用。
+                    <p>
+                        Audience，aka族群，藉由透過網路上內容作者發布的內容，判斷其背後可能代表的族群類型。這邊假設網路內容可用的資訊如發文頻道、
+                        發文作者名稱、發文內容等資訊，會透露出一些某些族群的特有資訊。目前支援可用的欄位名稱有
+                        <code>標題</code>、<code>內容</code>、<code>來源</code>、<code>來源網站</code>、<code>作者</code>。
+                    </p>
+                    <div class="card border-left-primary mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">舉個例子</h5>
+                            <p>在dcard討論區中，作者名稱有個固定的格式，可以拿來判斷發文者性別。例如「台灣大學/F」，其代表的涵意為「台灣大學的某位女生」，
+                                可為其貼上女性的族群標籤。</p>
+                        </div>
                     </div>
+                    <div class="card border-left-primary mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">再舉個例子</h5>
+                            <p>在bbs論壇中，男性的使用者在發文的時候，有一個習慣是會以「小弟我...」作為句子開頭，以示禮貌。這個時候可藉由「小弟我...」
+                                為開頭的關鍵字或規則，為其貼上男性的族群標籤。</p>
+                        </div>
+                    </div>
+                    <p>以上為藉由欄位的選擇與規則即可判斷的狀況，但若不是光靠規則可以判斷的狀況時，我們也可以藉由「監督式學習」的機器學習模型進行判斷，
+                        只需提供足夠的「內容」與其代表的「族群標記」，即可讓機器自動尋找文章中的有用資訊，學習如何判斷文章可能帶有的族群標籤。</p>
+                    <p>只要準備好模型，並可設定族群貼標任務，應用於您希望生效的資料範圍上。</p>
+                </div>
+            </div>
+            <!-- card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-danger">如何製作族群標籤</h6>
+                </div>
+                <div class="card-body">
+                    <p>
+                        族群標籤是藉由準備好的模型對OpView資料進行預測，並且對「發文者」進行貼標，發文者在這邊假設同一個頻道的相同名稱作者為同一人，
+                        因此對於發文者標籤上架時會使用 <code>s_id</code> + <code>author</code>作為該發文者的id。
+                    </p>
+                    <p>
+                        從上述流程可以得知，族群標間製作主要流程為「模型對資料的預測」，也就是說，我們需要準備好 <strong>「模型」</strong>與您打算預測的<strong>「資料範圍」</strong>，
+                        下面會針對這個主要的項目說明：
+                    </p>
+                    <hr>
+                    <h3 class="card-title text-primary">模型</h3>
+                    <p>這邊的模型指的是一個「資料預測」的一個物件，準備好後只需輸入資料，模型會輸出可能的族群標籤，我們可以串連多個模型來做族群標籤的預測。</p>
+                    <h4>該如何製作一個「模型」呢？</h4>
+                    <p>在製作模型之前，這裡先介紹一下可以使用的模型類型：</p>
+                    <ul>
+                        <li>
+                            <strong>規則模型</strong>：藉由直接定義規則來直接比對內容進行族群貼標。
+                            <ul>
+                                <li>關鍵字比對：
+                                    <p>可以設定關鍵字與比對方式，進行族群貼標，例如：<i class="text-gray-500">將「/F」結尾的作者名稱貼上女性的標籤</i>。</p>
+                                </li>
+                                <li>正則表達式
+                                    <p>較進階的比對方式，可以藉由設定
+                                        <a href="https://zh.wikipedia.org/wiki/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F" target="_blank">正則表達式(Regex)</a>
+                                        ，進行族群貼標。
+                                    </p>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>監督式學習模型</strong>：使用機器學習模型，讓機器基於訓練資料學習如何判斷族群標籤。
+                            <ul>
+                                <li>關鍵字權重</li>
+                                <li>SVM</li>
+                                <li>隨機森林</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p>
+                        由於不同類型的模型需要提供相應的資料進行設定或學習，因此在這個階段會分為兩種任務，分別是「資料標記任務」與「模型訓練任務 」。
+                    </p>
+
+                    <div class="card border-left-primary mb-4">
+                        <div class="card-body">
+                            <h5>資料準備任務</h5>
+                            <p>在這個階段，我們需要選擇想製作的模型類型，建立後系統會提示需要什麼類型的資料，只需依照提示準備資料即可。</p>
+                        </div>
+                    </div>
+                    <div class="card border-left-success mb-4">
+                        <div class="card-body">
+                            <h5>模型建立任務</h5>
+                            <p>基於上一個階段準備好資料後，即可建立相應的模型製作任務。建立完成後，即可上傳額外的測試資料，驗證模型的效果。
+                                若屬於監督式學習模型，需先執行模型訓練，即可進行驗證。</p>
+                        </div>
+                    </div>
+                    <p>驗證完成後，如果達到預期的效果，就可以進行下一個階段的任務。</p>
+                    <hr>
+                    <h3 class="card-title text-s">資料範圍</h3>
+                    <p>
+                        在模型準備好後，您可以重複使用訓練好的模型，在「族群貼標任務」中應用模型至OpView的資料上。這邊您可以建立族群貼標任務，
+                        任務中可以設定您想使用的模型列表，以及想要生效的資料範圍，設定完成後送出執行，系統就會將任務排到待執行列表中。
+                    </p>
                 </div>
             </div>
         </div>
-        <div class="col-lg-4 mb-4">
-            <div class="card bg-dark text-white shadow">
-                <div class="card-body">
-                    <a class="h5 text-white card-title" href="{% url 'modeling_jobs:index' %}">
-                    模型訓練任務
-                    </a>
-                    <div class="text-white-50 mt-2">
-                        在這裡您可以使用「資料標記任務」中完成的資料來建立、訓練，並驗證您的機器學習模型。
+        <div class="col-lg-4 col-md-12 md-4">
+            <div class="col-12 mb-4">
+                <h5>可用工具</h5>
+                <p>此工具包將製作流程分為三種任務工具：</p>
+                <!-- card -->
+                <div class="card shadow h-100 py-2 mb-4">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-3">
+                                <div class="font-weight-bold text-primary text-uppercase mb-1">
+                                    資料準備任務
+                                </div>
+                                <div class="mb-0 text-gray-800 font-weight-light">
+                                    在這裡您可以建立、描述，並管理您想進行的資料標記任務，完成的標記任務可以在「模型訓練任務」中使用。
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-tags fa-4x text-primary"></i>
+                            </div>
+                            <a class="stretched-link" href="{% url 'labeling_jobs:index' %}"></a>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4">
-            <div class="card bg-danger text-white shadow">
-                <div class="card-body">
-                    <a class="h5 text-white card-title" href="{% url 'predicting_jobs:index' %}">
-                    族群貼標任務
-                    </a>
-                    <div class="text-white-50 mt-2">
-                        在這裡您可以藉由選擇「模型訓練任務」中您的模型，並挑選應用的資料範圍，建立族群貼標任務。
+
+                <!-- card -->
+                <div class="card shadow h-100 py-2 mb-4">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-3">
+                                <div class="font-weight-bold text-success text-uppercase mb-1">
+                                    模型建立任務
+                                </div>
+                                <div class="mb-0 text-gray-800 font-weight-light">
+                                    在這裡您可以使用「資料標記任務」中完成的資料來建立、訓練，並驗證您的機器學習模型。
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-layer-group fa-4x text-success"></i>
+                            </div>
+                            <a class="stretched-link" href="{% url 'modeling_jobs:index' %}"></a>
+                        </div>
                     </div>
                 </div>
+
+                <!-- card -->
+                <div class="card shadow h-100 py-2 mb-4">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-3">
+                                <div class="font-weight-bold text-info text-uppercase mb-1">
+                                    族群貼標任務
+                                </div>
+                                <div class="mb-0 text-gray-800 font-weight-light">
+                                    在這裡您可以藉由選擇「模型訓練任務」中您的模型，並挑選應用的資料範圍，建立族群貼標任務。
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-id-card fa-4x text-info"></i>
+                            </div>
+                            <a class="stretched-link" href="{% url 'predicting_jobs:index' %}"></a>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

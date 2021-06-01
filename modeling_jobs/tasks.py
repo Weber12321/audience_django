@@ -134,10 +134,10 @@ def create_term_weights(job: ModelingJob, label_term_weight: Dict[str, List[Tupl
     job.save()
 
 
-def get_term_weights(job: ModelingJob) -> Dict[str, Dict[str, float]]:
-    label_term_weight: Dict[str, Dict[str, float]] = defaultdict(dict)
+def get_term_weights(job: ModelingJob) -> Dict[str, List[Tuple[str, float]]]:
+    label_term_weight: Dict[str, List[Tuple[str, float]]] = defaultdict(list)
     for term_weight in job.termweight_set.all():
-        label_term_weight[term_weight.label.name][term_weight.term] = term_weight.weight
+        label_term_weight[term_weight.label.name].append((term_weight.term, float(term_weight.weight),))
     return label_term_weight
 
 

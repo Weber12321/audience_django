@@ -1,11 +1,22 @@
 {% extends "base.html" %}
 {% load result_extras %}
-{% block title %}{{ job.name }} | 模型訓練任務{% endblock %}
-{% block nav_title %}模型訓練任務{% endblock %}
+{% block title %}{{ job.name }} | 模型建立任務{% endblock %}
+{% block nav_title %}模型建立任務{% endblock %}
 {% block page_title %}{{ job.name }}{% endblock %}
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="dropdown mb-4">
+            <button id="test-btn-{{ job.id }}" class="btn btn-outline-primary"
+                    {% if job.is_trainable and not job.jobRef %}hidden{% endif %}
+                    data-toggle="modal" data-target="#test-ext-data-{{ job.id }}">
+                上傳額外測試資料
+            </button>
+            <button id="train-btn-{{ job.id }}"
+                    class="btn btn-outline-primary"
+                    {% if not job.is_trainable %}hidden{% endif %}
+                    onclick="train_model({{ job.id }},'{% url 'modeling_jobs:training-model' job.id %}')">
+                開始訓練
+            </button>
             <button class="btn btn-primary dropdown-toggle" type="button"
                     id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
                     aria-expanded="false">
@@ -13,8 +24,7 @@
             </button>
             <div class="dropdown-menu animated--fade-in"
                  aria-labelledby="dropdownMenuButton">
-                <a class="dropdown-item"
-                   href="{% url 'modeling_jobs:job-update' job.id %}?next={{ request.path }}">修改</a>
+                <a class="dropdown-item" href="" data-toggle="modal" data-target="#jobUpdateModal">修改</a>
                 <a class="dropdown-item" href="{% url 'modeling_jobs:job-delete' job.id %}">刪除</a>
             </div>
         </div>
@@ -22,6 +32,7 @@
 {% endblock %}
 {% block page_info %}
     <div class="mb-2">
+        <span id="state-{{ job.id }}" data-toggle="tooltip" data-placement="top" title="無錯誤訊息"></span>
     </div>
 {% endblock %}
 {% block page_description %}
@@ -87,7 +98,7 @@
                     <div class="card-header py-3 d-flex justify-content-between">
                         <h6 class="m-0 font-weight-bold text-primary">詞彙權重列表</h6>
                         <span class="card-link">
-{#                            <a href="{% url 'labeling_jobs:rule-add' labeling_job.id %}">新增規則</a>#}
+                            <a href="{% url 'modeling_jobs:term-weight-add' job.id %}">新增規則</a>
                         </span>
                     </div>
                     <div class="card-body">
@@ -112,23 +123,18 @@
                                      id="label-{{ label.name }}" role="tabpanel"
                                      aria-labelledby="label-{{ label.name }}-tab">
                                     <div class="list-group">
-                                        {% for term_weights in label.termweight_set.all %}
+                                        {% for term_weight in label.termweight_set.all %}
                                             <div class="list-group-item list-group-item-action">
-                                                <div class="d-flex justify-content-between">
-{#                                                    <small>#}
-{#                                                        {{ term_weights.get_rule_type_display }}#}
-{#                                                        - {{ term_weights.get_match_type_display }}#}
-{#                                                    </small>#}
-{#                                                    <span class="d-flex justify-content-end">#}
-{#                                                        <a class="btn btn-link btn-sm text-secondary ml-2"#}
-{#                                                           href="{% url 'labeling_jobs:rule-update' labeling_job.id rule.id %}">編輯</a>#}
-{#                                                        <a class="btn btn-link btn-sm text-danger ml-2"#}
-{#                                                           href="{% url 'labeling_jobs:rule-delete' labeling_job.id rule.id %}">刪除</a>#}
-{#                                                    </span>#}
-                                                </div>
                                                 <div class="d-flex w-100 justify-content-between">
-                                                    <h5 class="mb-1">{{ term_weights.term }}</h5>
-                                                    <small>{{ term_weights.weight }}</small>
+                                                    <h5 class="m-0">{{ term_weight.term }}</h5>
+
+                                                    <div class="d-flex justify-content-lg-end">
+                                                        {{ term_weight.weight }}
+                                                        <a class="btn btn-link btn-sm text-secondary ml-2"
+                                                           href="{% url 'modeling_jobs:term-weight-update' job.id term_weight.id %}"><small>編輯</small></a>
+                                                        <a class="btn btn-link btn-sm text-danger ml-2"
+                                                           href="{% url 'modeling_jobs:term-weight-delete' job.id term_weight.id %}"><small>刪除</small></a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         {% endfor %}
@@ -331,4 +337,168 @@
         </div>
     </div>
 
+    <!-- Modal -->
+    <div class="modal fade" id="jobUpdateModal" tabindex="-1" aria-labelledby="jobUpdateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jobUpdateModalLabel">修改任務資訊</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" class="">{% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {{ form.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- File upload Modal -->
+    <div class="modal fade" id="test-ext-data-{{ job.id }}" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">使用額外測試集</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="{% url 'modeling_jobs:api-ext-testing-model' job.id %}" method="post"
+                          enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label class="col-form-label" for="test_csv_file">輸入檔案(.csv) : </label>
+                            <input type="file" id="test_csv_file" name="ext_test_file" accept=".csv"
+                                   class="csv_file" required>
+                        </div>
+                        <label hidden>
+                            <input type="text" hidden name="job_id" value="{{ job.id }}">
+                        </label>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">
+                                上傳
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block custom_script %}
+    <script>
+
+        function train_model(job_id, train_url) {
+            set_row_processing_display(job_id)
+            $.post(train_url)
+        }
+
+        function showResult(modeling_job_id) {
+            var aj = $.ajax({
+                url: 'show_result',
+                data: {
+                    modeling_job_id: modeling_job_id,
+                },
+                type: 'post',
+                success: function (result) {
+                    console.log("Done")
+                }
+            })
+        }
+
+        function set_row_done_display(job_id, details, is_trainable) {
+            $('#state-' + job_id).text("完成").attr('data-original-title', details);
+            $('#train-btn-' + job_id)
+                .text("重新訓練")
+                .removeClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", false);
+            }
+        }
+
+        function set_row_processing_display(job_id, details, is_trainable) {
+            $('#state-' + job_id).text("處理中").attr('data-original-title', details);
+            $('#train-btn-' + job_id)
+                .text("訓練中")
+                .addClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", true);
+            }
+        }
+
+        function set_row_wait_display(job_id, details, is_trainable) {
+            $('#state-' + job_id).text("等待中").attr('data-original-title', details);
+            $('#train-btn-' + job_id)
+                .text("開始訓練")
+                .removeClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", true);
+            }
+        }
+
+        function set_row_error_display(job_id, details, is_trainable) {
+            $('#state-' + job_id).text("錯誤").attr('data-original-title', details);
+            $('#train-btn-' + job_id).text("重試")
+                .removeClass("disabled");
+            if (!is_trainable) {
+                $('#test-btn-' + job_id).attr("hidden", true);
+            }
+        }
+
+        function get_progress(url) {
+            return $.get({
+                url: url
+            })
+        }
+
+        function update_progress(job_id, url, is_trainable) {
+            {#var state = "wait"#}
+            get_progress(url).done(function (result) {
+                let timeout = 10000
+                console.log(result)
+                let state = result.state
+                let details = result.details
+                let elem_id = '#state-' + job_id
+                console.log(elem_id)
+                $(elem_id).text(state)
+                switch (state) {
+                    case 'done':
+                        set_row_done_display(job_id, details, is_trainable)
+                        break
+                    case 'wait':
+                        set_row_wait_display(job_id, details, is_trainable)
+                        break
+                    case 'processing':
+                        timeout = 1000
+                        set_row_processing_display(job_id, details, is_trainable)
+                        break
+                    default:
+                        console.log(state)
+                        set_row_error_display(job_id, details, is_trainable)
+                }
+
+                setTimeout(function () {
+                    {#console.log(url)#}
+                    update_progress(job_id, url)
+                }, timeout);
+            });
+        }
+
+        update_progress(
+            {{ job.id }},
+            "{% url 'modeling_jobs:api-job-progress' job.id %}",
+            Boolean('{{ job.is_trainable }}') == 'True'
+        )
+
+    </script>
 {% endblock %}
