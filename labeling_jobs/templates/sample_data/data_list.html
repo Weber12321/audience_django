@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}資料準備任務|範例資料{% endblock %}
+{% block nav_title %}範例資料{% endblock %}
+{% block page_title %}範例資料列表{% endblock %}
+{% block page_description %}
+    <p>此部分可以設定
+        <span class="badge badge-success">監督式學習模型</span> 、
+        <span class="badge badge-primary">關鍵字規則模型</span> 、
+        <span class="badge badge-info">正則表達式模型</span> 與
+        <span class="badge badge-secondary">關鍵字權重模型</span>
+        相關任務資料，並應用於後續的 <a href="{% url 'modeling_jobs:index' %}">模型建立任務</a>中。</p>
+{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+    {% endif %}
+{% endblock %}
+{% block content %}
+    {% for sample_data in sampledata_list %}
+        <a href="{% url 'labeling_jobs:download-sample-data' sample_data.id %}">{{ sample_data.get_file_name }}</a>
+    {% endfor %}
+{% endblock %}
