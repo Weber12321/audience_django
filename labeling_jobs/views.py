@@ -368,8 +368,24 @@ class DocumentDetailView(LoginRequiredMixin, generic.DetailView):
 
 
 class SampleDataListView(LoginRequiredMixin, generic.ListView):
+    paginate_by = 10
     model = SampleData
     template_name = 'sample_data/data_list.html'
+
+    def get_context_data(self, **kwargs):
+        data_type = self.request.GET.dict().get("data_type")
+        context = super().get_context_data(**kwargs)
+        context['current_data_type'] = data_type
+        context['data_types'] = [d_type for d_type in LabelingJob.DataTypes]
+        print([d_type for d_type in LabelingJob.DataTypes])
+        return context
+
+    def get_queryset(self):
+        data_type = self.request.GET.dict().get("data_type")
+        if data_type:
+            return SampleData.objects.filter(job_data_type=data_type)
+        else:
+            return SampleData.objects.all()
 
 
 def download_sample_data(request, sample_data_id):
