@@ -1,8 +1,9 @@
+import os
 import re
 from random import shuffle
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404, HttpResponse, FileResponse
 from django.urls import reverse_lazy, reverse
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
@@ -10,7 +11,7 @@ from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
 
 from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm
-from .models import LabelingJob, UploadFileJob, Document, Label, Rule
+from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleData
 # Create your views here.
 from .tasks import import_csv_data_task, generate_datasets_task
 
@@ -364,3 +365,33 @@ class DocumentDetailView(LoginRequiredMixin, generic.DetailView):
         if referer:
             context['next'] = re.sub(r'^https?://[\w.:]+', '', referer)
         return context
+
+
+class SampleDataListView(LoginRequiredMixin, generic.ListView):
+    paginate_by = 10
+    model = SampleData
+    template_name = 'sample_data/data_list.html'
+
+    def get_context_data(self, **kwargs):
+        data_type = self.request.GET.dict().get("data_type")
+        context = super().get_context_data(**kwargs)
+        context['current_data_type'] = data_type
+        context['data_types'] = [d_type for d_type in LabelingJob.DataTypes]
+        print([d_type for d_type in LabelingJob.DataTypes])
+        return context
+
+    def get_queryset(self):
+        data_type = self.request.GET.dict().get("data_type")
+        if data_type:
+            return SampleData.objects.filter(job_data_type=data_type)
+        else:
+            return SampleData.objects.all()
+
+
+def download_sample_data(request, sample_data_id):
+    sample_data = SampleData.objects.get(pk=sample_data_id)
+    file_path = sample_data.file.path
+    if os.path.exists(file_path):
+        response = FileResponse(open(file_path, 'rb'))
+        return response
+    raise Http404

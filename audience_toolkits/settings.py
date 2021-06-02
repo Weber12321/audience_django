@@ -145,6 +145,7 @@ STATICFILES_DIRS = [
 
 # tmp files
 UPLOAD_FILE_DIRECTORY = 'upload_files'
+SAMPLE_DATA_FILE_DIRECTORY = 'sample_data_files'
 # ======================================
 #           django-Q settings
 # ======================================
