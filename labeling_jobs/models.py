@@ -1,3 +1,5 @@
+import os
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -213,3 +215,26 @@ class Rule(models.Model):
         verbose_name_plural = "規則列表"
         ordering = ('content', 'match_type',)
         unique_together = ('label', 'content', 'match_type',)
+
+
+class SampleData(models.Model):
+    name = models.CharField(max_length=100, verbose_name="範例資料名稱", default="Sample Data")
+    description = models.TextField(verbose_name="定義與說明")
+    job_data_type = models.CharField(max_length=20, choices=LabelingJob.DataTypes.choices, verbose_name="任務類型",
+                                     default=None, null=True)
+    file = models.FileField(upload_to=settings.SAMPLE_DATA_FILE_DIRECTORY, verbose_name="檔案")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.get_file_name()})"
+
+    class Meta:
+        verbose_name = "範例資料"
+        verbose_name_plural = "範例資料列表"
+        ordering = ('created_at', 'name', 'job_data_type',)
+
+    def get_file_name(self):
+        return os.path.basename(self.file.path)
+
+

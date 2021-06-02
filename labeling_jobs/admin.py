@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from labeling_jobs.forms import DocumentForm
-from labeling_jobs.models import LabelingJob, Label, Document, UploadFileJob
+from labeling_jobs.models import LabelingJob, Label, Document, UploadFileJob, SampleData
 
 
 class LabelInline(admin.TabularInline):
@@ -21,6 +21,17 @@ class UploadFileJobInline(admin.StackedInline):
     model = UploadFileJob
     extra = 0
     fields = ['file']
+
+
+class SampleDataAdmin(admin.ModelAdmin):
+    exclude = ['created_by', 'created_at']
+    list_display = ['name', 'job_data_type', 'created_by', 'created_at', 'file']
+    search_fields = ['name', 'file']
+    list_filter = ['job_data_type', 'created_by', 'created_at']
+
+    def save_model(self, request, obj, form, change):
+        obj.created_by = request.user
+        obj.save()
 
 
 class LabelingJobAdmin(admin.ModelAdmin):
@@ -68,4 +79,4 @@ class LabelAdmin(admin.ModelAdmin):
 
 admin.site.register(LabelingJob, LabelingJobAdmin)
 admin.site.register(Document, DocumentAdmin)
-admin.site.register(Label, LabelAdmin)
+admin.site.register(SampleData, SampleDataAdmin)

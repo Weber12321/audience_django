@@ -26,4 +26,7 @@ urlpatterns = [
     # func
     path('<int:job_id>/generate_dataset', views.generate_dataset, name="generate-dataset"),
 
+    # sample data
+    path('sample_data', views.SampleDataListView.as_view(), name='sample-data-list'),
+    path('sample_data/download/<int:sample_data_id>', views.download_sample_data, name='download-sample-data')
 ]

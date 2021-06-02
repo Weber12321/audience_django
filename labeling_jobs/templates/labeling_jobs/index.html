@@ -63,16 +63,7 @@
                                         {% resetcycle %}
                                     </p>
                                     <p class="card-text">{{ labeling_job.description }}</p>
-
-                                    <a class="stretched-link"
-                                       href="{% url 'labeling_jobs:job-detail' labeling_job.id %}"></a>
-                                    {#                                    <a class="mr-1 card-link"#}
-                                    {#                                       href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">檢視任務細節</a>#}
-                                    {#                                    {% if labeling_job.job_data_type == 'supervise_model' and labeling_job.document_set.count and labeling_job.label_set.count %}#}
-                                    {#                                        <a class="mr-1 card-link text-success"#}
-                                    {#                                           href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>#}
-                                    {#                                    {% endif %}#}
-
+                                    <a class="stretched-link" href="{% url 'labeling_jobs:job-detail' labeling_job.id %}"></a>
                                 </div>
                             </div>
                         </div>
@@ -85,6 +76,7 @@
         </div>
         <div class="col-md-3">
             <h4>各種模型需要的資料</h4>
+            <p>如果不確定資料內容或是格式，可參考 <a href="{% url 'labeling_jobs:sample-data-list' %}">範例資料下載</a>。</p>
             <div class="card shadow mb-2">
                 <div class="card-body">
                     <div class="card-title font-weight-bold">監督式學習模型</div>
