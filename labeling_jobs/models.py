@@ -226,6 +226,9 @@ class SampleData(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
+    def __str__(self):
+        return f"{self.name} ({self.get_file_name()})"
+
     class Meta:
         verbose_name = "範例資料"
         verbose_name_plural = "範例資料列表"

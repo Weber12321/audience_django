@@ -4,80 +4,101 @@
 {% block nav_title %}範例資料{% endblock %}
 {% block page_title %}範例資料列表{% endblock %}
 {% block page_description %}
-    <p>此部分可以設定
+    <p>此部分資料分為
         <span class="badge badge-success">監督式學習模型</span> 、
         <span class="badge badge-primary">關鍵字規則模型</span> 、
         <span class="badge badge-info">正則表達式模型</span> 與
-        <span class="badge badge-secondary">關鍵字權重模型</span>
-        相關任務資料，並應用於後續的 <a href="{% url 'modeling_jobs:index' %}">模型建立任務</a>中。</p>
+        <span class="badge badge-secondary">關鍵字權重模型</span>，可作為 <a href="{% url 'labeling_jobs:index' %}">資料準備任務</a> 輸入資料內容或格式的參考。</p>
 {% endblock %}
 {% block page_functions %}
     {% if user.is_staff %}
     {% endif %}
 {% endblock %}
 {% block content %}
-    {% for sample_data in sampledata_list %}
-        <a href="{% url 'labeling_jobs:download-sample-data' sample_data.id %}">{{ sample_data.get_file_name }}</a>
-    {% endfor %}
-    <div class="col-12 m-4 pagination justify-content-center">
-            <span class="step-links">
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
-                {% endif %}
 
-                <span class="current">
-                     {{ page_obj.number }} / {{ paginator.num_pages }}.
-                </span>
-
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
-                {% endif %}
-            </span>
-    </div>
     <div class="row">
+
         <div class="col-10">
-            <div class="list-group">
-                {% for row in sampledata_list %}
-                    <div class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">{{ row.job_data_type }}</h5>
-                            <small>{{ row.created_at }}</small>
+            {% if sampledata_list %}
+                <div class="col-12 m-4 pagination justify-content-start">
+                    <span class="step-links">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
+                        {% endif %}
+                        <span class="current">
+                             {{ page_obj.number }} / {{ paginator.num_pages }}.
+                        </span>
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
+                        {% endif %}
+                    </span>
+                </div>
+                {% for sample_data in sampledata_list %}
+                    <div class="card shadow mb-2">
+                        <div class="card-body">
+                            {% if sample_data.job_data_type == 'supervise_model' %}
+                                <span class="badge badge-success">監督式學習模型</span>
+                            {% elif sample_data.job_data_type == 'rule_base' %}
+                                <span class="badge badge-primary">關鍵字規則模型</span>
+                            {% elif sample_data.job_data_type == 'regex' %}
+                                <span class="badge badge-info">正則表達式模型</span>
+                            {% elif sample_data.job_data_type == 'term_weight' %}
+                                <span class="badge badge-secondary">關鍵字權重模型</span>
+                            {% endif %}
+                            <div class="d-flex w-100 justify-content-between">
+                                <div class="card-title">
+                                    <div class="font-weight-bold">#{{ sample_data.id }} {{ sample_data.name }}</div>
+                                    <small>{{ sample_data.get_file_name }}</small>
+                                </div>
+                                <small>於 {{ sample_data.created_at }} 由 {{ sample_data.created_by }} 建立</small>
+                            </div>
+                            <div>{{ sample_data.description }}</div>
                         </div>
-                        <small>#{{ row.id }} - {{ row.name }}, {{ row.get_file_name }}</small>
+                        <a class="stretched-link"
+                           href="{% url 'labeling_jobs:download-sample-data' sample_data.id %}"></a>
                     </div>
                 {% endfor %}
-            </div>
+                <div class="col-12 m-4 pagination justify-content-start">
+                    <span class="step-links">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
+                        {% endif %}
+                        <span class="current">
+                             {{ page_obj.number }} / {{ paginator.num_pages }}.
+                        </span>
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
+                        {% endif %}
+                    </span>
+                </div>
+            {% else %}
+                <p>沒有資料</p>
+            {% endif %}
+
         </div>
         <div class="col-2">
             <div class="list-group">
                     <a href="{% url 'labeling_jobs:sample-data-list' %}"
                        class="list-group-item list-group-item-action {% if not current_data_type %}active{% endif %}"
                        aria-current="true">
-                       全部
+                        <span class="badge badge-light">全部</span>
                     </a>
                 {% for data_type in data_types %}
                     <a href="{% url 'labeling_jobs:sample-data-list' %}?data_type={{ data_type }} "
                        class="list-group-item list-group-item-action {% if data_type == current_data_type %}active{% endif %}"
                        aria-current="true">
-                        {{ data_type.label }}
+                            {% if data_type == 'supervise_model' %}
+                                <span class="badge badge-success">監督式學習模型</span>
+                            {% elif data_type == 'rule_base' %}
+                                <span class="badge badge-primary">關鍵字規則模型</span>
+                            {% elif data_type == 'regex' %}
+                                <span class="badge badge-info">正則表達式模型</span>
+                            {% elif data_type == 'term_weight' %}
+                                <span class="badge badge-secondary">關鍵字權重模型</span>
+                            {% endif %}
                     </a>
                 {% endfor %}
             </div>
         </div>
-    </div>
-    <div class="col-12 m-4 pagination justify-content-center">
-            <span class="step-links">
-                {% if sa.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
-                {% endif %}
-
-                <span class="current">
-                     {{ page_obj.number }} / {{ paginator.num_pages }}.
-                </span>
-
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
-                {% endif %}
-            </span>
     </div>
 {% endblock %}

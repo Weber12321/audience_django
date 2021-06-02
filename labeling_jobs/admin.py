@@ -29,6 +29,10 @@ class SampleDataAdmin(admin.ModelAdmin):
     search_fields = ['name', 'file']
     list_filter = ['job_data_type', 'created_by', 'created_at']
 
+    def save_model(self, request, obj, form, change):
+        obj.created_by = request.user
+        obj.save()
+
 
 class LabelingJobAdmin(admin.ModelAdmin):
     fieldsets = [
