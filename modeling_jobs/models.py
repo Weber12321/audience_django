@@ -25,7 +25,7 @@ class ModelingJob(models.Model):
 
     name = models.CharField(max_length=100, verbose_name="模型名稱")
     description = models.CharField(max_length=100, verbose_name="模型敘述")
-    is_multi_label = models.BooleanField(verbose_name="是否為多標籤")
+    is_multi_label = models.BooleanField(default=False, verbose_name="是否為多標籤")
     model_name = models.CharField(max_length=50, choices=__model_choices__, verbose_name="模型類型")
     feature = models.CharField(max_length=50, choices=__feature_choices__, default='content', verbose_name="特徵欄位")
     jobRef = models.ForeignKey(LabelingJob, verbose_name="使用資料", on_delete=models.SET_NULL, blank=True, null=True)
