@@ -42,7 +42,7 @@ class PredictingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
 
         apply_model_form = ApplyingModelForm({'predicting_job': self.object, 'priority': 0})
         context["apply_model_form"] = apply_model_form
-        predicting_target_form = PredictingTargetForm({'predicting_job': self.object})
+        predicting_target_form = PredictingTargetForm({'predicting_job': self.object, 'min_content_length':10, 'max_content_length':500})
         context["predicting_target_form"] = predicting_target_form
         return context
 
