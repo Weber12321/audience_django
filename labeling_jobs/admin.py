@@ -25,7 +25,7 @@ class UploadFileJobInline(admin.StackedInline):
 
 class SampleDataAdmin(admin.ModelAdmin):
     exclude = ['created_by', 'created_at']
-    list_display = ['name', 'job_data_type', 'created_by', 'created_at', 'file']
+    list_display = ['id', 'name', 'job_data_type', 'created_by', 'created_at', 'file']
     search_fields = ['name', 'file']
     list_filter = ['job_data_type', 'created_by', 'created_at']
 
@@ -43,7 +43,7 @@ class LabelingJobAdmin(admin.ModelAdmin):
     ]
     inlines = [LabelInline, UploadFileJobInline]
     list_display = (
-        'name', 'is_multi_label', 'show_target_amount', 'show_document_amount', 'show_labels', 'created_at',
+        'id', 'name', 'is_multi_label', 'show_target_amount', 'show_document_amount', 'show_labels', 'created_at',
         'updated_at', 'created_by')
     list_filter = ['created_at', "updated_at", 'created_by']
     search_fields = ['name', 'description', 'created_by']
@@ -64,7 +64,7 @@ class LabelingJobAdmin(admin.ModelAdmin):
 
 class DocumentAdmin(admin.ModelAdmin):
     model = Document
-    list_display = ['title', 's_area_id', 'author', 'post_time', 'labeling_job']
+    list_display = ['id', 'title', 's_area_id', 'author', 'post_time', 'labeling_job']
     search_fields = ['title', 's_area_id', 'labeling_jobs']
     list_filter = ['post_time', 'labeling_job']
     form = DocumentForm
@@ -72,7 +72,7 @@ class DocumentAdmin(admin.ModelAdmin):
 
 class LabelAdmin(admin.ModelAdmin):
     model = Label
-    list_display = ('name', 'labeling_job', 'show_document_amount', 'target_amount', 'created_at', 'updated_at')
+    list_display = ('id', 'name', 'labeling_job', 'show_document_amount', 'target_amount', 'created_at', 'updated_at')
     list_filter = ['created_at', "updated_at", 'labeling_job']
     search_fields = ['name', 'description', 'labeling_job']
 
