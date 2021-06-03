@@ -93,7 +93,7 @@
                 <div class="card-header">預測資料範圍列表</div>
                 <div class="card-body">
                     <div class="card-link mb-4">
-                        <a href="{% url 'predicting_jobs:job-target-add' predicting_job.id %}?next={{ request.path }}">新增資料範圍</a>
+                        <a href="" data-toggle="modal" data-target="#predictingTargetModal">新增預測資料範圍</a>
                     </div>
                     <div class="table-responsive">
                         <table class="table">
@@ -181,6 +181,31 @@
                     <div class="modal-body">
                         {{ error }}
                         {{ apply_model_form.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- predicting target Modal -->
+    <div class="modal fade" id="predictingTargetModal" tabindex="-1" aria-labelledby="predictingTargetModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="predictingTargetModalLabel">新增應用範圍</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" class=""
+                      action="{% url 'predicting_jobs:job-target-add' predicting_job.id %}">{% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {{ predicting_target_form.as_p }}
                     </div>
                     <div class="modal-footer">
                         <input type="hidden" name="next" value="{{ next }}">
