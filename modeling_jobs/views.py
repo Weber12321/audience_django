@@ -13,10 +13,10 @@ from django_q.tasks import AsyncTask
 from core.audience.models.base_model import RuleBaseModel, SuperviseModel
 from core.audience.models.rule_base.regex_model import RegexModel
 from labeling_jobs.models import LabelingJob, Document
-from .forms import ModelingJobForm, TermWeightForm
+from .forms import ModelingJobForm, TermWeightForm, UploadModelJobForm
 from .helpers import insert_csv_to_db, parse_report
-from .models import ModelingJob, Report, TermWeight
-from .tasks import train_model_task, testing_model_via_ext_data_task
+from .models import ModelingJob, Report, TermWeight, UploadModelJob
+from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task
 import json
 
 
@@ -247,8 +247,25 @@ def get_progress(request, pk):
             job.save()
 
     elif job.get_model_type() == SuperviseModel.__name__:
-        if job.jobRef.job_data_type != LabelingJob.DataTypes.SUPERVISE_MODEL:
-            job.error_message = "Data type error, SuperviseModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
+        if job.jobRef:
+            if job.model_name == "TERM_WEIGHT_MODEL":
+                if job.jobRef.job_data_type != LabelingJob.DataTypes.TERM_WEIGHT_MODEL:
+                    job.error_message = f"Data type error, TermWeightModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
+                    job.job_status = ModelingJob.JobStatus.ERROR
+                    job.save()
+                else:
+                    job.job_status = ModelingJob.JobStatus.DONE
+                    job.save()
+            else:
+                if job.jobRef.job_data_type != LabelingJob.DataTypes.SUPERVISE_MODEL:
+                    job.error_message = f"Data type error, SuperviseModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
+                    job.job_status = ModelingJob.JobStatus.ERROR
+                    job.save()
+                else:
+                    job.job_status = ModelingJob.JobStatus.DONE
+                    job.save()
+        else:
+            job.error_message = "No labeling job reference error."
             job.job_status = ModelingJob.JobStatus.ERROR
             job.save()
     response_data = {
@@ -295,5 +312,41 @@ class TermWeightDelete(LoginRequiredMixin, generic.DeleteView):
             return super(TermWeightDelete, self).post(request, *args, **kwargs)
 
     def get_success_url(self):
-        job_id = self.kwargs.get('job_id')
+        job_id = self.kwargs.get('pk')
         return reverse_lazy('modeling_job_id:job-detail', kwargs={"pk": job_id})
+
+
+class UploadModelJobCreate(LoginRequiredMixin, generic.CreateView):
+    model = UploadModelJob
+    form_class = UploadModelJobForm
+    template_name = 'model_upload/file_upload_form.html'
+
+    def get_success_url(self):
+        # 利用django-q實作非同步上傳
+        a = AsyncTask(import_model_data_task, upload_job=self.object, group='upload_model')
+        a.run()
+        job_id = self.kwargs['job_id']
+        return reverse_lazy('modeling_jobs:job-detail', kwargs={'pk': job_id})
+
+    def form_valid(self, form):
+        print(self.kwargs)
+        form.instance.modeling_job_id = self.kwargs.get('job_id')
+        form.instance.created_by = self.request.user
+        print(form.instance)
+        return super(UploadModelJobCreate, self).form_valid(form)
+
+
+class UploadModelJobDelete(LoginRequiredMixin, generic.DeleteView):
+    model = UploadModelJob
+    template_name = 'model_upload/confirm_delete_form.html'
+
+    def post(self, request, *args, **kwargs):
+        if "cancel" in request.POST:
+            print(request.POST)
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return super(UploadModelJobDelete, self).post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        job_id = self.kwargs.get('job_id')
+        return reverse_lazy('modeling_jobs:job-detail', kwargs={"pk": job_id})

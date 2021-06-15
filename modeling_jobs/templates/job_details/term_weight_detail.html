@@ -53,6 +53,7 @@
                 </div>
             </div>
             <div class="card mb-4">
+            {% if job.jobRef %}
                 {% with labeling_job=job.jobRef %}
                     <div class="card-header">訓練資料</div>
                     <div class="card-body">
@@ -91,6 +92,7 @@
                         </div>
                     </div>
                 {% endwith %}
+            {% endif %}
             </div>
 
             <div class="card mb-4">

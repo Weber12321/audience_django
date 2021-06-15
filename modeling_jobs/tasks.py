@@ -11,8 +11,55 @@ from core.audience.models.classic.term_weight_model import TermWeightModel
 from core.dao.input_example import Features, InputExample
 from core.helpers.model_helpers import get_model_class
 from labeling_jobs.models import Document, LabelingJob, Label
-from labeling_jobs.tasks import create_documents
-from modeling_jobs.models import ModelingJob
+from labeling_jobs.tasks import create_documents, read_csv_file
+from modeling_jobs.models import ModelingJob, UploadModelJob
+
+TERM_WEIGHT_FIELDS_MAPPING = {
+    'content': '字詞',
+    'label': '標籤',
+    'score': '分數',
+}
+
+
+def import_model_data_task(upload_job: UploadModelJob):
+    upload_job.job_status = UploadModelJob.JobStatus.PROCESSING
+    upload_job.save()
+    try:
+        file = upload_job.file
+        print(upload_job.modeling_job.model_name)
+        if upload_job.modeling_job.model_name in {"TERM_WEIGHT_MODEL"}:
+            import_term_weights(file, upload_job.modeling_job, update_labels=True,
+                                required_fields=TERM_WEIGHT_FIELDS_MAPPING)
+        else:
+            raise ValueError(f'Unknown or unsupported model {upload_job.modeling_job.model_name}.')
+        upload_job.job_status = UploadModelJob.JobStatus.DONE
+    except Exception as e:
+        print(e)
+        upload_job.job_status = UploadModelJob.JobStatus.ERROR
+    finally:
+        upload_job.save()
+
+
+def import_term_weights(file, job: ModelingJob, required_fields=None, update_labels=False):
+    if not required_fields:
+        required_fields = TERM_WEIGHT_FIELDS_MAPPING
+    label_term_weight: Dict[str, List[Tuple[str, float]]] = defaultdict(list)
+    csv_rows = read_csv_file(file, required_fields)
+
+    for index, row in enumerate(csv_rows):
+        data = defaultdict(str)
+        for _field in required_fields.keys():
+            # 判斷欄位是否有出現在可使用的欄位名稱列表中
+            field_data = row.get(_field, None) or row.get(required_fields.get(_field), None)
+            if _field == 'score':
+                field_data = field_data if field_data else 1
+            data[_field] = field_data
+        label_str: str = data.get('label', None)
+        content = data.get('content', None)
+        score = data.get('score', 1)
+        label_term_weight[label_str].append((content, score))
+    create_term_weights(job=job, label_term_weight=label_term_weight)
+    pass
 
 
 def train_model_task(job: ModelingJob):
@@ -126,6 +173,15 @@ def get_rules(job: LabelingJob):
 
 def create_term_weights(job: ModelingJob, label_term_weight: Dict[str, List[Tuple[str, float]]]):
     job.termweight_set.all().delete()
+    if not job.jobRef:
+        job.jobRef = LabelingJob(name=f"「{job.name}」自動建立的任務",
+                                 description=f"因「{job.name}」匯入而自動建立的任務",
+                                 job_data_type=LabelingJob.DataTypes.TERM_WEIGHT_MODEL,
+                                 created_by=job.created_by)
+        job.jobRef.save()
+        for label_str in label_term_weight.keys():
+            job.jobRef.label_set.create(name=label_str)
+        job.jobRef.save()
     label_dict = job.jobRef.get_labels_dict()
     for label_str, term_weights in label_term_weight.items():
         for term, weight in term_weights:

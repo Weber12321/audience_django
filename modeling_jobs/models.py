@@ -135,3 +135,25 @@ class TermWeight(models.Model):
         verbose_name_plural = "詞彙權重列表"
         ordering = ('modeling_job', 'label', F('weight').desc(nulls_last=True), 'term')
         unique_together = ("modeling_job", "term", "label")
+
+
+class UploadModelJob(models.Model):
+    class JobStatus(models.TextChoices):
+        WAIT = ('wait', '等待中')
+        PROCESSING = ('processing', '處理中')
+        BREAK = ('break', '中斷')
+        ERROR = ('error', '錯誤')
+        DONE = ('done', '完成')
+
+    modeling_job = models.ForeignKey(ModelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
+    file = models.FileField(upload_to=settings.UPLOAD_FILE_DIRECTORY, verbose_name="檔案")
+    job_status = models.CharField(max_length=20, verbose_name="任務狀態", default=JobStatus.WAIT, choices=JobStatus.choices)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.file.name
+
+    class Meta:
+        verbose_name = "模型上傳任務"
+        verbose_name_plural = "模型上傳任務列表"
