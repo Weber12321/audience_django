@@ -45,6 +45,10 @@ class JobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["job"] = self.object
+        print()
+        if self.object.model_name == "TERM_WEIGHT_MODEL":
+            import_model_form = UploadModelJobForm({'modeling_job': self.object.id, })
+            context["import_model_form"] = import_model_form
         return context
 
     def get_template_names(self):
@@ -249,7 +253,8 @@ def get_progress(request, pk):
     elif job.get_model_type() == SuperviseModel.__name__:
         if job.jobRef:
             if job.model_name == "TERM_WEIGHT_MODEL":
-                if job.jobRef.job_data_type != LabelingJob.DataTypes.TERM_WEIGHT_MODEL:
+                if job.jobRef.job_data_type not in {LabelingJob.DataTypes.TERM_WEIGHT_MODEL,
+                                                    LabelingJob.DataTypes.SUPERVISE_MODEL}:
                     job.error_message = f"Data type error, TermWeightModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
                     job.job_status = ModelingJob.JobStatus.ERROR
                     job.save()

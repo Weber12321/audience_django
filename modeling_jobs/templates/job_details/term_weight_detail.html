@@ -24,6 +24,10 @@
             </button>
             <div class="dropdown-menu animated--fade-in"
                  aria-labelledby="dropdownMenuButton">
+                <button id="import-model-modal-btn" class="dropdown-item"
+                        data-toggle="modal" data-target="#import-model-modal">
+                    上傳詞彙權重
+                </button>
                 <a class="dropdown-item" href="" data-toggle="modal" data-target="#jobUpdateModal">修改</a>
                 <a class="dropdown-item" href="{% url 'modeling_jobs:job-delete' job.id %}">刪除</a>
             </div>
@@ -53,46 +57,46 @@
                 </div>
             </div>
             <div class="card mb-4">
-            {% if job.jobRef %}
-                {% with labeling_job=job.jobRef %}
-                    <div class="card-header">訓練資料</div>
-                    <div class="card-body">
-                        <div class="card-title">使用資料：#{{ labeling_job.id }} <a
-                                href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">{{ labeling_job.name }}</a>
-                        </div>
+                {% if job.jobRef %}
+                    {% with labeling_job=job.jobRef %}
+                        <div class="card-header">訓練資料</div>
+                        <div class="card-body">
+                            <div class="card-title">使用資料：#{{ labeling_job.id }} <a
+                                    href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">{{ labeling_job.name }}</a>
+                            </div>
 
-                        <div class="card-title">資料數量：</div>
-                        <div class="table-responsive mt-2">
-                            <table class="table table-bordered">
-                                <thead>
-                                <tr>
-                                    <th scope="col"></th>
-                                    <th scope="col">訓練集</th>
-                                    <th scope="col">驗證集</th>
-                                    <th scope="col">測試集</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for label in labeling_job.label_set.all %}
+                            <div class="card-title">資料數量：</div>
+                            <div class="table-responsive mt-2">
+                                <table class="table table-bordered">
+                                    <thead>
                                     <tr>
-                                        <td>{{ label.name }}</td>
-                                        <td>{{ label.show_train_set_count }}</td>
-                                        <td>{{ label.show_dev_set_count }}</td>
-                                        <td>{{ label.show_test_set_count }}</td>
+                                        <th scope="col"></th>
+                                        <th scope="col">訓練集</th>
+                                        <th scope="col">驗證集</th>
+                                        <th scope="col">測試集</th>
                                     </tr>
-                                {% endfor %}
-                                <tr class="table-active">
-                                    <td>總計</td>
-                                    <td>{{ labeling_job.get_train_set.count }}</td>
-                                    <td>{{ labeling_job.get_dev_set.count }}</td>
-                                    <td>{{ labeling_job.get_test_set.count }}</td>
-                                </tr>
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                    {% for label in labeling_job.label_set.all %}
+                                        <tr>
+                                            <td>{{ label.name }}</td>
+                                            <td>{{ label.show_train_set_count }}</td>
+                                            <td>{{ label.show_dev_set_count }}</td>
+                                            <td>{{ label.show_test_set_count }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    <tr class="table-active">
+                                        <td>總計</td>
+                                        <td>{{ labeling_job.get_train_set.count }}</td>
+                                        <td>{{ labeling_job.get_dev_set.count }}</td>
+                                        <td>{{ labeling_job.get_test_set.count }}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                {% endwith %}
-            {% endif %}
+                    {% endwith %}
+                {% endif %}
             </div>
 
             <div class="card mb-4">
@@ -151,6 +155,7 @@
                 </div>
             </div>
         </div>
+        <!-- confusion matrix -->
         <div class="col-md-6 mb-4">
             <div class="h5">模型效果</div>
             <hr>
@@ -364,7 +369,7 @@
     </div>
     <!-- File upload Modal -->
     <div class="modal fade" id="test-ext-data-{{ job.id }}" tabindex="-1" role="dialog"
-         aria-labelledby="exampleModalLabel" aria-hidden="true">
+         aria-labelledby="extTestDataUploadModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -384,6 +389,40 @@
                         <label hidden>
                             <input type="text" hidden name="job_id" value="{{ job.id }}">
                         </label>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">
+                                上傳
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- model upload Modal -->
+    <div class="modal fade" id="import-model-modal" tabindex="-1" role="dialog"
+         aria-labelledby="importModelModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">上傳詞彙權重</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="{% url 'modeling_jobs:import-model' job.id %}" method="post"
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ error }}
+                        {% for field in import_model_form %}
+                            <div class="form-group">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {{ field.errors }}
+                            </div>
+                        {% endfor %}
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                             <button type="submit" class="btn btn-primary">

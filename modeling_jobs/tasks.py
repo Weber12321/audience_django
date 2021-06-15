@@ -2,8 +2,10 @@ import json
 from collections import defaultdict
 from typing import List, Union, Dict, Tuple
 
+import numpy as np
 from django.db import IntegrityError
 from django.db.models import QuerySet
+from sklearn import preprocessing
 
 from audience_toolkits import settings
 from core.audience.models.base_model import SuperviseModel, RuleBaseModel
@@ -28,7 +30,7 @@ def import_model_data_task(upload_job: UploadModelJob):
         file = upload_job.file
         print(upload_job.modeling_job.model_name)
         if upload_job.modeling_job.model_name in {"TERM_WEIGHT_MODEL"}:
-            import_term_weights(file, upload_job.modeling_job, update_labels=True,
+            import_term_weights(file, upload_job.modeling_job, normalize_score=True,
                                 required_fields=TERM_WEIGHT_FIELDS_MAPPING)
         else:
             raise ValueError(f'Unknown or unsupported model {upload_job.modeling_job.model_name}.')
@@ -40,7 +42,7 @@ def import_model_data_task(upload_job: UploadModelJob):
         upload_job.save()
 
 
-def import_term_weights(file, job: ModelingJob, required_fields=None, update_labels=False):
+def import_term_weights(file, job: ModelingJob, required_fields=None, normalize_score=True):
     if not required_fields:
         required_fields = TERM_WEIGHT_FIELDS_MAPPING
     label_term_weight: Dict[str, List[Tuple[str, float]]] = defaultdict(list)
@@ -58,8 +60,19 @@ def import_term_weights(file, job: ModelingJob, required_fields=None, update_lab
         content = data.get('content', None)
         score = data.get('score', 1)
         label_term_weight[label_str].append((content, score))
-    create_term_weights(job=job, label_term_weight=label_term_weight)
-    pass
+    if normalize_score:
+        normalized_label_term_weight = {}
+        for label, term_weight in label_term_weight.items():
+            terms, weights = [[i for i, j in term_weight],
+                              [j for i, j in term_weight]]
+            weights = np.array(weights)
+            weights = weights.reshape(-1, 1)
+            min_max_scaler = preprocessing.MinMaxScaler()
+            weights_minmax = min_max_scaler.fit_transform(weights)
+            weights_minmax = [round(weight[0], 6) for weight in weights_minmax]
+            normalized_label_term_weight[label] = [t_w for t_w in zip(terms, weights_minmax)]
+        label_term_weight = normalized_label_term_weight
+    create_term_weights(job=job, label_term_weight=label_term_weight, reset_term_weights=False)
 
 
 def train_model_task(job: ModelingJob):
@@ -171,8 +184,10 @@ def get_rules(job: LabelingJob):
     return rules
 
 
-def create_term_weights(job: ModelingJob, label_term_weight: Dict[str, List[Tuple[str, float]]]):
-    job.termweight_set.all().delete()
+def create_term_weights(job: ModelingJob, label_term_weight: Dict[str, List[Tuple[str, float]]],
+                        reset_term_weights=True):
+    if reset_term_weights:
+        job.termweight_set.all().delete()
     if not job.jobRef:
         job.jobRef = LabelingJob(name=f"「{job.name}」自動建立的任務",
                                  description=f"因「{job.name}」匯入而自動建立的任務",
@@ -185,8 +200,16 @@ def create_term_weights(job: ModelingJob, label_term_weight: Dict[str, List[Tupl
     label_dict = job.jobRef.get_labels_dict()
     for label_str, term_weights in label_term_weight.items():
         for term, weight in term_weights:
-            if label_str in label_dict:
+            if label_str not in label_dict:
+                job.jobRef.label_set.create(name=label_str)
+                job.save()
+                label_dict = job.jobRef.get_labels_dict()
+            try:
                 job.termweight_set.create(term=term, weight=weight, label=label_dict.get(label_str))
+                job.save()
+            except Exception as e:
+                print(e)
+                print(term)
     job.save()
 
 
