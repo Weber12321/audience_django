@@ -175,7 +175,6 @@ class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
 
 class UploadFileJobDelete(LoginRequiredMixin, generic.DeleteView):
     model = UploadFileJob
-    success_url = reverse_lazy('predicting_jobs:index')
     template_name = 'labeling_jobs/confirm_delete_form.html'
 
     def post(self, request, *args, **kwargs):

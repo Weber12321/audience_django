@@ -1,7 +1,7 @@
 from django import forms
 
 from labeling_jobs.models import Label
-from modeling_jobs.models import ModelingJob, TermWeight
+from modeling_jobs.models import ModelingJob, TermWeight, UploadModelJob
 
 
 class ModelingJobForm(forms.ModelForm):
@@ -40,3 +40,13 @@ class TermWeightForm(forms.ModelForm):
         model = TermWeight
         fields = "__all__"
         exclude = ['modeling_job', 'created_at', 'created_by', 'rule_type']
+
+
+class UploadModelJobForm(forms.ModelForm):
+    class Meta:
+        model = UploadModelJob
+        fields = '__all__'
+        exclude = ['modeling_job', 'job_status', 'created_by']
+        widgets = {
+            'file': forms.FileInput(attrs={'class': '.form-control-file.', }),
+        }

@@ -16,6 +16,7 @@ urlpatterns = [
     path('deleteTask', views.delete_task, name='api-doc-delete'),
     path('insert_csv', views.insert_csv, name='api-doc-insert_csv'),
     path('<int:pk>/training', views.training_model, name='training-model'),
+    path('<int:job_id>/import', views.UploadModelJobCreate.as_view(), name='import-model'),
     path('<int:pk>/ext_test', views.testing_model_via_ext_data, name='api-ext-testing-model'),
     path('<int:modeling_job_id>/result_page', views.result_page, name='api-doc-result-page'),
 

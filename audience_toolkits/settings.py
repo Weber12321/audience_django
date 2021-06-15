@@ -186,7 +186,7 @@ ML_MODELS = {
         'module': 'core.audience.models.rule_base.regex_model.RegexModel',
     },
     "TERM_WEIGHT_MODEL": {
-        'verbose_name': '關鍵字權重',
+        'verbose_name': '詞彙權重模型',
         'module': 'core.audience.models.classic.term_weight_model.TermWeightModel',
     },
 }
