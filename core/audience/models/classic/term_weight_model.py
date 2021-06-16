@@ -29,7 +29,7 @@ class TermWeightModel(SuperviseModel):
         self.label_term_weights: Dict[str, List[Tuple[str, float]]] = defaultdict(List)
         self.mlb: Optional[MultiLabelBinarizer] = None
         self.vectorizer = None
-        self.threshold = 0.55
+        self.threshold = 0.3
 
     def fit(self, examples: List[InputExample], y_true):
         """
@@ -82,6 +82,7 @@ class TermWeightModel(SuperviseModel):
             raise ValueError(f"模型尚未被讀取，請嘗試執行 ' load() ' 方法讀取模型。")
         matched_keyword = []
         result_labels = []
+        print(f"feature = {self.feature}, threshold = {self.threshold}, labels = {self.label_term_weights.keys()}")
         for example in examples:
             content: str = getattr(example, self.feature.value)
             match_kw = defaultdict(list)

@@ -25,15 +25,17 @@ class AudienceWorker:
         :param input_examples:
         :return: list of models-> list of label results -> label, score
         """
+        print("Start Run Labeling")
         model_predicted_result = [[] for i in range(len(input_examples))]
         for audience_model in self.models:
-            predict_labels, predict_logits = audience_model.predict(input_examples)
+            predictions = audience_model.predict(input_examples)
+            predict_labels, predict_logits = predictions
             for i, example in enumerate(input_examples):
                 model_predicted_result[i].append(
                     RESULT(labels=predict_labels[i], logits=predict_logits[i],
                            model=audience_model.model_dir_name.__str__(),
                            feature=audience_model.feature.value, value=getattr(example, audience_model.feature.value)))
-                # print(model_predicted_result[i][-1])
+                # print(audience_model.model_dir_name.__str__())
         return model_predicted_result
 
     @staticmethod

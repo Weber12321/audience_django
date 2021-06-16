@@ -4,7 +4,9 @@
     <div class="col-12 m-4 pagination justify-content-center">
             <span class="step-links">
                 {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
+                    <a href="?page=
+
+                            {{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
                 {% endif %}
 
                 <span class="current">
@@ -12,7 +14,9 @@
                 </span>
 
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
+                    <a href="?page=
+
+                            {{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
                 {% endif %}
             </span>
     </div>
@@ -25,7 +29,13 @@
                             <h5 class="mb-1">{{ row.label_name }}</h5>
                             <small>{{ row.created_at }}</small>
                         </div>
-                        <p class="mb-1">{{ row.apply_path|get_apply_path_features }}</p>
+                        <div class="mb-1">
+                            {% for path in row.apply_path|get_apply_path_features %}
+                                <small>{{ path|get_item:"model" }} {{ path|get_item:"feature" }}</small>
+                                <p>{{ path|get_item:"content" }}</p>
+                            {% endfor %}
+                        </div>
+                        <p></p>
                         <small>#{{ row.id }} - {{ row.data_id }}, {{ row.source_author }}</small>
                     </div>
                 {% endfor %}
@@ -46,7 +56,9 @@
     <div class="col-12 m-4 pagination justify-content-center">
             <span class="step-links">
                 {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
+                    <a href="?page=
+
+                            {{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
                 {% endif %}
 
                 <span class="current">
@@ -54,7 +66,9 @@
                 </span>
 
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
+                    <a href="?page=
+
+                            {{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
                 {% endif %}
             </span>
     </div>

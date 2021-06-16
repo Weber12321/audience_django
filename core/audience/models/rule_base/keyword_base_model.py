@@ -12,6 +12,7 @@ class MatchType(Enum):
     START = 'start'
     END = 'end'
     EXACTLY = 'exactly'
+    ABSOLUTELY = 'absolutely'
     PARTIALLY = 'partially'
 
 
@@ -30,24 +31,31 @@ class KeywordModel(RuleBaseModel):
         for example in examples:
             content: str = getattr(example, self.feature.value)
             match_kw = {}
+            if not content:
+                continue
             for cls, keywords in self.rules.items():
                 for keyword, match_type in keywords:
-                    _match_type = match_type if isinstance(match_type, MatchType) else MatchType(match_type)
+
+                    try:
+                        _match_type = match_type if isinstance(match_type, MatchType) else MatchType(match_type)
+                    except Exception as e:
+                        print(e, match_type)
+                        continue
                     if _match_type == MatchType.PARTIALLY:
                         if content.__contains__(keyword):
-                            match_kw[cls] = (keyword, match_type.value)
+                            match_kw[cls] = (keyword, _match_type.value)
                             break
                     elif _match_type == MatchType.START:
                         if content.startswith(keyword):
-                            match_kw[cls] = (keyword, match_type.value)
+                            match_kw[cls] = (keyword, _match_type.value)
                             break
                     elif _match_type == MatchType.END:
                         if content.endswith(keyword):
-                            match_kw[cls] = (keyword, match_type.value)
+                            match_kw[cls] = (keyword, _match_type.value)
                             break
-                    elif _match_type == MatchType.EXACTLY:
+                    elif _match_type in {MatchType.EXACTLY, MatchType.ABSOLUTELY}:
                         if content == keyword:
-                            match_kw[cls] = (keyword, match_type.value)
+                            match_kw[cls] = (keyword, _match_type.value)
                             break
                     else:
                         continue

@@ -154,20 +154,25 @@ def create_ext_data(job: LabelingJob, uploaded_file, remove_old_data=True):
 
 
 def get_model(job: ModelingJob, model_path=None, for_training=False, na_tag=None):
-    # if job.model_path is None and model_path is None:
 
     if job.model_name in settings.ML_MODELS:
         model_cls = get_model_class(job.model_name)
-        if issubclass(model_cls, RuleBaseModel):
+        print(model_cls)
+        if not model_path and job.model_path is None or job.model_path == "":
             model_path = f"{job.id}_{job.name}"
-        print(model_path)
+        else:
+            model_path = job.model_path
+        print("=======", model_path, "=======")
         model: Union[SuperviseModel, RuleBaseModel] = model_cls(
-            model_dir_name=model_path if model_path else job.model_path,
+            model_dir_name=model_path,
             feature=Features(job.feature), na_tag=na_tag)
         if hasattr(model, 'is_multi_label'):
             # print(job.is_multi_label)
             model.is_multi_label = job.is_multi_label
-        if isinstance(model, SuperviseModel) and not for_training:
+        if isinstance(model, TermWeightModel):
+            label_term_weights = get_term_weights(job)
+            model.load(label_term_weights=label_term_weights)
+        elif isinstance(model, SuperviseModel) and not for_training:
             model.load()
         elif isinstance(model, RuleBaseModel):
             rules = get_rules(job=job.jobRef)
@@ -180,7 +185,7 @@ def get_model(job: ModelingJob, model_path=None, for_training=False, na_tag=None
 def get_rules(job: LabelingJob):
     rules = defaultdict(list)
     for rule in job.rule_set.all():
-        rules[rule.label.name] = rule.content
+        rules[rule.label.name].append((rule.content, rule.match_type))
     return rules
 
 

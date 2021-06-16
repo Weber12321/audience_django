@@ -119,7 +119,7 @@ class PredictingResult(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
 
     def __str__(self):
-        return f"{self.data_id} result"
+        return f"#{self.id}, {self.data_id} result"
 
     class Meta:
         verbose_name = "預測結果"

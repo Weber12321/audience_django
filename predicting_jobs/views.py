@@ -42,7 +42,8 @@ class PredictingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
 
         apply_model_form = ApplyingModelForm({'predicting_job': self.object, 'priority': 0})
         context["apply_model_form"] = apply_model_form
-        predicting_target_form = PredictingTargetForm({'predicting_job': self.object, 'min_content_length':10, 'max_content_length':500})
+        predicting_target_form = PredictingTargetForm(
+            {'predicting_job': self.object, 'min_content_length': 10, 'max_content_length': 500})
         context["predicting_target_form"] = predicting_target_form
         return context
 
@@ -163,10 +164,11 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         label_name = self.request.GET.dict().get("label_name")
+        print(PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk')))
         if label_name:
-            return PredictingResult.objects.filter(label_name=label_name)
+            return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'), label_name=label_name)
         else:
-            return PredictingResult.objects.all()
+            return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'))
 
     def get_context_data(self, **kwargs):
         label_name = self.request.GET.dict().get("label_name")
