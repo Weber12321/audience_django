@@ -30,6 +30,7 @@ class AudienceWorker:
         for audience_model in self.models:
             predictions = audience_model.predict(input_examples)
             predict_labels, predict_logits = predictions
+            print(audience_model.model_dir_name.__str__(), len(input_examples), len(predict_labels), len(predict_logits))
             for i, example in enumerate(input_examples):
                 model_predicted_result[i].append(
                     RESULT(labels=predict_labels[i], logits=predict_logits[i],
