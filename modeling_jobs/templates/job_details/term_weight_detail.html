@@ -108,49 +108,72 @@
                         </span>
                     </div>
                     <div class="card-body">
-
-                        <ul class="nav nav-pills mb-4" id="myTab" role="tablist">
-                            {% for label in job.jobRef.label_set.all %}
-                                <li class="nav-item" role="presentation">
-                                    <a class="nav-link  {% if forloop.first %} active {% endif %}"
-                                       id="label-{{ label.name }}-tab" data-toggle="tab"
-                                       href="#label-{{ label.name }}" role="tab"
-                                       aria-controls="home" aria-selected="true">{{ label.name }}
-                                        ({{ label.termweight_set.count }})</a>
-                                </li>
-
-                            {% empty %}
-                                沒有設定標籤
+                        <table id="term-table" class="table">
+                            <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">詞彙</th>
+                                <th scope="col">標籤</th>
+                                <th scope="col">權重</th>
+                                <th scope="col"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for term_weight in  job.termweight_set.all %}
+                                <tr>
+                                    <th>{{ term_weight.id }}</th>
+                                    <td>{{ term_weight.term }}</td>
+                                    <td>{{ term_weight.label.name }}</td>
+                                    <td>{{ term_weight.weight }}</td>
+                                    <td>
+                                        <a class="btn btn-link btn-sm text-secondary ml-2"
+                                           href="{% url 'modeling_jobs:term-weight-update' job.id term_weight.id %}"><small>編輯</small></a>
+                                        <a class="btn btn-link btn-sm text-danger ml-2"
+                                           href="{% url 'modeling_jobs:term-weight-delete' job.id term_weight.id %}"><small>刪除</small></a>
+                                    </td>
+                                </tr>
                             {% endfor %}
-                        </ul>
-                        <div class="tab-content" id="myTabContent">
-                            {% for label in job.jobRef.label_set.all %}
-                                <div class="tab-pane {% if forloop.first %} fade show active {% endif %}"
-                                     id="label-{{ label.name }}" role="tabpanel"
-                                     aria-labelledby="label-{{ label.name }}-tab">
-                                    <div class="list-group">
-                                        {% for term_weight in label.termweight_set.all %}
-                                            <div class="list-group-item list-group-item-action">
-                                                <div class="d-flex w-100 justify-content-between">
-                                                    <h5 class="m-0">{{ term_weight.term }}</h5>
+                            </tbody>
+                        </table>
+                        {#                        <ul class="nav nav-pills mb-4" id="myTab" role="tablist">#}
+                        {#                            {% for label in job.jobRef.label_set.all %}#}
+                        {#                                <li class="nav-item" role="presentation">#}
+                        {#                                    <a class="nav-link  {% if forloop.first %} active {% endif %}"#}
+                        {#                                       id="label-{{ label.name }}-tab" data-toggle="tab"#}
+                        {#                                       href="#label-{{ label.name }}" role="tab"#}
+                        {#                                       aria-controls="home" aria-selected="true">{{ label.name }}#}
+                        {#                                        ({{ label.termweight_set.count }})</a>#}
+                        {#                                </li>#}
+                        {##}
+                        {#                            {% empty %}#}
+                        {#                                沒有設定標籤#}
+                        {#                            {% endfor %}#}
+                        {#                        </ul>#}
+                        {#                        <div class="tab-content" id="myTabContent">#}
+                        {#                            {% for label in job.jobRef.label_set.all %}#}
+                        {#                                <div class="tab-pane {% if forloop.first %} fade show active {% endif %}"#}
+                        {#                                     id="label-{{ label.name }}" role="tabpanel"#}
+                        {#                                     aria-labelledby="label-{{ label.name }}-tab">#}
+                        {#                                    <div class="list-group">#}
+                        {#                                        {% for term_weight in label.termweight_set.all %}#}
+                        {#                                            <div class="list-group-item list-group-item-action">#}
+                        {#                                                <div class="d-flex w-100 justify-content-between">#}
+                        {#                                                    <h5 class="m-0">{{ term_weight.term }}</h5>#}
+                        {##}
+                        {#                                                    <div class="d-flex justify-content-lg-end">#}
+                        {#                                                        {{ term_weight.weight }}#}
 
-                                                    <div class="d-flex justify-content-lg-end">
-                                                        {{ term_weight.weight }}
-                                                        <a class="btn btn-link btn-sm text-secondary ml-2"
-                                                           href="{% url 'modeling_jobs:term-weight-update' job.id term_weight.id %}"><small>編輯</small></a>
-                                                        <a class="btn btn-link btn-sm text-danger ml-2"
-                                                           href="{% url 'modeling_jobs:term-weight-delete' job.id term_weight.id %}"><small>刪除</small></a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-
-                            {% empty %}
-                                沒有設定標籤
-                            {% endfor %}
-                        </div>
+                        {#                                                    </div>#}
+                        {#                                                </div>#}
+                        {#                                            </div>#}
+                        {#                                        {% endfor %}#}
+                        {#                                    </div>#}
+                        {#                                </div>#}
+                        {##}
+                        {#                            {% empty %}#}
+                        {#                                沒有設定標籤#}
+                        {#                            {% endfor %}#}
+                        {#                        </div>#}
                     </div>
                 </div>
             </div>
@@ -438,6 +461,10 @@
 
 {% block custom_script %}
     <script>
+
+        $(document).ready(function () {
+            $('#term-table').DataTable();
+        });
 
         function train_model(job_id, train_url) {
             set_row_processing_display(job_id)

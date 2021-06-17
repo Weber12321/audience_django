@@ -44,7 +44,7 @@
                     <div class="card-link mb-4">
                         <a href="" data-toggle="modal" data-target="#applyingModelModal">新增模型</a></div>
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table" id="applying-models">
                             <thead>
                             <tr>
                                 <th scope="col">#</th>
@@ -96,7 +96,7 @@
                         <a href="" data-toggle="modal" data-target="#predictingTargetModal">新增預測資料範圍</a>
                     </div>
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table" id="target-source">
                             <thead>
                             <tr>
                                 <th scope="col">#</th>
@@ -218,8 +218,11 @@
 {% endblock %}
 
 {% block custom_script %}
-    <script>
-
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#applying-models').DataTable();
+            $('#target-source').DataTable();
+        });
         $(function () {
             $("#datetimepicker1").datetimepicker({
                 format: 'DD/MM/YYYY HH:mm',
