@@ -164,7 +164,6 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         label_name = self.request.GET.dict().get("label_name")
-        print(PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk')))
         if label_name:
             return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'), label_name=label_name)
         else:

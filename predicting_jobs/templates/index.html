@@ -18,7 +18,7 @@
         <div class="col-lg-9">
             <div class="card shadow">
                 <div class="card-body py-4">
-                    <table class="table">
+                    <table class="table" id="job-table">
                         <thead class="thead-light">
                         <tr>
                             <th scope="col">#</th>
@@ -93,6 +93,11 @@
 
 {% block custom_script %}
     <script>
+
+        $(document).ready(function () {
+            $('#job-table').DataTable();
+        });
+
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {

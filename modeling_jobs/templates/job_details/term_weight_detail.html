@@ -49,7 +49,7 @@
 {% block content %}
     <!-- Content Row -->
     <div class="row">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-8 mb-4">
             <div class="card mb-4">
                 <div class="card-header">模型資訊</div>
                 <div class="card-body">
@@ -115,7 +115,7 @@
                                 <th scope="col">詞彙</th>
                                 <th scope="col">標籤</th>
                                 <th scope="col">權重</th>
-                                <th scope="col"></th>
+                                <th scope="col">功能</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -126,60 +126,23 @@
                                     <td>{{ term_weight.label.name }}</td>
                                     <td>{{ term_weight.weight }}</td>
                                     <td>
-                                        <a class="btn btn-link btn-sm text-secondary ml-2"
+                                        <span>
+                                        <a class="btn btn-link btn-sm text-secondary mr-1"
                                            href="{% url 'modeling_jobs:term-weight-update' job.id term_weight.id %}"><small>編輯</small></a>
-                                        <a class="btn btn-link btn-sm text-danger ml-2"
+                                        <a class="btn btn-link btn-sm text-danger"
                                            href="{% url 'modeling_jobs:term-weight-delete' job.id term_weight.id %}"><small>刪除</small></a>
+                                        </span>
                                     </td>
                                 </tr>
                             {% endfor %}
                             </tbody>
                         </table>
-                        {#                        <ul class="nav nav-pills mb-4" id="myTab" role="tablist">#}
-                        {#                            {% for label in job.jobRef.label_set.all %}#}
-                        {#                                <li class="nav-item" role="presentation">#}
-                        {#                                    <a class="nav-link  {% if forloop.first %} active {% endif %}"#}
-                        {#                                       id="label-{{ label.name }}-tab" data-toggle="tab"#}
-                        {#                                       href="#label-{{ label.name }}" role="tab"#}
-                        {#                                       aria-controls="home" aria-selected="true">{{ label.name }}#}
-                        {#                                        ({{ label.termweight_set.count }})</a>#}
-                        {#                                </li>#}
-                        {##}
-                        {#                            {% empty %}#}
-                        {#                                沒有設定標籤#}
-                        {#                            {% endfor %}#}
-                        {#                        </ul>#}
-                        {#                        <div class="tab-content" id="myTabContent">#}
-                        {#                            {% for label in job.jobRef.label_set.all %}#}
-                        {#                                <div class="tab-pane {% if forloop.first %} fade show active {% endif %}"#}
-                        {#                                     id="label-{{ label.name }}" role="tabpanel"#}
-                        {#                                     aria-labelledby="label-{{ label.name }}-tab">#}
-                        {#                                    <div class="list-group">#}
-                        {#                                        {% for term_weight in label.termweight_set.all %}#}
-                        {#                                            <div class="list-group-item list-group-item-action">#}
-                        {#                                                <div class="d-flex w-100 justify-content-between">#}
-                        {#                                                    <h5 class="m-0">{{ term_weight.term }}</h5>#}
-                        {##}
-                        {#                                                    <div class="d-flex justify-content-lg-end">#}
-                        {#                                                        {{ term_weight.weight }}#}
-
-                        {#                                                    </div>#}
-                        {#                                                </div>#}
-                        {#                                            </div>#}
-                        {#                                        {% endfor %}#}
-                        {#                                    </div>#}
-                        {#                                </div>#}
-                        {##}
-                        {#                            {% empty %}#}
-                        {#                                沒有設定標籤#}
-                        {#                            {% endfor %}#}
-                        {#                        </div>#}
                     </div>
                 </div>
             </div>
         </div>
         <!-- confusion matrix -->
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
             <div class="h5">模型效果</div>
             <hr>
             {% if job.get_latest_train_report %}

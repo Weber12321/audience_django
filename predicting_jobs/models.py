@@ -124,6 +124,7 @@ class PredictingResult(models.Model):
     class Meta:
         verbose_name = "預測結果"
         verbose_name_plural = "預測結果列表"
+        ordering = ('id',)
 
     def get_absolute_url(self):
         return reverse('predicting_jobs:job-detail', kwargs={'pk': self.predicting_target.predicting_job.id})
