@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework import routers
 
 from . import views
 
@@ -27,4 +28,21 @@ urlpatterns = [
 
     # apis
     path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),
+]
+
+# rest-framework settings
+
+router = routers.DefaultRouter()
+router.register(r'jobs', views.JobViewSet)
+router.register(r'targets', views.TargetViewSet)
+router.register(r'applying_models', views.ApplyingModelViewSet)
+router.register(r'results', views.ResultViewSet)
+
+# Wire up our API using automatic URL routing.
+# Additionally, we include login URLs for the browsable API.
+urlpatterns += [
+    path('apis/targets/<int:target_id>/results', views.ResultViewSet.as_view({'get': 'list'}), name='target-results'),
+    path('apis/', include(router.urls)),
+    path('apis/api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+
 ]

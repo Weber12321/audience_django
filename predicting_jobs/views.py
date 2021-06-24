@@ -1,13 +1,16 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import Group, User
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect, HttpResponse
 # Create your views here.
 from django.urls import reverse_lazy
 from django.views import generic
 from django_q.tasks import AsyncTask
+from rest_framework import viewsets, permissions
 
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
 from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult
+from predicting_jobs.serializers import JobSerializer, ResultSerializer, TargetSerializer, ApplyingModelSerializer
 from predicting_jobs.tasks import predict_task
 import json
 
@@ -199,3 +202,51 @@ def get_progress(request, pk):
         'details': {target.name: target.job_status for target in job.predictingtarget_set.all()},
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
+
+
+class JobViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = PredictingJob.objects.all().order_by('-created_at')
+    serializer_class = JobSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class ApplyingModelViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = ApplyingModel.objects.all()
+    serializer_class = ApplyingModelSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class TargetViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = PredictingTarget.objects.all()
+    serializer_class = TargetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class ResultViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = PredictingResult.objects.all().order_by('-created_at')
+    serializer_class = ResultSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the purchases for
+        the user as determined by the username portion of the URL.
+        """
+        target_id = self.kwargs['target_id']
+        print(target_id)
+        if target_id:
+            return PredictingResult.objects.filter(predicting_target_id=target_id).order_by('-created_at')
+        else:
+            return PredictingResult.objects.all().order_by('-created_at')
