@@ -122,16 +122,20 @@ def predict_task(job: PredictingJob):
                 # todo save result tags into database
                 for tmp_example, example_results in zip(example_chunk, batch_results):
                     document_count += 1
-                    ensemble_results, apply_path = predict_worker.ensemble_results(example_results,
-                                                                                   bypass_same_label=True)
+                    # ensemble_results, apply_path = predict_worker.ensemble_results(example_results,
+                    #                                                                bypass_same_label=True)
                     data_id = tmp_example.id_
-                    for label_name, score in ensemble_results.items():
+                    for result in example_results:
+                        print(result)
                         predicting_result = PredictingResult(
                             predicting_target=predicting_target,
-                            label_name=label_name,
-                            score=score, data_id=data_id,
+                            label_name=result.labels,
+                            # score=score,
+                            data_id=data_id,
                             source_author=f"{tmp_example.s_id}_{tmp_example.author}",
-                            apply_path=json.dumps(apply_path[label_name], ensure_ascii=False),
+                            applied_model=int(result.model.split("_")[0]) if result.model else None,
+                            applied_meta=result.logits,
+                            applied_content=result.value,
                             created_at=timezone.now()
                         )
                         # print(apply_path[label_name])

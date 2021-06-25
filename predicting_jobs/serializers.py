@@ -14,7 +14,6 @@ class TargetSerializer(serializers.ModelSerializer):
 
 
 class ApplyingModelSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ApplyingModel
         fields = "__all__"
@@ -33,11 +32,20 @@ class JobSerializer(serializers.ModelSerializer):
 
 class ResultSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    apply_path = serializers.SerializerMethodField(read_only=False)
+    feature = serializers.SerializerMethodField(read_only=True)
 
-    def get_apply_path(self, result):
-        return json.loads(result.apply_path)
+    def get_feature(self, result: PredictingResult):
+        return result.applied_model.feature if result.applied_model else "UNK"
 
     class Meta:
         model = PredictingResult
-        fields = "__all__"
+        fields = ['id',
+                  'source_author',
+                  'data_id',
+                  'label_name',
+                  # 'score',
+                  'applied_model',
+                  'feature',
+                  'applied_content',
+                  'applied_meta',
+                  'created_at']

@@ -1,126 +1,43 @@
 {% extends "base.html" %}
 {% load result_extras %}
+{% block page_title %}
+    {{ predicting_target.name }}
+{% endblock %}
+{% block page_description %}
+    {{ predicting_job.name }}
+{% endblock %}
 {% block content %}
-    <div class="col-12 m-4 pagination justify-content-center">
-            <span class="step-links">
-                {% if page_obj.has_previous %}
-                    <a href="?page=
-                            {{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
-                {% endif %}
 
-                <span class="current">
-                     {{ page_obj.number }} / {{ paginator.num_pages }}.
-                </span>
 
-                {% if page_obj.has_next %}
-                    <a href="?page=
-                            {{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
-                {% endif %}
-            </span>
-    </div>
     <div class="row">
-        <div class="col-10">
-            <div class="list-group">
-                {% for row in result_rows %}
-                    <div class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">{{ row.label_name }}</h5>
-                            <small>{{ row.created_at }}</small>
-                        </div>
-                        <div class="mb-1">
-                            {% for path in row.apply_path|get_apply_path_features %}
-                                <small>{{ path|get_item:"model" }} {{ path|get_item:"feature" }}</small>
-                                <p>{{ path|get_item:"content" }}</p>
-                            {% endfor %}
-                        </div>
-                        <p></p>
-                        <small>#{{ row.id }} - {{ row.data_id }}, {{ row.source_author }}</small>
-                    </div>
-                {% endfor %}
-            </div>
+        <div class="col-12">
+            <table id="result-table" class="table table-striped table-bordered" style="width:100%"
+                   data-server-side="true"
+                   data-ajax="{% url 'predicting_jobs:target-results' predicting_target.id %}?format=datatables">
+                <thead>
+                <tr>
+                    <th data-data="source_author">作者</th>
+                    <th data-data="data_id">資料ID</th>
+                    <th data-data="label_name">命中族群</th>
+{#                    <th data-data="score">分數</th>#}
+                    <th data-data="applied_model">命中模型</th>
+                    <th data-data="applied_content">特徵</th>
+                    <th data-data="feature">內容</th>
+                    <th data-data="applied_meta">命中資訊</th>
+                    <th data-data="created_at">貼標時間</th>
+                </tr>
+                </thead>
+            </table>
         </div>
-        <div class="col-2">
-            <div class="list-group">
-                {% for label_name in exist_labels %}
-                    <a href="{% url 'predicting_jobs:result-samples' predicting_job.id predicting_target.id %}?label_name={{ label_name }}"
-                       class="list-group-item list-group-item-action {% if label_name == current_label %}active{% endif %}"
-                       aria-current="true">
-                        {{ label_name }}
-                    </a>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    <div class="col-12 m-4 pagination justify-content-center">
-            <span class="step-links">
-                {% if page_obj.has_previous %}
-                    <a href="?page=
-                            {{ page_obj.previous_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">上一頁</a>
-                {% endif %}
 
-                <span class="current">
-                     {{ page_obj.number }} / {{ paginator.num_pages }}.
-                </span>
-
-                {% if page_obj.has_next %}
-                    <a href="?page=
-                            {{ page_obj.next_page_number }}{% if current_label %}&label_name={{ current_label }}{% endif %}">下一頁</a>
-                {% endif %}
-            </span>
     </div>
-    <table id="tb"></table>
+
 {% endblock %}
 
 {% block custom_script %}
     <script>
-    // server-side data test
         $(document).ready(function () {
-            $("#tb").DataTable({
-                "paging": true,
-                "searching": true,
-                "processing": true,
-                "serverSide": true,
-//            "destroy": true,
-//            "pageLength": 10,
-                "ordering": false,
-                // "renderer": "bootstrap", // Rendering style: Bootstrap and jquery-ui
-                // "pagingType": "simple_numbers", // Paging style: simple, simple_numbers, full, full_numbers
-//            "autoWidth": true,
-                // "stateSave": true, // Keep page turning state, used in combination with comTable.fnDraw (false);
-                "ajax": {
-                    "url": "{% url 'predicting_jobs:index' %}",
-                    "type": "get"
-                },
-                // "columns": [// If the returned data is a dictionary, this property needs to be set
-//               { "data": "id" },
-//               { "data": "name" },
-//               { "data": "dept" },
-//               { "data": "phone" }
-//            ]
-                "columnDefs": [// Column rendering
-                    {
-                        "render": function (data, type, row) {// data: content of this field row: content of this line
-                            if (data == "10.199.50.125") {
-                                return "<span style='color: red'>" + data + "</span>";
-                            } else {
-                                return data;
-                            }
-                        },
-                        "targets": 0 // Specify the rendering column
-                    },
-                    {
-                        "render": function (data, type, row) {
-                            if (row [0] == "10.199.50.139") {// Set the color of this field according to IP
-                                return "<span style='color: #adff2f'>" + data + "</span>";
-                            } else {
-                                return data;
-                            }
-                        },
-                        "targets": 1 // Specify the rendering column
-                    }
-                ]
-
-            });
+            $('#result-table').DataTable();
         });
     </script>
 {% endblock %}
