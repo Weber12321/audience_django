@@ -32,10 +32,14 @@ class JobSerializer(serializers.ModelSerializer):
 
 class ResultSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    feature = serializers.SerializerMethodField(read_only=True)
+    applied_feature = serializers.CharField(source='get_applied_feature_display')
+    applied_meta = serializers.SerializerMethodField(read_only=True)
 
-    def get_feature(self, result: PredictingResult):
-        return result.applied_model.feature if result.applied_model else "UNK"
+    def get_applied_meta(self, result: PredictingResult):
+        if result.applied_model.model_name == "term_weight_model":
+            return json.dumps(result.applied_meta, ensure_ascii=False)
+        else:
+            return json.dumps(result.applied_meta, ensure_ascii=False)
 
     class Meta:
         model = PredictingResult
@@ -43,9 +47,8 @@ class ResultSerializer(serializers.ModelSerializer):
                   'source_author',
                   'data_id',
                   'label_name',
-                  # 'score',
                   'applied_model',
-                  'feature',
+                  'applied_feature',
                   'applied_content',
                   'applied_meta',
                   'created_at']

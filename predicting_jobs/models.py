@@ -118,6 +118,8 @@ class PredictingResult(models.Model):
     # apply_path = models.JSONField(verbose_name="模型預測路徑", null=True)
     applied_model = models.ForeignKey(ModelingJob, verbose_name="命中模型", null=True, on_delete=models.SET_DEFAULT,
                                       default=None)
+    applied_feature = models.CharField(max_length=50, choices=ModelingJob.__feature_choices__, default='content',
+                                       verbose_name="特徵欄位")
     applied_meta = models.JSONField(verbose_name="預測細節", null=True)
     applied_content = models.TextField(verbose_name="命中內容", null=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")

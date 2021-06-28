@@ -16,7 +16,6 @@ class AudienceWorker:
             self.logger = get_logger(context="AudienceWorker")
         else:
             self.logger = logger
-
         self.models: List[SuperviseModel] = model_list
 
     def run_labeling(self, input_examples: List[InputExample]) -> List[List[RESULT]]:

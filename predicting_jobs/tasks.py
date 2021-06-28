@@ -126,21 +126,21 @@ def predict_task(job: PredictingJob):
                     #                                                                bypass_same_label=True)
                     data_id = tmp_example.id_
                     for result in example_results:
-                        print(result)
-                        predicting_result = PredictingResult(
-                            predicting_target=predicting_target,
-                            label_name=result.labels,
-                            # score=score,
-                            data_id=data_id,
-                            source_author=f"{tmp_example.s_id}_{tmp_example.author}",
-                            applied_model=int(result.model.split("_")[0]) if result.model else None,
-                            applied_meta=result.logits,
-                            applied_content=result.value,
-                            created_at=timezone.now()
-                        )
-                        # print(apply_path[label_name])
-                        # print(label_name, tmp_example.content[:50], "..." if len(tmp_example.content) > 50 else "")
-                        predicting_result.save()
+                        if not result.labels:
+                            continue
+                        for label in result.labels:
+                            predicting_result = PredictingResult(
+                                predicting_target=predicting_target,
+                                label_name=label,
+                                # score=score,
+                                data_id=data_id,
+                                source_author=f"{tmp_example.s_id}_{tmp_example.author}",
+                                applied_model_id=int(result.model.split("_")[0]) if result.model else None,
+                                applied_meta=result.logits.get(label),
+                                applied_content=result.value,
+                                created_at=timezone.now()
+                            )
+                            predicting_result.save()
                         # print(predicting_result.apply_path)
             print(f"target: {predicting_target.name} processed {document_count} documents.")
             predicting_target.job_status = JobStatus.DONE
