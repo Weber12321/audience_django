@@ -1,5 +1,7 @@
+import json
+import logging
+
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import Group, User
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect, HttpResponse
 # Create your views here.
@@ -12,7 +14,9 @@ from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, Apply
 from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult
 from predicting_jobs.serializers import JobSerializer, ResultSerializer, TargetSerializer, ApplyingModelSerializer
 from predicting_jobs.tasks import predict_task
-import json
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
@@ -81,7 +85,7 @@ class PredictingJobDelete(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
-            print(request.POST)
+            logger.debug(request.POST)
             return HttpResponseRedirect(self.success_url)
         else:
             return super(PredictingJobDelete, self).post(request, *args, **kwargs)
@@ -112,7 +116,7 @@ class PredictingTargetDelete(LoginRequiredMixin, generic.DeleteView):
         job_id = self.kwargs.get('job_id')
         self.success_url = reverse_lazy('predicting_jobs:job-detail', kwargs={"pk": job_id})
         if "cancel" in request.POST:
-            print(request.POST)
+            logger.debug(request.POST)
             return HttpResponseRedirect(self.success_url)
         else:
             return super(PredictingTargetDelete, self).post(request, *args, **kwargs)
@@ -149,7 +153,7 @@ class ApplyingModelDelete(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
-            print(request.POST)
+            logger.debug(request.POST)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return super(ApplyingModelDelete, self).post(request, *args, **kwargs)
@@ -186,7 +190,7 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
 
 def start_job(request, pk):
     if request.method == 'POST':
-        print("start predicting")
+        logger.debug("start predicting")
         job = PredictingJob.objects.get(pk=pk)
         a = AsyncTask(predict_task, job, group="predicting_audience")
         a.run()
@@ -245,7 +249,7 @@ class ResultViewSet(viewsets.ModelViewSet):
         the user as determined by the username portion of the URL.
         """
         target_id = self.kwargs['target_id']
-        print(target_id)
+        logger.debug(target_id)
         if target_id:
             return PredictingResult.objects.filter(predicting_target_id=target_id).order_by('-created_at')
         else:

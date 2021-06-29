@@ -1,4 +1,5 @@
 import csv
+import logging
 from collections import defaultdict
 from enum import Enum
 from pathlib import Path
@@ -15,6 +16,9 @@ from audience_toolkits import settings
 from core.audience.models.base_model import SuperviseModel, MODEL_ROOT
 from core.dao.input_example import InputExample, Features
 
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
 
 class TermWeightModel(SuperviseModel):
     class DictHeaders(Enum):
@@ -25,7 +29,7 @@ class TermWeightModel(SuperviseModel):
     def __init__(self, model_dir_name, feature=Features.CONTENT, na_tag=None, **kwargs):
         super().__init__(model_dir_name=model_dir_name, feature=feature, na_tag=na_tag, **kwargs)
         self.dict_file_name = "term_dict.csv"
-        print(self.__class__.__name__)
+        logger.debug(self.__class__.__name__)
         self.label_term_weights: Dict[str, List[Tuple[str, float]]] = defaultdict(List)
         self.mlb: Optional[MultiLabelBinarizer] = None
         self.vectorizer = None
@@ -45,12 +49,12 @@ class TermWeightModel(SuperviseModel):
             classes = set()
             for _y_pred in y_true:
                 for y in _y_pred:
-                    # print(y)
+                    # logger.debug()(y)
                     classes.add(y)
             classes = list(classes)
         self.mlb = MultiLabelBinarizer(classes=classes)
         self.mlb.fit(y_true)
-        print(self.mlb.classes_)
+        logger.debug(self.mlb.classes_)
         # start training
         ovr_class_features = defaultdict(list)
         for label in self.mlb.classes_:
@@ -82,7 +86,7 @@ class TermWeightModel(SuperviseModel):
             raise ValueError(f"模型尚未被讀取，請嘗試執行 ' load() ' 方法讀取模型。")
         matched_keyword = []
         result_labels = []
-        print(f"feature = {self.feature}, threshold = {self.threshold}, labels = {self.label_term_weights.keys()}")
+        logger.debug(f"feature = {self.feature}, threshold = {self.threshold}, labels = {self.label_term_weights.keys()}")
         for example in examples:
             content: str = getattr(example, self.feature.value)
             match_kw = defaultdict(list)
@@ -128,7 +132,7 @@ class TermWeightModel(SuperviseModel):
         if not tmp_model_dir.exists():
             tmp_model_dir.mkdir(parents=True, exist_ok=True)
         output_file = (tmp_model_dir / self.dict_file_name).__str__()
-        # print(output_file)
+        # logger.debug()(output_file)
         with open(output_file, 'w') as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow([self.DictHeaders.LABEL.value, self.DictHeaders.TERM.value, self.DictHeaders.WEIGHT.value])
@@ -151,13 +155,13 @@ class TermWeightModel(SuperviseModel):
 
         self.mlb = MultiLabelBinarizer(classes=list(self.label_term_weights.keys()))
         self.mlb.fit([[label] for label in list(self.label_term_weights.keys())])
-        print(self.mlb.classes)
+        logger.debug(self.mlb.classes)
 
     def convert_feature(self, examples,
                         update_vectorizer=False,
                         max_features=10000, min_df=None, stop_words='english'):
         min_df = round(max_features * 0.005) if min_df is None else min_df
-        print('min_df:', min_df)
+        logger.debug('min_df:', min_df)
         seg_contents = []
         for example in examples:
             content = getattr(example, self.feature.value)
@@ -208,12 +212,12 @@ if __name__ == '__main__':
     model_dir = settings.BASE_DIR / settings.MODEL_PATH_FIELD_DIRECTORY
     with open(test_file, 'r') as f:
         for _id, row in enumerate(csv.DictReader(f, dialect=csv.QUOTE_ALL, delimiter='\t')):
-            # print(row)
+            # logger.debug()(row)
             examples.append(InputExample(id_=str(_id), **row))
     y_true = [example.label for example in examples]
     model = TermWeightModel(model_dir_name=model_dir / 'test', na_tag='一般')
     model.fit(examples, y_true)
-    print(examples[1].content)
-    print(model.predict(examples)[0][1])
-    print(model.predict(examples)[1][1])
-    print(model.eval(examples, y_true))
+    logger.debug(examples[1].content)
+    logger.debug(model.predict(examples)[0][1])
+    logger.debug(model.predict(examples)[1][1])
+    logger.debug(model.eval(examples, y_true))

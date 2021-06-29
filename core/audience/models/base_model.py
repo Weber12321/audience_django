@@ -1,3 +1,4 @@
+import logging
 from abc import abstractmethod, ABC
 from pathlib import Path
 from typing import List, Tuple, Iterable, Dict, Any
@@ -8,6 +9,9 @@ from audience_toolkits import settings
 from core.dao.input_example import InputExample, Features
 
 MODEL_ROOT = Path(settings.MODEL_PATH_FIELD_DIRECTORY)
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 class SuperviseModel(ABC):
@@ -22,7 +26,7 @@ class SuperviseModel(ABC):
         self.feature = feature if isinstance(feature, Features) else Features(feature)
         self.is_multi_label = True
         self.na_tag = na_tag
-        print('na_tag:', self.na_tag, '(If model predict noting, it will be the default prediction)')
+        logger.debug(f'na_tag: {self.na_tag} (If model predict noting, it will be the default prediction)')
 
     @abstractmethod
     def fit(self, examples: Iterable[InputExample], y_true):
@@ -62,7 +66,7 @@ class RuleBaseModel(ABC):
         self.model_dir_name = Path(model_dir_name)
         self.feature = feature if isinstance(feature, Features) else Features(feature)
         self.na_tag = na_tag
-        print('na_tag:', self.na_tag, '(If model predict noting, it will be the default prediction)')
+        logger.debug(f'na_tag: {self.na_tag} (If model predict noting, it will be the default prediction)')
 
     @abstractmethod
     def predict(self, examples: Iterable[InputExample]) -> List[Tuple[Tuple]]:
@@ -119,4 +123,4 @@ class DummyModel(SuperviseModel):
 
 if __name__ == '__main__':
     model = DummyModel()
-    print(model.predict(""))
+    logger.debug(model.predict(""))

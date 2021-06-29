@@ -7,9 +7,25 @@ from predicting_jobs.models import PredictingJob, PredictingResult, PredictingTa
 
 
 class TargetSerializer(serializers.ModelSerializer):
+    results = serializers.HyperlinkedIdentityField(lookup_field='id', lookup_url_kwarg='target_id',
+                                                   view_name='predicting_jobs:target-results')
+
     class Meta:
         model = PredictingTarget
-        fields = "__all__"
+        fields = [
+            "id",
+            "name",
+            "description",
+            "begin_post_time",
+            "end_post_time",
+            "min_content_length",
+            "max_content_length",
+            "job_status",
+            "error_message",
+            "predicting_job",
+            "source",
+            "results"
+        ]
     # todo 如何設定label
 
 
@@ -34,6 +50,12 @@ class ResultSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     applied_feature = serializers.CharField(source='get_applied_feature_display')
     applied_meta = serializers.SerializerMethodField(read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M")
+    applied_model = serializers.HyperlinkedRelatedField(
+        many=False,
+        read_only=True,
+        view_name='modeling_jobs:job-detail'
+    )
 
     def get_applied_meta(self, result: PredictingResult):
         if result.applied_model.model_name == "term_weight_model":

@@ -1,12 +1,13 @@
+import logging
 from collections import namedtuple, defaultdict
-from typing import Dict, List, Generator, Tuple
-
-from typing import Iterable
+from typing import Dict, List, Tuple
 
 from core.audience.models.base_model import SuperviseModel
 from core.dao.input_example import InputExample
 from core.helpers.log_helper import get_logger
 
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 RESULT = namedtuple("Result", "labels, logits, model, feature, value")
 
 
@@ -24,18 +25,18 @@ class AudienceWorker:
         :param input_examples:
         :return: list of models-> list of label results -> label, score
         """
-        print("Start Run Labeling")
+        logger.debug("Start Run Labeling")
         model_predicted_result = [[] for i in range(len(input_examples))]
         for audience_model in self.models:
             predictions = audience_model.predict(input_examples)
             predict_labels, predict_logits = predictions
-            print(audience_model.model_dir_name.__str__(), len(input_examples), len(predict_labels), len(predict_logits))
+            logger.debug(f"{audience_model.model_dir_name.__str__()}, {audience_model.feature}")
             for i, example in enumerate(input_examples):
                 model_predicted_result[i].append(
                     RESULT(labels=predict_labels[i], logits=predict_logits[i],
                            model=audience_model.model_dir_name.__str__(),
                            feature=audience_model.feature.value, value=getattr(example, audience_model.feature.value)))
-                # print(audience_model.model_dir_name.__str__())
+                # logger.debug(audience_model.model_dir_name.__str__())
         return model_predicted_result
 
     @staticmethod

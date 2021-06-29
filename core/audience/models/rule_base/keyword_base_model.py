@@ -1,3 +1,4 @@
+import logging
 from enum import Enum
 from typing import Dict, Optional, List, Tuple
 
@@ -6,6 +7,9 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 from core.audience.models.base_model import RuleBaseModel
 from core.dao.input_example import Features, InputExample
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 class MatchType(Enum):
@@ -38,7 +42,7 @@ class KeywordModel(RuleBaseModel):
                         try:
                             _match_type = match_type if isinstance(match_type, MatchType) else MatchType(match_type)
                         except Exception as e:
-                            print(e, match_type)
+                            logger.error(e, match_type)
                             continue
                         if _match_type == MatchType.PARTIALLY:
                             if content.__contains__(keyword):
@@ -86,23 +90,23 @@ class KeywordModel(RuleBaseModel):
         self.rules = rules
         self.mlb = MultiLabelBinarizer(classes=list(rules.keys()))
         self.mlb.fit([[label] for label in list(rules.keys())])
-        print(self.mlb.classes)
+        logger.debug(self.mlb.classes)
 
 
 if __name__ == '__main__':
     kw_cls = KeywordModel
-    print(kw_cls, kw_cls.__class__.__base__, kw_cls.__name__)
+    logger.debug(kw_cls, kw_cls.__class__.__base__, kw_cls.__name__)
     kw = kw_cls('')
-    print(kw.__class__.__base__)
+    logger.debug(kw.__class__.__base__)
     test_rules = {"male": [("小弟我", MatchType.START)], "female": [("小妹我", MatchType.PARTIALLY)],
                   "married": [("我老婆", MatchType.PARTIALLY)]}
     kw.load(test_rules)
-    print(kw.predict([
+    logger.debug(kw.predict([
         InputExample(content="小弟我今天很棒"),
         InputExample(content="小妹我今天很棒"),
         InputExample(content="小弟我老婆今天很棒"),
     ]))
-    print(kw.eval(examples=[
+    logger.debug(kw.eval(examples=[
         InputExample(content="小弟我今天很棒"),
         InputExample(content="小妹我今天很棒"),
         InputExample(content="小弟我老婆今天很棒"),
