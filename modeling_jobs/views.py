@@ -1,3 +1,4 @@
+import logging
 from collections import namedtuple, defaultdict
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView
 from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
+from rest_framework import viewsets, permissions
 
 from core.audience.models.base_model import RuleBaseModel, SuperviseModel
 from core.audience.models.rule_base.regex_model import RegexModel
@@ -16,8 +18,12 @@ from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm, TermWeightForm, UploadModelJobForm
 from .helpers import insert_csv_to_db, parse_report
 from .models import ModelingJob, Report, TermWeight, UploadModelJob
+from .serializers import JobSerializer, TermWeightSerializer
 from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task
 import json
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
@@ -355,3 +361,35 @@ class UploadModelJobDelete(LoginRequiredMixin, generic.DeleteView):
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
         return reverse_lazy('modeling_jobs:job-detail', kwargs={"pk": job_id})
+
+
+# rest api views
+
+class JobViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = ModelingJob.objects.all().order_by('-created_at')
+    serializer_class = JobSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class TermWrightViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = TermWeight.objects.all().order_by('-weight')
+    serializer_class = TermWeightSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the purchases for
+        the user as determined by the username portion of the URL.
+        """
+        job_id = self.kwargs.get("job_id")
+        logger.debug(job_id)
+        if job_id:
+            return TermWeight.objects.filter(modeling_job_id=job_id).order_by('-weight').reverse()
+        else:
+            return TermWeight.objects.all().order_by('-weight').reverse()

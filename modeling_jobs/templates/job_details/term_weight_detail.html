@@ -108,34 +108,16 @@
                         </span>
                     </div>
                     <div class="card-body">
-                        <table id="term-table" class="table">
+                        <table id="term-table" class="table table-striped table-bordered" style="width:100%"
+                               data-server-side="true"
+                               data-ajax="{% url 'modeling_jobs:term-weight-list' job.id %}?format=datatables">
                             <thead>
                             <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">詞彙</th>
-                                <th scope="col">標籤</th>
-                                <th scope="col">權重</th>
-                                <th scope="col">功能</th>
+                                <th data-data="term">詞彙</th>
+                                <th data-data="label">標籤</th>
+                                <th data-data="weight">權重</th>
                             </tr>
                             </thead>
-                            <tbody>
-                            {% for term_weight in  job.termweight_set.all %}
-                                <tr>
-                                    <th>{{ term_weight.id }}</th>
-                                    <td>{{ term_weight.term }}</td>
-                                    <td>{{ term_weight.label.name }}</td>
-                                    <td>{{ term_weight.weight }}</td>
-                                    <td>
-                                        <span>
-                                        <a class="btn btn-link btn-sm text-secondary mr-1"
-                                           href="{% url 'modeling_jobs:term-weight-update' job.id term_weight.id %}"><small>編輯</small></a>
-                                        <a class="btn btn-link btn-sm text-danger"
-                                           href="{% url 'modeling_jobs:term-weight-delete' job.id term_weight.id %}"><small>刪除</small></a>
-                                        </span>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -426,7 +408,11 @@
     <script>
 
         $(document).ready(function () {
-            $('#term-table').DataTable();
+            $('#term-table').DataTable(
+                {
+                    "order": [[1, "asc"], [2, "asc"]]
+                }
+            );
         });
 
         function train_model(job_id, train_url) {

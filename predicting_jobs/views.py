@@ -4,7 +4,6 @@ import logging
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect, HttpResponse
-# Create your views here.
 from django.urls import reverse_lazy
 from django.views import generic
 from django_q.tasks import AsyncTask
@@ -207,6 +206,8 @@ def get_progress(request, pk):
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
+
+# rest api views
 
 class JobViewSet(viewsets.ModelViewSet):
     """
