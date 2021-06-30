@@ -1,26 +1,25 @@
+import json
 import logging
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import ListView, DetailView
+from django.views.generic import DetailView
 from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, filters
 
 from core.audience.models.base_model import RuleBaseModel, SuperviseModel
-from core.audience.models.rule_base.regex_model import RegexModel
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm, TermWeightForm, UploadModelJobForm
 from .helpers import insert_csv_to_db, parse_report
 from .models import ModelingJob, Report, TermWeight, UploadModelJob
 from .serializers import JobSerializer, TermWeightSerializer
 from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task
-import json
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -51,14 +50,15 @@ class JobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["job"] = self.object
-        print()
         if self.object.model_name == "TERM_WEIGHT_MODEL":
             import_model_form = UploadModelJobForm({'modeling_job': self.object.id, })
             context["import_model_form"] = import_model_form
+            term_form = TermWeightForm(modeling_job=self.object.id)
+            context['term_form'] = term_form
         return context
 
     def get_template_names(self):
-        print(self.object.model_name)
+        logger.debug(self.object.model_name)
         if self.object.model_name == "TERM_WEIGHT_MODEL":
             return 'job_details/term_weight_detail.html'
         else:
@@ -95,7 +95,7 @@ class JobDeleteView(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
-            print(request.POST)
+            logger.debug(request.POST)
             return HttpResponseRedirect(self.success_url)
         else:
             return super(JobDeleteView, self).post(request, *args, **kwargs)
@@ -125,7 +125,7 @@ class DocDeleteView(LoginRequiredMixin, DetailView):
     model = LabelingJob
 
     def post(self, request):
-        print(request.POST)
+        logger.debug(request.POST)
 
 
 @csrf_exempt
@@ -190,7 +190,7 @@ def insert_csv(request):
 @csrf_exempt
 def training_model(request, pk):
     job = ModelingJob.objects.get(pk=pk)
-    print(job.is_multi_label)
+    logger.debug(job.is_multi_label)
     a = AsyncTask(train_model_task, job=job, group='training_model')
     a.run()
     return HttpResponseRedirect(reverse('modeling_jobs:index'))
@@ -298,7 +298,7 @@ class TermWeightCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['modeling_job_id'] = self.kwargs.get('job_id')
+        kwargs['modeling_job'] = self.kwargs.get('job_id')
         return kwargs
 
     def form_valid(self, form):
@@ -317,7 +317,7 @@ class TermWeightDelete(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
-            print(request.POST)
+            logger.debug(request.POST)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return super(TermWeightDelete, self).post(request, *args, **kwargs)
@@ -340,10 +340,10 @@ class UploadModelJobCreate(LoginRequiredMixin, generic.CreateView):
         return reverse_lazy('modeling_jobs:job-detail', kwargs={'pk': job_id})
 
     def form_valid(self, form):
-        print(self.kwargs)
+        logger.debug(self.kwargs)
         form.instance.modeling_job_id = self.kwargs.get('job_id')
         form.instance.created_by = self.request.user
-        print(form.instance)
+        logger.debug(form.instance)
         return super(UploadModelJobCreate, self).form_valid(form)
 
 
@@ -353,7 +353,7 @@ class UploadModelJobDelete(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
-            print(request.POST)
+            logger.debug(request.POST)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return super(UploadModelJobDelete, self).post(request, *args, **kwargs)
@@ -380,6 +380,8 @@ class TermWrightViewSet(viewsets.ModelViewSet):
     """
     queryset = TermWeight.objects.all().order_by('-weight')
     serializer_class = TermWeightSerializer
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    search_fields = ['term', 'label__name']
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -387,9 +389,9 @@ class TermWrightViewSet(viewsets.ModelViewSet):
         This view should return a list of all the purchases for
         the user as determined by the username portion of the URL.
         """
-        job_id = self.kwargs.get("job_id")
-        logger.debug(job_id)
-        if job_id:
-            return TermWeight.objects.filter(modeling_job_id=job_id).order_by('-weight').reverse()
+        logger.debug(self.basename)
+        job_id = self.request.query_params.get('job')
+        if job_id is not None:
+            return TermWeight.objects.filter(modeling_job_id=job_id).order_by('-weight')
         else:
-            return TermWeight.objects.all().order_by('-weight').reverse()
+            return TermWeight.objects.all().order_by('-weight')
