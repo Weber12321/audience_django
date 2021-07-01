@@ -490,8 +490,9 @@
             $("#id_label").val($(this).data('termLabel'));
         });
         $(document).on("click", ".delete-term", function () {
-            let confirm_str = prompt(`確認要刪除屬於「${$(this).data('termLabel')}」標籤的詞彙「${$(this).data('termTerm')}」嗎？ 請輸入詞彙「${$(this).data('termTerm')}」確認刪除。`);
-            if (confirm_str===$(this).data('termTerm')){
+            let term = String($(this).data('termTerm'))
+            let confirm_str = prompt(`確認要刪除屬於「${$(this).data('termLabel')}」標籤的詞彙「${term}」嗎？ 請輸入詞彙「${term}」確認刪除。`);
+            if (confirm_str && String(confirm_str).trim() == term.trim()){
                 $.ajax({
                     url: $(this).data('termUrl'),
                     type: "DELETE",
@@ -499,7 +500,7 @@
                         xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
                     },
                     success: function (data) {
-                        alert(`詞彙「${$(this).data('termTerm')}」刪除成功。`)
+                        alert(`詞彙「${term}」刪除成功。`)
                         table.ajax.reload()
                     }
                 });
@@ -507,7 +508,7 @@
                 e.preventDefault(); // avoid to execute the actual submit of the form.
             }
             else{
-                alert("取消刪除")
+                alert(`取消刪除「${term}」`)
             }
         });
 

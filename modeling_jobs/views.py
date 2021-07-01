@@ -307,7 +307,7 @@ class TermWeightCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
-        return reverse_lazy('modeling_job_id:job-detail', kwargs={"pk": job_id})
+        return reverse_lazy('modeling_jobs:job-detail', kwargs={"pk": job_id})
 
 
 class TermWeightDelete(LoginRequiredMixin, generic.DeleteView):
