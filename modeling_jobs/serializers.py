@@ -8,6 +8,7 @@ class JobSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="modeling_jobs:modelingjob-detail")
     created_by = serializers.StringRelatedField()
     jobRef = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:job-detail")
+
     # termweights = serializers.HyperlinkedRelatedField(view_name='modeling_jobs:termweight-detail', many=True,
     #                                                   read_only=True)
 
@@ -43,5 +44,5 @@ class TermWeightSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = TermWeight
-        # fields = ['url', 'id', 'name', 'created_at', 'created_by']
-        fields = "__all__"
+        fields = ['url', 'id', 'term', 'label', 'label_id', 'weight', 'modeling_job']
+        # fields = "__all__"

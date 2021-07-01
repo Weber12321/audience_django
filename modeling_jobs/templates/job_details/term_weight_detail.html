@@ -117,6 +117,7 @@
                                 <th>詞彙</th>
                                 <th>標籤</th>
                                 <th>權重</th>
+                                <th>網址</th>
                                 <th>編輯</th>
                             </tr>
                             </thead>
@@ -416,64 +417,117 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form>{% csrf_token %}
+                <form id="term-form">{% csrf_token %}
                     <div class="modal-body">
                         {{ error }}
                         {{ term_form.as_p }}
                     </div>
                     <div class="modal-footer">
                         <input type="hidden" name="next" value="{{ next }}">
-                        <input type="submit" id="submit-term-form" class="btn btn-primary" value="送出">
+                        <input type="button" id="submit-term-form" class="btn btn-primary" value="送出">
                     </div>
                 </form>
             </div>
         </div>
     </div>
+    <a href="{% url 'modeling_jobs:termweight-list' %}?format=datatables&job={{ job.id }}">termtest</a>
 {% endblock %}
 
 {% block custom_script %}
     <script>
+        var table = $('#term-table').DataTable(
+            {
+                serverSide: true,
+                ajax: "{% url 'modeling_jobs:termweight-list' %}?format=datatables&job={{ job.id }}",
+                columnDefs: [
+                    {"visible": false, "targets": [3]}
+                ],
+                columns: [
+                    {
+                        data: 'term'
+                    },
+                    {
+                        data: 'label'
+                    },
+                    {
+                        data: 'weight'
+                    },
+                    {
+                        data: 'url',
+                    },
+                    {
+                        data: 'label_id',
+                        render: function (data, type, row, meta) {
+                            edit_btn = '<a href="" ' +
+                                'data-toggle="modal" ' +
+                                'data-target="#termUpdateModal" ' +
+                                `data-term-url=${row.url} ` +
+                                `data-term-term=${row.term} ` +
+                                `data-term-weight=${row.weight} ` +
+                                `data-term-label=${data} ` +
+                                'class="update-term mr-3">修改</a>'
+                            delete_btn = '<a href="" ' +
+                                `data-term-url=${row.url} ` +
+                                `data-term-term=${row.term} ` +
+                                `data-term-weight=${row.weight} ` +
+                                `data-term-label=${row.label} ` +
+                                'class="delete-term text-danger">刪除</a>'
+                            return edit_btn + delete_btn
+                        }
+                    }
+                ]
+            }
+        );
 
         $(document).ready(function () {
-            $('#term-table').DataTable(
-                {
-                    serverSide: true,
-                    ajax: "{% url 'modeling_jobs:termweight-list' %}?format=datatables&job={{ job.id }}",
-                    columns: [
-                        {
-                            data: 'term'
-                        },
-                        {
-                            data: 'label'
-                        },
-                        {
-                            data: 'weight'
-                        },
-                        {
-                            data: 'label_id',
-                            render: function (data, type, row, meta) {
-                                console.log(row)
-                                return '<a href="" ' +
-                                    'data-toggle="modal" ' +
-                                    'data-target="#termUpdateModal" ' +
-                                    `data-term-term=${row.term} `+
-                                    `data-term-weight=${row.weight} `+
-                                    `data-term-label=${data} `+
-                                    'class="update-term">修改</a>'
-                            }
-                        }
-                    ]
-                }
-            );
+            table.ajax.reload()
         });
         $(document).on("click", ".update-term", function () {
-            $("#id_term").val($(this).data('term-term'));
-            $("#id_weight").val($(this).data('term-weight'));
-            $("#id_label").val($(this).data('term-label'));
-            // As pointed out in comments,
-            // it is unnecessary to have to manually call the modal.
-            // $('#addBookDialog').modal('show');
-            console.log($('#termUpdateModal #submit-term-form'))
+            let form = $('#termUpdateModal form');
+            form.data("term-url", $(this).data('termUrl'));
+            $("#id_term").val($(this).data('termTerm'));
+            $("#id_weight").val($(this).data('termWeight'));
+            $("#id_label").val($(this).data('termLabel'));
+        });
+        $(document).on("click", ".delete-term", function () {
+            let confirm_str = prompt(`確認要刪除屬於「${$(this).data('termLabel')}」標籤的詞彙「${$(this).data('termTerm')}」嗎？ 請輸入詞彙「${$(this).data('termTerm')}」確認刪除。`);
+            if (confirm_str===$(this).data('termTerm')){
+                $.ajax({
+                    url: $(this).data('termUrl'),
+                    type: "DELETE",
+                    beforeSend: function (xhr, settings) {
+                        xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                    },
+                    success: function (data) {
+                        alert(`詞彙「${$(this).data('termTerm')}」刪除成功。`)
+                        table.ajax.reload()
+                    }
+                });
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+            }
+            else{
+                alert("取消刪除")
+            }
+        });
+
+        $('#submit-term-form').click(function (e) {
+            let form = $('#termUpdateModal form');
+            $.ajax({
+                url: form.data('termUrl'),
+                type: "PUT",
+                beforeSend: function (xhr, settings) {
+                    xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                },
+                data: form.serializeArray(), // serializes the form's elements.
+                success: function (data) {
+                    console.log(data);
+                    $('#termUpdateModal').modal('hide');
+                    table.ajax.reload()
+                }
+            });
+
+            e.preventDefault(); // avoid to execute the actual submit of the form.
         });
 
         function train_model(job_id, train_url) {
