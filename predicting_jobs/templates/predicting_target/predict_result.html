@@ -13,7 +13,7 @@
         <div class="col-12">
             <table id="result-table" class="table table-striped table-bordered" style="width:100%"
                    data-server-side="true"
-                   data-ajax="{% url 'predicting_jobs:target-results' predicting_target.id %}?format=datatables">
+                   data-ajax="{% url 'predicting_jobs:predictingresult-list' %}?format=datatables&target_id={{ predicting_target.id }}">
                 <thead>
                 <tr>
                     <th data-data="source_author">作者</th>
@@ -36,7 +36,23 @@
 {% block custom_script %}
     <script>
         $(document).ready(function () {
-            $('#result-table').DataTable();
+            $('#result-table').DataTable({
+                columnDefs: [
+                    {
+                        targets: 5,
+                        render: function (data, type, row, meta) {
+                            let content = data
+                            let matched_terms = row["applied_meta"]
+                            matched_terms.forEach(function (item) {
+                                {#console.log(item[0] + "/" + item[1])#}
+                                content = content.replace(item[0], `<mark>${item[0]}</mark>`)
+                            });
+                            {#console.log(row["applied_meta"])#}
+                            return content
+                        },
+                    },
+                ],
+            });
         });
     </script>
 {% endblock %}

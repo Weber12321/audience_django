@@ -3,6 +3,7 @@ import json
 from django.contrib.auth.models import User, Group
 from rest_framework import serializers
 
+from modeling_jobs.models import ModelingJob
 from predicting_jobs.models import PredictingJob, PredictingResult, PredictingTarget, ApplyingModel
 
 
@@ -51,26 +52,40 @@ class ResultSerializer(serializers.ModelSerializer):
     applied_feature = serializers.CharField(source='get_applied_feature_display')
     applied_meta = serializers.SerializerMethodField(read_only=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M")
-    applied_model = serializers.HyperlinkedRelatedField(
+    applied_model = serializers.StringRelatedField()
+    model_meta = serializers.SerializerMethodField()
+    applied_model_url = serializers.HyperlinkedRelatedField(
         many=False,
         read_only=True,
         view_name='modeling_jobs:job-detail'
     )
 
+    def get_model_meta(self, result: PredictingResult):
+        modeling_job = result.applied_model
+        return {
+            "name": modeling_job.name,
+            "model_type": modeling_job.model_name
+        }
+
     def get_applied_meta(self, result: PredictingResult):
         if result.applied_model.model_name == "term_weight_model":
-            return json.dumps(result.applied_meta, ensure_ascii=False)
+            return result.applied_meta
         else:
-            return json.dumps(result.applied_meta, ensure_ascii=False)
+            return result.applied_meta
 
     class Meta:
         model = PredictingResult
-        fields = ['id',
-                  'source_author',
-                  'data_id',
-                  'label_name',
-                  'applied_model',
-                  'applied_feature',
-                  'applied_content',
-                  'applied_meta',
-                  'created_at']
+        # fields = "__all__"
+        fields = [
+            'id',
+            'source_author',
+            'data_id',
+            'label_name',
+            'applied_model',
+            'applied_feature',
+            'applied_content',
+            'applied_meta',
+            'created_at',
+            'model_meta',
+            'applied_model_url',
+        ]

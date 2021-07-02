@@ -161,7 +161,7 @@ class TermWeightModel(SuperviseModel):
                         update_vectorizer=False,
                         max_features=10000, min_df=None, stop_words='english'):
         min_df = round(max_features * 0.005) if min_df is None else min_df
-        logger.debug('min_df:', min_df)
+        logger.debug(f'min_df: {min_df}')
         seg_contents = []
         for example in examples:
             content = getattr(example, self.feature.value)

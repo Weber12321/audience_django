@@ -483,15 +483,15 @@
             table.ajax.reload()
         });
         $(document).on("click", ".update-term", function () {
-            let form = $('#termUpdateModal form');
+            const form = $('#termUpdateModal form');
             form.data("term-url", $(this).data('termUrl'));
             $("#id_term").val($(this).data('termTerm'));
             $("#id_weight").val($(this).data('termWeight'));
             $("#id_label").val($(this).data('termLabel'));
         });
         $(document).on("click", ".delete-term", function () {
-            let term = String($(this).data('termTerm'))
-            let confirm_str = prompt(`確認要刪除屬於「${$(this).data('termLabel')}」標籤的詞彙「${term}」嗎？ 請輸入詞彙「${term}」確認刪除。`);
+            const term = String($(this).data('termTerm'))
+            const confirm_str = prompt(`確認要刪除屬於「${$(this).data('termLabel')}」標籤的詞彙「${term}」嗎？ 請輸入詞彙「${term}」確認刪除。`);
             if (confirm_str && String(confirm_str).trim() == term.trim()){
                 $.ajax({
                     url: $(this).data('termUrl'),
@@ -513,7 +513,7 @@
         });
 
         $('#submit-term-form').click(function (e) {
-            let form = $('#termUpdateModal form');
+            const form = $('#termUpdateModal form');
             $.ajax({
                 url: form.data('termUrl'),
                 type: "PUT",
@@ -537,7 +537,7 @@
         }
 
         function showResult(modeling_job_id) {
-            var aj = $.ajax({
+            $.ajax({
                 url: 'show_result',
                 data: {
                     modeling_job_id: modeling_job_id,
@@ -598,11 +598,11 @@
             {#var state = "wait"#}
             get_progress(url).done(function (result) {
                 let timeout = 10000
-                console.log(result)
+                {#console.log(result)#}
                 let state = result.state
                 let details = result.details
                 let elem_id = '#state-' + job_id
-                console.log(elem_id)
+                {#console.log(elem_id)#}
                 $(elem_id).text(state)
                 switch (state) {
                     case 'done':
@@ -630,7 +630,7 @@
         update_progress(
             {{ job.id }},
             "{% url 'modeling_jobs:api-job-progress' job.id %}",
-            Boolean('{{ job.is_trainable }}') == 'True'
+            Boolean('{{ job.is_trainable }}') === true
         )
 
     </script>

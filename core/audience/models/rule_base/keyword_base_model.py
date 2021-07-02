@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from enum import Enum
 from typing import Dict, Optional, List, Tuple
 
@@ -34,7 +35,7 @@ class KeywordModel(RuleBaseModel):
         result_labels = []
         for example in examples:
             content: str = getattr(example, self.feature.value)
-            match_kw = {}
+            match_kw = defaultdict(list)
             if content:
                 for cls, keywords in self.rules.items():
                     for keyword, match_type in keywords:
@@ -46,19 +47,19 @@ class KeywordModel(RuleBaseModel):
                             continue
                         if _match_type == MatchType.PARTIALLY:
                             if content.__contains__(keyword):
-                                match_kw[cls] = (keyword, _match_type.value)
+                                match_kw[cls].append((keyword, _match_type.value))
                                 break
                         elif _match_type == MatchType.START:
                             if content.startswith(keyword):
-                                match_kw[cls] = (keyword, _match_type.value)
+                                match_kw[cls].append((keyword, _match_type.value))
                                 break
                         elif _match_type == MatchType.END:
                             if content.endswith(keyword):
-                                match_kw[cls] = (keyword, _match_type.value)
+                                match_kw[cls].append((keyword, _match_type.value))
                                 break
                         elif _match_type in [MatchType.EXACTLY, MatchType.ABSOLUTELY]:
                             if content == keyword:
-                                match_kw[cls] = (keyword, _match_type.value)
+                                match_kw[cls].append((keyword, _match_type.value))
                                 break
                         else:
                             continue

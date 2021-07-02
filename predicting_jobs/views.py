@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy
 from django.views import generic
 from django_q.tasks import AsyncTask
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, filters
 
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
 from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult
@@ -243,13 +243,14 @@ class ResultViewSet(viewsets.ModelViewSet):
     queryset = PredictingResult.objects.all().order_by('-created_at')
     serializer_class = ResultSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
 
     def get_queryset(self):
         """
         This view should return a list of all the purchases for
         the user as determined by the username portion of the URL.
         """
-        target_id = self.kwargs['target_id']
+        target_id = self.request.query_params.get('target_id')
         logger.debug(target_id)
         if target_id:
             return PredictingResult.objects.filter(predicting_target_id=target_id).order_by('-created_at')
