@@ -1,9 +1,11 @@
 import json
+import logging
 from collections import defaultdict
 from typing import List, Union, Dict, Tuple
 
-from django.db import IntegrityError
+import numpy as np
 from django.db.models import QuerySet
+from sklearn import preprocessing
 
 from audience_toolkits import settings
 from core.audience.models.base_model import SuperviseModel, RuleBaseModel
@@ -11,8 +13,68 @@ from core.audience.models.classic.term_weight_model import TermWeightModel
 from core.dao.input_example import Features, InputExample
 from core.helpers.model_helpers import get_model_class
 from labeling_jobs.models import Document, LabelingJob, Label
-from labeling_jobs.tasks import create_documents
-from modeling_jobs.models import ModelingJob
+from labeling_jobs.tasks import create_documents, read_csv_file
+from modeling_jobs.models import ModelingJob, UploadModelJob
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+TERM_WEIGHT_FIELDS_MAPPING = {
+    'content': '字詞',
+    'label': '標籤',
+    'score': '分數',
+}
+
+
+def import_model_data_task(upload_job: UploadModelJob):
+    upload_job.job_status = UploadModelJob.JobStatus.PROCESSING
+    upload_job.save()
+    try:
+        file = upload_job.file
+        logger.debug(upload_job.modeling_job.model_name)
+        if upload_job.modeling_job.model_name in {"TERM_WEIGHT_MODEL"}:
+            import_term_weights(file, upload_job.modeling_job, normalize_score=True,
+                                required_fields=TERM_WEIGHT_FIELDS_MAPPING)
+        else:
+            raise ValueError(f'Unknown or unsupported model {upload_job.modeling_job.model_name}.')
+        upload_job.job_status = UploadModelJob.JobStatus.DONE
+    except Exception as e:
+        logger.debug(e)
+        upload_job.job_status = UploadModelJob.JobStatus.ERROR
+    finally:
+        upload_job.save()
+
+
+def import_term_weights(file, job: ModelingJob, required_fields=None, normalize_score=True):
+    if not required_fields:
+        required_fields = TERM_WEIGHT_FIELDS_MAPPING
+    label_term_weight: Dict[str, List[Tuple[str, float]]] = defaultdict(list)
+    csv_rows = read_csv_file(file, required_fields)
+
+    for index, row in enumerate(csv_rows):
+        data = defaultdict(str)
+        for _field in required_fields.keys():
+            # 判斷欄位是否有出現在可使用的欄位名稱列表中
+            field_data = row.get(_field, None) or row.get(required_fields.get(_field), None)
+            if _field == 'score':
+                field_data = field_data if field_data else 1
+            data[_field] = field_data
+        label_str: str = data.get('label', None)
+        content = data.get('content', None)
+        score = data.get('score', 1)
+        label_term_weight[label_str].append((content, score))
+    if normalize_score:
+        normalized_label_term_weight = {}
+        for label, term_weight in label_term_weight.items():
+            terms, weights = [[i for i, j in term_weight],
+                              [j for i, j in term_weight]]
+            weights = np.array(weights)
+            weights = weights.reshape(-1, 1)
+            min_max_scaler = preprocessing.MinMaxScaler()
+            weights_minmax = min_max_scaler.fit_transform(weights)
+            weights_minmax = [round(weight[0], 6) for weight in weights_minmax]
+            normalized_label_term_weight[label] = [t_w for t_w in zip(terms, weights_minmax)]
+        label_term_weight = normalized_label_term_weight
+    create_term_weights(job=job, label_term_weight=label_term_weight, reset_term_weights=False)
 
 
 def train_model_task(job: ModelingJob):
@@ -41,10 +103,10 @@ def train_model_task(job: ModelingJob):
 
         job.job_status = ModelingJob.JobStatus.DONE
         job.save()
-        print('training done')
+        logger.debug('training done')
 
     except Exception as e:
-        print(e)
+        logger.debug(e)
         job.error_message = e
         job.job_status = ModelingJob.JobStatus.ERROR
         job.save()
@@ -56,7 +118,7 @@ def testing_model_via_ext_data_task(uploaded_file, job: ModelingJob, remove_old_
     job.save()
     try:
         create_ext_data(uploaded_file=uploaded_file, job=job.jobRef, remove_old_data=remove_old_data)
-        print(job.model_name, job.model_path, job.is_multi_label)
+        logger.debug(job.model_name, job.model_path, job.is_multi_label)
         model = get_model(job)
         if isinstance(model, TermWeightModel):
             model.load(get_term_weights(job))
@@ -64,9 +126,9 @@ def testing_model_via_ext_data_task(uploaded_file, job: ModelingJob, remove_old_
         eval_dataset(model=model, dataset_type=Document.TypeChoices.EXT_TEST, dataset=job.jobRef.get_ext_test_set(),
                      job=job)
         job.ext_test_status = ModelingJob.JobStatus.DONE
-        print('test done')
+        logger.debug('test done')
     except Exception as e:
-        print(e)
+        logger.debug(e)
         job.error_message = e
         job.ext_test_status = ModelingJob.JobStatus.ERROR
         job.save()
@@ -94,20 +156,23 @@ def create_ext_data(job: LabelingJob, uploaded_file, remove_old_data=True):
 
 
 def get_model(job: ModelingJob, model_path=None, for_training=False, na_tag=None):
-    # if job.model_path is None and model_path is None:
-
     if job.model_name in settings.ML_MODELS:
         model_cls = get_model_class(job.model_name)
-        if issubclass(model_cls, RuleBaseModel):
+        if not model_path and job.model_path is None or job.model_path == "":
             model_path = f"{job.id}_{job.name}"
-        print(model_path)
+        else:
+            model_path = job.model_path
+        logger.debug(f"======= {model_path} =======")
         model: Union[SuperviseModel, RuleBaseModel] = model_cls(
-            model_dir_name=model_path if model_path else job.model_path,
+            model_dir_name=model_path,
             feature=Features(job.feature), na_tag=na_tag)
         if hasattr(model, 'is_multi_label'):
-            # print(job.is_multi_label)
+            # logger.debug(job.is_multi_label)
             model.is_multi_label = job.is_multi_label
-        if isinstance(model, SuperviseModel) and not for_training:
+        if isinstance(model, TermWeightModel):
+            label_term_weights = get_term_weights(job)
+            model.load(label_term_weights=label_term_weights)
+        elif isinstance(model, SuperviseModel) and not for_training:
             model.load()
         elif isinstance(model, RuleBaseModel):
             rules = get_rules(job=job.jobRef)
@@ -120,17 +185,36 @@ def get_model(job: ModelingJob, model_path=None, for_training=False, na_tag=None
 def get_rules(job: LabelingJob):
     rules = defaultdict(list)
     for rule in job.rule_set.all():
-        rules[rule.label.name] = rule.content
+        rules[rule.label.name].append((rule.content, rule.match_type))
     return rules
 
 
-def create_term_weights(job: ModelingJob, label_term_weight: Dict[str, List[Tuple[str, float]]]):
-    job.termweight_set.all().delete()
+def create_term_weights(job: ModelingJob, label_term_weight: Dict[str, List[Tuple[str, float]]],
+                        reset_term_weights=True):
+    if reset_term_weights:
+        job.termweight_set.all().delete()
+    if not job.jobRef:
+        job.jobRef = LabelingJob(name=f"「{job.name}」自動建立的任務",
+                                 description=f"因「{job.name}」匯入而自動建立的任務",
+                                 job_data_type=LabelingJob.DataTypes.TERM_WEIGHT_MODEL,
+                                 created_by=job.created_by)
+        job.jobRef.save()
+        for label_str in label_term_weight.keys():
+            job.jobRef.label_set.create(name=label_str)
+        job.jobRef.save()
     label_dict = job.jobRef.get_labels_dict()
     for label_str, term_weights in label_term_weight.items():
         for term, weight in term_weights:
-            if label_str in label_dict:
+            if label_str not in label_dict:
+                job.jobRef.label_set.create(name=label_str)
+                job.save()
+                label_dict = job.jobRef.get_labels_dict()
+            try:
                 job.termweight_set.create(term=term, weight=weight, label=label_dict.get(label_str))
+                job.save()
+            except Exception as e:
+                logger.debug(e)
+                logger.debug(term)
     job.save()
 
 
@@ -144,14 +228,14 @@ def get_term_weights(job: ModelingJob) -> Dict[str, List[Tuple[str, float]]]:
 def eval_dataset(model, job: ModelingJob, dataset, dataset_type: Document.TypeChoices):
     examples, y_true = get_examples_and_labels(dataset)
     report = model.eval(examples, y_true=y_true)
-    print(report)
+    logger.debug(report)
     report_json = json.dumps(report, ensure_ascii=False)
     tmp_report = job.report_set.create(dataset_type=dataset_type, report=report_json,
                                        accuracy=report.get('accuracy', -1))
 
     predict_labels, predict_logits = model.predict(examples)
     labels = {_label.name: _label for _label in job.jobRef.label_set.all()}
-    print(labels)
+    logger.debug(labels)
     for doc, pred in zip(dataset, predict_labels):
         # process prediction
         pr = tmp_report.evalprediction_set.create(document=doc)
@@ -163,7 +247,7 @@ def eval_dataset(model, job: ModelingJob, dataset, dataset_type: Document.TypeCh
                 if isinstance(_pred, str):
                     pr_label = labels.get(_pred)
                     pr.prediction_labels.add(pr_label)
-                    # print(pr)
+                    # logger.debug(pr)
                 if isinstance(_pred, Label):
                     pr.prediction_labels.add(_pred)
         elif isinstance(pred, str):

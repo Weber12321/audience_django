@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_q',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -99,6 +100,41 @@ DATABASES = {
 #     }
 # }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'normal': {
+            'format': '[%(levelname)s] %(asctime)s | %(name)s:%(lineno)d | %(message)s'
+        },
+        'simple': {
+            'format': '[%(levelname)s] %(message)s'
+        },
+    },
+    # 'filters': {
+    #     'require_debug_true': {
+    #         '()': 'django.utils.log.RequireDebugTrue',
+    #     },
+    # },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',  # Default logs to stderr
+            'formatter': 'normal',  # use the above "normal" formatter
+            # 'filters': ['require_debug_true'],  # add filters
+        },
+    },
+    'loggers': {
+        '': {  # means "root logger"
+            'handlers': ['console'],  # use the above "console" handler
+            'level': 'DEBUG',  # logging level
+        },
+        'some_app.some_module': {  # Modify logger in some modules
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -117,6 +153,25 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ],
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework_datatables.renderers.DatatablesRenderer',
+    ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'rest_framework_datatables.filters.DatatablesFilterBackend',
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework_datatables.pagination.DatatablesPageNumberPagination',
+    'PAGE_SIZE': 10,
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
@@ -186,7 +241,7 @@ ML_MODELS = {
         'module': 'core.audience.models.rule_base.regex_model.RegexModel',
     },
     "TERM_WEIGHT_MODEL": {
-        'verbose_name': '關鍵字權重',
+        'verbose_name': '詞彙權重模型',
         'module': 'core.audience.models.classic.term_weight_model.TermWeightModel',
     },
 }

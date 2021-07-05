@@ -1,4 +1,5 @@
 import re
+from collections import defaultdict
 from typing import Dict, Optional, List
 
 from sklearn.metrics import classification_report, accuracy_score
@@ -21,11 +22,11 @@ class RegexModel(RuleBaseModel):
         result_labels = []
         for example in examples:
             content = getattr(example, self.feature.value)
-            match_pattern = {}
+            match_pattern = defaultdict(list)
             for cls, patterns in self.patterns.items():
                 for pattern in patterns:
                     if re.search(pattern, content, re.IGNORECASE):
-                        match_pattern[cls] = pattern
+                        match_pattern[cls].append(pattern)
                         break
             first_matched_keyword.append(match_pattern)
             result_labels.append(list(match_pattern.keys()))

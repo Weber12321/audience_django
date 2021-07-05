@@ -112,18 +112,25 @@ class PredictingResult(models.Model):
     """
     predicting_target = models.ForeignKey(PredictingTarget, verbose_name="預測資料範圍", on_delete=models.CASCADE)
     label_name = models.CharField(max_length=200, verbose_name="標籤名稱")
-    score = models.FloatField(verbose_name="預測分數")
+    # score = models.FloatField(verbose_name="預測分數")
     data_id = models.CharField(max_length=200, verbose_name="預測文章ID")
     source_author = models.CharField(max_length=200, verbose_name="作者", default="UNK")
-    apply_path = models.JSONField(verbose_name="模型預測路徑", null=True)
+    # apply_path = models.JSONField(verbose_name="模型預測路徑", null=True)
+    applied_model = models.ForeignKey(ModelingJob, verbose_name="命中模型", null=True, on_delete=models.SET_DEFAULT,
+                                      default=None)
+    applied_feature = models.CharField(max_length=50, choices=ModelingJob.__feature_choices__, default='content',
+                                       verbose_name="特徵欄位")
+    applied_meta = models.JSONField(verbose_name="預測細節", null=True)
+    applied_content = models.TextField(verbose_name="命中內容", null=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
 
     def __str__(self):
-        return f"{self.data_id} result"
+        return f"#{self.id}, {self.data_id} result"
 
     class Meta:
         verbose_name = "預測結果"
         verbose_name_plural = "預測結果列表"
+        ordering = ('id',)
 
     def get_absolute_url(self):
         return reverse('predicting_jobs:job-detail', kwargs={'pk': self.predicting_target.predicting_job.id})

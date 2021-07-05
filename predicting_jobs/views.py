@@ -1,15 +1,21 @@
+import json
+import logging
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect, HttpResponse
-# Create your views here.
 from django.urls import reverse_lazy
 from django.views import generic
 from django_q.tasks import AsyncTask
+from rest_framework import viewsets, permissions, filters
 
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
 from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult
+from predicting_jobs.serializers import JobSerializer, ResultSerializer, TargetSerializer, ApplyingModelSerializer
 from predicting_jobs.tasks import predict_task
-import json
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
@@ -42,7 +48,8 @@ class PredictingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
 
         apply_model_form = ApplyingModelForm({'predicting_job': self.object, 'priority': 0})
         context["apply_model_form"] = apply_model_form
-        predicting_target_form = PredictingTargetForm({'predicting_job': self.object, 'min_content_length':10, 'max_content_length':500})
+        predicting_target_form = PredictingTargetForm(
+            {'predicting_job': self.object, 'min_content_length': 10, 'max_content_length': 500})
         context["predicting_target_form"] = predicting_target_form
         return context
 
@@ -77,7 +84,7 @@ class PredictingJobDelete(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
-            print(request.POST)
+            logger.debug(request.POST)
             return HttpResponseRedirect(self.success_url)
         else:
             return super(PredictingJobDelete, self).post(request, *args, **kwargs)
@@ -108,7 +115,7 @@ class PredictingTargetDelete(LoginRequiredMixin, generic.DeleteView):
         job_id = self.kwargs.get('job_id')
         self.success_url = reverse_lazy('predicting_jobs:job-detail', kwargs={"pk": job_id})
         if "cancel" in request.POST:
-            print(request.POST)
+            logger.debug(request.POST)
             return HttpResponseRedirect(self.success_url)
         else:
             return super(PredictingTargetDelete, self).post(request, *args, **kwargs)
@@ -145,7 +152,7 @@ class ApplyingModelDelete(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
-            print(request.POST)
+            logger.debug(request.POST)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return super(ApplyingModelDelete, self).post(request, *args, **kwargs)
@@ -164,9 +171,9 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         label_name = self.request.GET.dict().get("label_name")
         if label_name:
-            return PredictingResult.objects.filter(label_name=label_name)
+            return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'), label_name=label_name)
         else:
-            return PredictingResult.objects.all()
+            return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'))
 
     def get_context_data(self, **kwargs):
         label_name = self.request.GET.dict().get("label_name")
@@ -182,7 +189,7 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
 
 def start_job(request, pk):
     if request.method == 'POST':
-        print("start predicting")
+        logger.debug("start predicting")
         job = PredictingJob.objects.get(pk=pk)
         a = AsyncTask(predict_task, job, group="predicting_audience")
         a.run()
@@ -198,3 +205,54 @@ def get_progress(request, pk):
         'details': {target.name: target.job_status for target in job.predictingtarget_set.all()},
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
+
+
+# rest api views
+
+class JobViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = PredictingJob.objects.all().order_by('-created_at')
+    serializer_class = JobSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class ApplyingModelViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = ApplyingModel.objects.all()
+    serializer_class = ApplyingModelSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class TargetViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = PredictingTarget.objects.all()
+    serializer_class = TargetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class ResultViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = PredictingResult.objects.all().order_by('-created_at')
+    serializer_class = ResultSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the purchases for
+        the user as determined by the username portion of the URL.
+        """
+        target_id = self.request.query_params.get('target_id')
+        logger.debug(target_id)
+        if target_id:
+            return PredictingResult.objects.filter(predicting_target_id=target_id).order_by('-created_at')
+        else:
+            return PredictingResult.objects.all().order_by('-created_at')

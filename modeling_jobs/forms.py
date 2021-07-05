@@ -1,7 +1,12 @@
+import logging
+
 from django import forms
 
 from labeling_jobs.models import Label
-from modeling_jobs.models import ModelingJob, TermWeight
+from modeling_jobs.models import ModelingJob, TermWeight, UploadModelJob
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 class ModelingJobForm(forms.ModelForm):
@@ -27,12 +32,14 @@ class ModelingJobForm(forms.ModelForm):
 
 class TermWeightForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        modeling_job_id = kwargs.pop('modeling_job_id', None)
+        logger.debug(kwargs)
+        modeling_job_id = kwargs.pop('modeling_job', None)
         super(TermWeightForm, self).__init__(*args, **kwargs)
 
         if hasattr(self.instance, 'modeling_job'):
             self.fields['label'].queryset = self.instance.modeling_job.jobRef.label_set.all()
         else:
+            logger.debug(modeling_job_id)
             modeling_job = ModelingJob.objects.get(pk=modeling_job_id)
             self.fields['label'].queryset = modeling_job.jobRef.label_set.all()
 
@@ -40,3 +47,13 @@ class TermWeightForm(forms.ModelForm):
         model = TermWeight
         fields = "__all__"
         exclude = ['modeling_job', 'created_at', 'created_by', 'rule_type']
+
+
+class UploadModelJobForm(forms.ModelForm):
+    class Meta:
+        model = UploadModelJob
+        fields = '__all__'
+        exclude = ['modeling_job', 'job_status', 'created_by']
+        widgets = {
+            'file': forms.FileInput(attrs={'class': '.form-control-file.', }),
+        }

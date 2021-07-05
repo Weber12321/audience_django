@@ -44,7 +44,7 @@
                     <div class="card-link mb-4">
                         <a href="" data-toggle="modal" data-target="#applyingModelModal">新增模型</a></div>
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table" id="applying-models">
                             <thead>
                             <tr>
                                 <th scope="col">#</th>
@@ -96,7 +96,7 @@
                         <a href="" data-toggle="modal" data-target="#predictingTargetModal">新增預測資料範圍</a>
                     </div>
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table" id="target-source">
                             <thead>
                             <tr>
                                 <th scope="col">#</th>
@@ -121,10 +121,10 @@
                                             操作
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                            {% if target.job_status.lower == "done" %}
+{#                                            {% if target.job_status.lower == "done" %}#}
                                                 <a href="{% url 'predicting_jobs:result-samples' predicting_job.id target.id %}"
-                                                   class="dropdown-item">查看抽樣結果</a>
-                                            {% endif %}
+                                                   class="dropdown-item" id="result-btn">查看抽樣結果</a>
+{#                                            {% endif %}#}
                                             <a href="{% url 'predicting_jobs:job-target-update' predicting_job.id target.id %}"
                                                class="dropdown-item">修改</a>
                                             <a href="{% url 'predicting_jobs:job-target-delete' predicting_job.id target.id %}"
@@ -218,8 +218,11 @@
 {% endblock %}
 
 {% block custom_script %}
-    <script>
-
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#applying-models').DataTable();
+            $('#target-source').DataTable();
+        });
         $(function () {
             $("#datetimepicker1").datetimepicker({
                 format: 'DD/MM/YYYY HH:mm',
@@ -269,33 +272,37 @@
 
         function set_row_done_display(job_id) {
             $('#state-' + job_id).text("完成")
-            $('#train-btn-' + job_id)
-                .text("重新訓練")
-                .removeClass("disabled")
+            $('#result-btn').show()
+            {#$('#train-btn-' + job_id)#}
+            {#    .text("重新訓練")#}
+            {#    .removeClass("disabled")#}
             $('#test-btn-' + job_id).attr("hidden", false)
         }
 
         function set_row_processing_display(job_id) {
             $('#state-' + job_id).text("處理中")
-            $('#train-btn-' + job_id)
-                .text("訓練中")
-                .addClass("disabled")
-            $('#test-btn-' + job_id).attr("hidden", true)
+            $('#result-btn').hide()
+            {#$('#train-btn-' + job_id)#}
+            {#    .text("訓練中")#}
+            {#    .addClass("disabled")#}
+            {#$('#test-btn-' + job_id).attr("hidden", true)#}
         }
 
         function set_row_wait_display(job_id) {
             $('#state-' + job_id).text("等待中")
-            $('#train-btn-' + job_id)
-                .text("開始訓練")
-                .removeClass("disabled")
-            $('#test-btn-' + job_id).attr("hidden", true)
+            $('#result-btn').hide()
+            {#$('#train-btn-' + job_id)#}
+            {#    .text("開始訓練")#}
+            {#    .removeClass("disabled")#}
+            {#$('#test-btn-' + job_id).attr("hidden", true)#}
         }
 
         function set_row_error_display(job_id) {
             $('#state-' + job_id).text("錯誤")
-            $('#train-btn-' + job_id).text("重試")
-                .removeClass("disabled")
-            $('#test-btn-' + job_id).attr("hidden", true)
+            $('#result-btn').hide()
+            {#$('#train-btn-' + job_id).text("重試")#}
+            {#    .removeClass("disabled")#}
+            {#$('#test-btn-' + job_id).attr("hidden", true)#}
         }
 
         function get_progress(url) {

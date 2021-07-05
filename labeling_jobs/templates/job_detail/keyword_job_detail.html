@@ -121,6 +121,60 @@
                     </div>
                 {% endfor %}
             </div>
+            <div class="row mb-4">
+                <div class="col-lg-12">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="h5">規則列表</h6>
+                        <span class="card-link">
+                <a href="" data-toggle="modal" data-target="#labelFormModal"
+                   class="btn btn-sm btn-outline-secondary ml-2">新增標籤</a>
+                <a href="" data-toggle="modal" data-target="#ruleFormModal" class="btn btn-sm btn-outline-primary ml-2">新增規則</a>
+                        </span>
+                    </div>
+                    <hr>
+                    <div class="card mb-4">
+                        <div class="card-header py-3 d-flex justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">詞彙權重列表</h6>
+                            <span class="card-link">
+
+                    <a href="" data-toggle="modal" data-target="#ruleFormModal"
+                       class="btn btn-sm btn-outline-primary ml-2">新增規則</a>
+                        </span>
+                        </div>
+                        <div class="card-body">
+                            <table id="rule-table" class="table">
+                                <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">詞彙</th>
+                                    <th scope="col">標籤</th>
+                                    <th scope="col">權重</th>
+                                    <th scope="col">功能</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for rule in  labeling_job.rule_set.all %}
+                                    <tr>
+                                        <th>{{ rule.id }}</th>
+                                        <td>{{ rule.content }}</td>
+                                        <td>{{ rule.label }}</td>
+                                        <td>{{ rule.get_match_type_display }}</td>
+                                        <td>
+                                           <span class="d-flex justify-content-end">
+                                                <a class="btn btn-link btn-sm text-secondary ml-2"
+                                                   href="{% url 'labeling_jobs:rule-update' rule.labeling_job.id rule.id %}">編輯</a>
+                                                <a class="btn btn-link btn-sm text-danger ml-2"
+                                                   href="{% url 'labeling_jobs:rule-delete' rule.labeling_job.id rule.id %}">刪除</a>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="col-lg-4 mb-4">
@@ -244,7 +298,8 @@
                     <ul>
                         <li><code>字詞</code></li>
                         <li><code>判斷式</code>
-                            <div><small>(可複選， 使用逗號 <code>,</code> 分隔，需要特別注意的是，為避免判斷式中的逗號造成欄位判斷錯誤，請使用 <code>""</code>將字串包起來))</small></div>
+                            <div><small>(可複選， 使用逗號 <code>,</code> 分隔，需要特別注意的是，為避免判斷式中的逗號造成欄位判斷錯誤，請使用 <code>""</code>將字串包起來))</small>
+                            </div>
                             <ul>
                                 <li><code>START</code> 比對開頭</li>
                                 <li><code>END</code> 比對結尾</li>
@@ -304,4 +359,12 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block custom_script %}
+    <script>
+        $(document).ready(function () {
+            $('#rule-table').DataTable();
+        });
+    </script>
 {% endblock %}

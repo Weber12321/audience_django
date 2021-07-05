@@ -63,7 +63,8 @@
                                         {% resetcycle %}
                                     </p>
                                     <p class="card-text">{{ labeling_job.description }}</p>
-                                    <a class="stretched-link" href="{% url 'labeling_jobs:job-detail' labeling_job.id %}"></a>
+                                    <a class="stretched-link"
+                                       href="{% url 'labeling_jobs:job-detail' labeling_job.id %}"></a>
                                 </div>
                             </div>
                         </div>
@@ -184,4 +185,11 @@
             </div>
         </div>
     </div>
+{% endblock %}
+{% block custom_script %}
+    <script>
+        $(document).ready(function () {
+            $('#job-table').DataTable();
+        });
+    </script>
 {% endblock %}

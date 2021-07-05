@@ -1,7 +1,6 @@
-import json
+import logging
 from datetime import datetime
-from time import sleep
-from typing import List, Dict, Iterable
+from typing import List, Iterable
 
 from django.utils import timezone
 from tqdm import tqdm
@@ -14,6 +13,9 @@ from core.dao.input_example import InputExample
 from core.helpers.data_helpers import chunks, get_opview_data_rows
 from modeling_jobs.tasks import get_model, get_term_weights
 from predicting_jobs.models import PredictingJob, PredictingTarget, JobStatus, ApplyingModel, PredictingResult, Source
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 class TaskCanceledByUserException(Exception):
@@ -100,13 +102,13 @@ def predict_task(job: PredictingJob):
     models = get_models(applying_models)
     predict_worker = AudienceWorker(models)
     modeling_jobs = [applying_model.modeling_job for applying_model in applying_models]
-    print(f"Using models:", [mj.name for mj in modeling_jobs])
+    logger.debug(f"Using models: {[mj.name for mj in modeling_jobs]}")
     # start predicting
     try:
         for predicting_target in job.predictingtarget_set.all():
             document_count = 0
             check_if_status_break(job.id)
-            print(f"Cleaning predicting data from target '{predicting_target}'")
+            logger.debug(f"Cleaning predicting data from target '{predicting_target}'")
             predicting_target.predictingresult_set.all().delete()
             predicting_target.job_status = JobStatus.PROCESSING
             predicting_target.save()
@@ -122,23 +124,28 @@ def predict_task(job: PredictingJob):
                 # todo save result tags into database
                 for tmp_example, example_results in zip(example_chunk, batch_results):
                     document_count += 1
-                    ensemble_results, apply_path = predict_worker.ensemble_results(example_results,
-                                                                                   bypass_same_label=True)
+                    # ensemble_results, apply_path = predict_worker.ensemble_results(example_results,
+                    #                                                                bypass_same_label=True)
                     data_id = tmp_example.id_
-                    for label_name, score in ensemble_results.items():
-                        predicting_result = PredictingResult(
-                            predicting_target=predicting_target,
-                            label_name=label_name,
-                            score=score, data_id=data_id,
-                            source_author=f"{tmp_example.s_id}_{tmp_example.author}",
-                            apply_path=json.dumps(apply_path[label_name], ensure_ascii=False),
-                            created_at=timezone.now()
-                        )
-                        # print(apply_path[label_name])
-                        # print(label_name, tmp_example.content[:50], "..." if len(tmp_example.content) > 50 else "")
-                        predicting_result.save()
+                    for result in example_results:
+                        if not result.labels:
+                            continue
+                        for label in result.labels:
+                            predicting_result = PredictingResult(
+                                predicting_target=predicting_target,
+                                label_name=label,
+                                # score=score,
+                                data_id=data_id,
+                                source_author=f"{tmp_example.s_id}_{tmp_example.author}",
+                                applied_model_id=int(result.model.split("_")[0]) if result.model else None,
+                                applied_meta=result.logits.get(label),
+                                applied_content=result.value,
+                                applied_feature=result.feature,
+                                created_at=timezone.now()
+                            )
+                            predicting_result.save()
                         # print(predicting_result.apply_path)
-            print(f"target: {predicting_target.name} processed {document_count} documents.")
+            logger.debug(f"target: {predicting_target.name} processed {document_count} documents.")
             predicting_target.job_status = JobStatus.DONE
             predicting_target.save()
 
@@ -149,7 +156,7 @@ def predict_task(job: PredictingJob):
         job.job_status = JobStatus.BREAK
     except Exception as e:
         # if something wrong
-        print(e)
+        logger.error(e)
         job.error_message = e
         job.job_status = JobStatus.ERROR
     finally:

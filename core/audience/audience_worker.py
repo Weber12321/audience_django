@@ -1,12 +1,13 @@
+import logging
 from collections import namedtuple, defaultdict
-from typing import Dict, List, Generator, Tuple
-
-from typing import Iterable
+from typing import Dict, List, Tuple
 
 from core.audience.models.base_model import SuperviseModel
 from core.dao.input_example import InputExample
 from core.helpers.log_helper import get_logger
 
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 RESULT = namedtuple("Result", "labels, logits, model, feature, value")
 
 
@@ -16,7 +17,6 @@ class AudienceWorker:
             self.logger = get_logger(context="AudienceWorker")
         else:
             self.logger = logger
-
         self.models: List[SuperviseModel] = model_list
 
     def run_labeling(self, input_examples: List[InputExample]) -> List[List[RESULT]]:
@@ -25,15 +25,18 @@ class AudienceWorker:
         :param input_examples:
         :return: list of models-> list of label results -> label, score
         """
+        logger.debug("Start Run Labeling")
         model_predicted_result = [[] for i in range(len(input_examples))]
         for audience_model in self.models:
-            predict_labels, predict_logits = audience_model.predict(input_examples)
+            predictions = audience_model.predict(input_examples)
+            predict_labels, predict_logits = predictions
+            logger.debug(f"{audience_model.model_dir_name.__str__()}, {audience_model.feature}")
             for i, example in enumerate(input_examples):
                 model_predicted_result[i].append(
                     RESULT(labels=predict_labels[i], logits=predict_logits[i],
                            model=audience_model.model_dir_name.__str__(),
                            feature=audience_model.feature.value, value=getattr(example, audience_model.feature.value)))
-                # print(model_predicted_result[i][-1])
+                # logger.debug(audience_model.model_dir_name.__str__())
         return model_predicted_result
 
     @staticmethod

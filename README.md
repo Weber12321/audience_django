@@ -67,3 +67,7 @@ python manage.py makemigrations <app_name>
 python manage.py migrate
 ```
 3. 將前面註解掉的部分取消註解
+
+### 如何使用Apple silicon機器開發
+由於部分套件尚未支援arm64環境，需使用rosetta 2轉譯的方式模擬intel x86_64執行python，詳細可參考 [這篇](https://www.caktusgroup.com/blog/2021/04/02/python-django-react-development-apple-silicon/) 的方式安裝python，並使用模擬的python執行檔建立venv即可。
+> 若您的terminal是使用zsh，請確認是否支援rosetta 2轉譯，建議使用文中的方式使用bash。

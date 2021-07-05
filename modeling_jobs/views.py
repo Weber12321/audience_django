@@ -1,23 +1,28 @@
-from collections import namedtuple, defaultdict
+import json
+import logging
+from collections import namedtuple
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import ListView, DetailView
+from django.views.generic import DetailView
 from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
+from rest_framework import viewsets, permissions, filters
 
 from core.audience.models.base_model import RuleBaseModel, SuperviseModel
-from core.audience.models.rule_base.regex_model import RegexModel
 from labeling_jobs.models import LabelingJob, Document
-from .forms import ModelingJobForm, TermWeightForm
+from .forms import ModelingJobForm, TermWeightForm, UploadModelJobForm
 from .helpers import insert_csv_to_db, parse_report
-from .models import ModelingJob, Report, TermWeight
-from .tasks import train_model_task, testing_model_via_ext_data_task
-import json
+from .models import ModelingJob, Report, TermWeight, UploadModelJob
+from .serializers import JobSerializer, TermWeightSerializer
+from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
@@ -45,10 +50,15 @@ class JobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["job"] = self.object
+        if self.object.model_name == "TERM_WEIGHT_MODEL":
+            import_model_form = UploadModelJobForm({'modeling_job': self.object.id, })
+            context["import_model_form"] = import_model_form
+            term_form = TermWeightForm(modeling_job=self.object.id)
+            context['term_form'] = term_form
         return context
 
     def get_template_names(self):
-        print(self.object.model_name)
+        logger.debug(self.object.model_name)
         if self.object.model_name == "TERM_WEIGHT_MODEL":
             return 'job_details/term_weight_detail.html'
         else:
@@ -85,7 +95,7 @@ class JobDeleteView(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
-            print(request.POST)
+            logger.debug(request.POST)
             return HttpResponseRedirect(self.success_url)
         else:
             return super(JobDeleteView, self).post(request, *args, **kwargs)
@@ -115,7 +125,7 @@ class DocDeleteView(LoginRequiredMixin, DetailView):
     model = LabelingJob
 
     def post(self, request):
-        print(request.POST)
+        logger.debug(request.POST)
 
 
 @csrf_exempt
@@ -180,7 +190,7 @@ def insert_csv(request):
 @csrf_exempt
 def training_model(request, pk):
     job = ModelingJob.objects.get(pk=pk)
-    print(job.is_multi_label)
+    logger.debug(job.is_multi_label)
     a = AsyncTask(train_model_task, job=job, group='training_model')
     a.run()
     return HttpResponseRedirect(reverse('modeling_jobs:index'))
@@ -247,8 +257,26 @@ def get_progress(request, pk):
             job.save()
 
     elif job.get_model_type() == SuperviseModel.__name__:
-        if job.jobRef.job_data_type != LabelingJob.DataTypes.SUPERVISE_MODEL:
-            job.error_message = "Data type error, SuperviseModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
+        if job.jobRef:
+            if job.model_name == "TERM_WEIGHT_MODEL":
+                if job.jobRef.job_data_type not in {LabelingJob.DataTypes.TERM_WEIGHT_MODEL,
+                                                    LabelingJob.DataTypes.SUPERVISE_MODEL}:
+                    job.error_message = f"Data type error, TermWeightModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
+                    job.job_status = ModelingJob.JobStatus.ERROR
+                    job.save()
+                else:
+                    job.job_status = ModelingJob.JobStatus.DONE
+                    job.save()
+            else:
+                if job.jobRef.job_data_type != LabelingJob.DataTypes.SUPERVISE_MODEL:
+                    job.error_message = f"Data type error, SuperviseModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
+                    job.job_status = ModelingJob.JobStatus.ERROR
+                    job.save()
+                else:
+                    job.job_status = ModelingJob.JobStatus.DONE
+                    job.save()
+        else:
+            job.error_message = "No labeling job reference error."
             job.job_status = ModelingJob.JobStatus.ERROR
             job.save()
     response_data = {
@@ -270,7 +298,7 @@ class TermWeightCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['modeling_job_id'] = self.kwargs.get('job_id')
+        kwargs['modeling_job'] = self.kwargs.get('job_id')
         return kwargs
 
     def form_valid(self, form):
@@ -279,7 +307,7 @@ class TermWeightCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
-        return reverse_lazy('modeling_job_id:job-detail', kwargs={"pk": job_id})
+        return reverse_lazy('modeling_jobs:job-detail', kwargs={"pk": job_id})
 
 
 class TermWeightDelete(LoginRequiredMixin, generic.DeleteView):
@@ -289,11 +317,81 @@ class TermWeightDelete(LoginRequiredMixin, generic.DeleteView):
 
     def post(self, request, *args, **kwargs):
         if "cancel" in request.POST:
-            print(request.POST)
+            logger.debug(request.POST)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return super(TermWeightDelete, self).post(request, *args, **kwargs)
 
     def get_success_url(self):
-        job_id = self.kwargs.get('job_id')
+        job_id = self.kwargs.get('pk')
         return reverse_lazy('modeling_job_id:job-detail', kwargs={"pk": job_id})
+
+
+class UploadModelJobCreate(LoginRequiredMixin, generic.CreateView):
+    model = UploadModelJob
+    form_class = UploadModelJobForm
+    template_name = 'model_upload/file_upload_form.html'
+
+    def get_success_url(self):
+        # 利用django-q實作非同步上傳
+        a = AsyncTask(import_model_data_task, upload_job=self.object, group='upload_model')
+        a.run()
+        job_id = self.kwargs['job_id']
+        return reverse_lazy('modeling_jobs:job-detail', kwargs={'pk': job_id})
+
+    def form_valid(self, form):
+        logger.debug(self.kwargs)
+        form.instance.modeling_job_id = self.kwargs.get('job_id')
+        form.instance.created_by = self.request.user
+        logger.debug(form.instance)
+        return super(UploadModelJobCreate, self).form_valid(form)
+
+
+class UploadModelJobDelete(LoginRequiredMixin, generic.DeleteView):
+    model = UploadModelJob
+    template_name = 'model_upload/confirm_delete_form.html'
+
+    def post(self, request, *args, **kwargs):
+        if "cancel" in request.POST:
+            logger.debug(request.POST)
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return super(UploadModelJobDelete, self).post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        job_id = self.kwargs.get('job_id')
+        return reverse_lazy('modeling_jobs:job-detail', kwargs={"pk": job_id})
+
+
+# rest api views
+
+class JobViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = ModelingJob.objects.all().order_by('-created_at')
+    serializer_class = JobSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class TermWrightViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = TermWeight.objects.all().order_by('-weight')
+    serializer_class = TermWeightSerializer
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    search_fields = ['term', 'label__name']
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the purchases for
+        the user as determined by the username portion of the URL.
+        """
+        logger.debug(self.basename)
+        job_id = self.request.query_params.get('job')
+        if job_id is not None:
+            return TermWeight.objects.filter(modeling_job_id=job_id).order_by('-weight')
+        else:
+            return TermWeight.objects.all().order_by('-weight')
