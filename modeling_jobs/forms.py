@@ -2,7 +2,7 @@ import logging
 
 from django import forms
 
-from labeling_jobs.models import Label
+from labeling_jobs.models import Label, LabelingJob
 from modeling_jobs.models import ModelingJob, TermWeight, UploadModelJob
 
 # Get an instance of a logger
@@ -10,6 +10,19 @@ logger = logging.getLogger(__name__)
 
 
 class ModelingJobForm(forms.ModelForm):
+    def clean(self):
+        cleaned_data = super().clean()
+        labeling_job = cleaned_data.get("jobRef")
+        logger.debug(labeling_job)
+        if not labeling_job:
+            logger.debug(cleaned_data)
+            name = cleaned_data.get('name')
+            labeling_job = LabelingJob(name=f"「{name}」自動建立的任務",
+                                       description=f"因「{name}」匯入而自動建立的任務",
+                                       job_data_type=LabelingJob.DataTypes.TERM_WEIGHT_MODEL)
+            labeling_job.save()
+            cleaned_data['jobRef'] = labeling_job
+
     class Meta:
         model = ModelingJob
         fields = "__all__"
@@ -41,7 +54,7 @@ class TermWeightForm(forms.ModelForm):
         else:
             logger.debug(modeling_job_id)
             modeling_job = ModelingJob.objects.get(pk=modeling_job_id)
-            self.fields['label'].queryset = modeling_job.jobRef.label_set.all()
+            self.fields['label'].queryset = modeling_job.jobRef.label_set.all() if modeling_job.jobRef else None
 
     class Meta:
         model = TermWeight
