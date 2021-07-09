@@ -243,7 +243,8 @@ class ResultViewSet(viewsets.ModelViewSet):
     queryset = PredictingResult.objects.all().order_by('-created_at')
     serializer_class = ResultSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    # filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    # search_fields = "__all__"
 
     def get_queryset(self):
         """

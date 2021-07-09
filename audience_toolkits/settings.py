@@ -11,11 +11,15 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 from pathlib import Path
 import pymysql
+import environ
 
 pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env()
+env.read_env((BASE_DIR / '.env').open())
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
@@ -82,23 +86,25 @@ WSGI_APPLICATION = 'audience_toolkits.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'audience-toolkit-dango', # 目標資料庫的名稱
-#         'USER': 'root', # 資料庫帳號
-#         'PASSWORD': 'pohjohn88990928', # 資料庫密碼
-#         'HOST': 'localhost', # 主機位置，可以先測本地localhost
-#         'PORT': '3306',
-#     }
-# }
+else:
+    # read from .env
+    DATABASES = {
+        'default': {
+            'ENGINE': env("DATABASE_ENGINE"),
+            'NAME': env("DATABASE_NAME"),  # 目標資料庫的名稱
+            'USER': env("DATABASE_USER"),  # 資料庫帳號
+            'PASSWORD': env("DATABASE_PASSWORD"),  # 資料庫密碼
+            'HOST': env("DATABASE_HOST"),  # 主機位置，可以先測本地localhost
+            'PORT': env("DATABASE_PORT"),
+        }
+    }
 
 LOGGING = {
     'version': 1,

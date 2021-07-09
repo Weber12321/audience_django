@@ -15,13 +15,8 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import path, include
 from django.views import static
-from rest_framework import routers
-
-from audience_toolkits import settings
-from predicting_jobs import views as predicting_jobs_views
 
 urlpatterns = [
     path('', include('home.urls')),
