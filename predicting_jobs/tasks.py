@@ -113,7 +113,7 @@ def predict_task(job: PredictingJob):
             predicting_target.job_status = JobStatus.PROCESSING
             predicting_target.save()
             input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size,
-                                                                     max_rows=10000,
+                                                                     max_rows=10000 if settings.DEBUG else None,
                                                                      max_len=int(predicting_target.max_content_length),
                                                                      min_len=int(predicting_target.min_content_length))
             for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size),
