@@ -32,8 +32,13 @@ class AudienceWorker:
             predict_labels, predict_logits = predictions
             logger.debug(f"{audience_model.model_dir_name.__str__()}, {audience_model.feature}")
             for i, example in enumerate(input_examples):
+                p_label = predict_labels[i]
+                p_logit = predict_logits[i]
+                if isinstance(p_label, str):
+                    p_label = [p_label]
+                    p_logit = [p_logit]
                 model_predicted_result[i].append(
-                    RESULT(labels=predict_labels[i], logits=predict_logits[i],
+                    RESULT(labels=p_label, logits=p_logit,
                            model=audience_model.model_dir_name.__str__(),
                            feature=audience_model.feature.value, value=getattr(example, audience_model.feature.value)))
                 # logger.debug(audience_model.model_dir_name.__str__())

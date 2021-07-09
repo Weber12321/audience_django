@@ -138,7 +138,8 @@ def predict_task(job: PredictingJob):
                                 data_id=data_id,
                                 source_author=f"{tmp_example.s_id}_{tmp_example.author}",
                                 applied_model_id=int(result.model.split("_")[0]) if result.model else None,
-                                applied_meta=result.logits.get(label),
+                                applied_meta=result.logits.get(label) if hasattr(result.logits,
+                                                                                 "get") else result.logits,
                                 applied_content=result.value,
                                 applied_feature=result.feature,
                                 created_at=timezone.now()

@@ -380,8 +380,8 @@ class TermWrightViewSet(viewsets.ModelViewSet):
     """
     queryset = TermWeight.objects.all().order_by('-weight')
     serializer_class = TermWeightSerializer
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['term', 'label__name']
+    # filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    # search_fields = ['term', 'label__name']
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
