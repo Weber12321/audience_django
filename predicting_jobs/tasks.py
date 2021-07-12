@@ -93,7 +93,7 @@ def check_if_status_break(job_id):
         raise ValueError("Something happened or status changed by user.")
 
 
-def predict_task(job: PredictingJob):
+def predict_task(job: PredictingJob, target_id=None):
     batch_size = 1000
     job.job_status = JobStatus.PROCESSING
     job.save()
@@ -102,10 +102,12 @@ def predict_task(job: PredictingJob):
     models = get_models(applying_models)
     predict_worker = AudienceWorker(models)
     modeling_jobs = [applying_model.modeling_job for applying_model in applying_models]
-    logger.debug(f"Using models: {[mj.name for mj in modeling_jobs]}")
+    logger.info(f"Using models: {[mj.name for mj in modeling_jobs]}")
     # start predicting
+    targets = job.predictingtarget_set.all() if not target_id else [job.predictingtarget_set.get(pk=target_id)]
+    logger.info(f"targets: {[t.name for t in targets]}")
     try:
-        for predicting_target in job.predictingtarget_set.all():
+        for predicting_target in targets:
             document_count = 0
             check_if_status_break(job.id)
             logger.debug(f"Cleaning predicting data from target '{predicting_target}'")

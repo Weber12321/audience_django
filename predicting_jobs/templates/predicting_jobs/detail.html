@@ -121,6 +121,11 @@
                                             操作
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                                <button type="button" class="dropdown-item"
+                                                        id="run-job-btn-{{ predicting_job.id }}"
+                                                        onclick="run_job({{ predicting_job.id }},'{% url 'predicting_jobs:job_start' predicting_job.id %}?target_id={{ target.id }}')">
+                                                    開始貼標
+                                                </button>
 {#                                            {% if target.job_status.lower == "done" %}#}
                                                 <a href="{% url 'predicting_jobs:result-samples' predicting_job.id target.id %}"
                                                    class="dropdown-item" id="result-btn">查看抽樣結果</a>
