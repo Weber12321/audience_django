@@ -202,7 +202,9 @@ def get_progress(request, pk):
     job = PredictingJob.objects.get(pk=pk)
     response_data = {
         'state': job.job_status,
-        'details': {target.id: target.get_job_status_display() for target in job.predictingtarget_set.all()},
+        'details': {target.id: {"status": target.get_job_status_display(),
+                                "sa_count": target.get_group_by_source_author().count()} for target in
+                    job.predictingtarget_set.all()},
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
@@ -243,6 +245,7 @@ class ResultViewSet(viewsets.ModelViewSet):
     queryset = PredictingResult.objects.all().order_by('-created_at')
     serializer_class = ResultSerializer
     permission_classes = [permissions.IsAuthenticated]
+
     # filter_backends = [filters.OrderingFilter, filters.SearchFilter]
     # search_fields = "__all__"
 

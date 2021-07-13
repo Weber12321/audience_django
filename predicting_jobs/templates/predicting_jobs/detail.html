@@ -102,6 +102,7 @@
                                 <th scope="col">#</th>
                                 <th scope="col">資料範圍名稱</th>
                                 <th scope="col">狀態</th>
+                                <th scope="col">已貼到人數</th>
                                 <th scope="col">資料源</th>
                                 <th scope="col">時間範圍</th>
                                 <th scope="col"></th>
@@ -113,6 +114,7 @@
                                 <th scope="row">{{ target.id }}</th>
                                 <td>{{ target.name }}</td>
                                 <td id="target-status-{{ target.id }}">{{ target.get_job_status_display }}</td>
+                                <td id="author-count-{{ target.id }}">{{ target.get_group_by_source_author.count }}</td>
                                 <td>{{ target.source.name }}</td>
                                 <td>{{ target.begin_post_time }}<br>~<br>{{ target.end_post_time }}</td>
                                 <td>
@@ -325,7 +327,8 @@
                 console.log(result)
                 for (const [key, value] of Object.entries(result.details)) {
                     console.log(`${key}: ${value}`);
-                    $(`#target-status-${key}`).text(value)
+                    $(`#target-status-${key}`).text(value.status)
+                    $(`#author-count-${key}`).text(value.sa_count)
                     if(value === "完成"){
 
                     }
