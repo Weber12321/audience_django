@@ -101,6 +101,8 @@
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">資料範圍名稱</th>
+                                <th scope="col">狀態</th>
+                                <th scope="col">已貼到人數</th>
                                 <th scope="col">資料源</th>
                                 <th scope="col">時間範圍</th>
                                 <th scope="col"></th>
@@ -111,6 +113,8 @@
                                 <tr>
                                 <th scope="row">{{ target.id }}</th>
                                 <td>{{ target.name }}</td>
+                                <td id="target-status-{{ target.id }}">{{ target.get_job_status_display }}</td>
+                                <td id="author-count-{{ target.id }}">{{ target.get_group_by_source_author.count }}</td>
                                 <td>{{ target.source.name }}</td>
                                 <td>{{ target.begin_post_time }}<br>~<br>{{ target.end_post_time }}</td>
                                 <td>
@@ -121,10 +125,15 @@
                                             操作
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-{#                                            {% if target.job_status.lower == "done" %}#}
-                                                <a href="{% url 'predicting_jobs:result-samples' predicting_job.id target.id %}"
-                                                   class="dropdown-item" id="result-btn">查看抽樣結果</a>
-{#                                            {% endif %}#}
+                                            <button type="button" class="dropdown-item"
+                                                    id="run-job-btn-{{ predicting_job.id }}"
+                                                    onclick="run_job({{ predicting_job.id }},'{% url 'predicting_jobs:job_start' predicting_job.id %}?target_id={{ target.id }}')">
+                                                開始貼標
+                                            </button>
+                                            {#                                            {% if target.job_status.lower == "done" %}#}
+                                            <a href="{% url 'predicting_jobs:result-samples' predicting_job.id target.id %}"
+                                               class="dropdown-item" id="result-btn">查看抽樣結果</a>
+                                            {#                                            {% endif %}#}
                                             <a href="{% url 'predicting_jobs:job-target-update' predicting_job.id target.id %}"
                                                class="dropdown-item">修改</a>
                                             <a href="{% url 'predicting_jobs:job-target-delete' predicting_job.id target.id %}"
@@ -272,7 +281,7 @@
 
         function set_row_done_display(job_id) {
             $('#state-' + job_id).text("完成")
-            $('#result-btn').show()
+            {#$('#result-btn').show()#}
             {#$('#train-btn-' + job_id)#}
             {#    .text("重新訓練")#}
             {#    .removeClass("disabled")#}
@@ -281,7 +290,7 @@
 
         function set_row_processing_display(job_id) {
             $('#state-' + job_id).text("處理中")
-            $('#result-btn').hide()
+            {#$('#result-btn').hide()#}
             {#$('#train-btn-' + job_id)#}
             {#    .text("訓練中")#}
             {#    .addClass("disabled")#}
@@ -290,7 +299,7 @@
 
         function set_row_wait_display(job_id) {
             $('#state-' + job_id).text("等待中")
-            $('#result-btn').hide()
+            {#$('#result-btn').hide()#}
             {#$('#train-btn-' + job_id)#}
             {#    .text("開始訓練")#}
             {#    .removeClass("disabled")#}
@@ -299,7 +308,7 @@
 
         function set_row_error_display(job_id) {
             $('#state-' + job_id).text("錯誤")
-            $('#result-btn').hide()
+            {#$('#result-btn').hide()#}
             {#$('#train-btn-' + job_id).text("重試")#}
             {#    .removeClass("disabled")#}
             {#$('#test-btn-' + job_id).attr("hidden", true)#}
@@ -316,6 +325,14 @@
             get_progress(url).done(function (result) {
                 let timeout = 10000
                 console.log(result)
+                for (const [key, value] of Object.entries(result.details)) {
+                    console.log(`${key}: ${value}`);
+                    $(`#target-status-${key}`).text(value.status)
+                    $(`#author-count-${key}`).text(value.sa_count)
+                    if(value === "完成"){
+
+                    }
+                }
                 let state = result.state
                 let elem_id = '#state-' + job_id
                 console.log(elem_id)

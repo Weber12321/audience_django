@@ -93,7 +93,7 @@ def check_if_status_break(job_id):
         raise ValueError("Something happened or status changed by user.")
 
 
-def predict_task(job: PredictingJob):
+def predict_task(job: PredictingJob, target_id=None):
     batch_size = 1000
     job.job_status = JobStatus.PROCESSING
     job.save()
@@ -102,18 +102,22 @@ def predict_task(job: PredictingJob):
     models = get_models(applying_models)
     predict_worker = AudienceWorker(models)
     modeling_jobs = [applying_model.modeling_job for applying_model in applying_models]
-    logger.debug(f"Using models: {[mj.name for mj in modeling_jobs]}")
+    logger.info(f"Using models: {[mj.name for mj in modeling_jobs]}")
     # start predicting
+    targets = job.predictingtarget_set.all() if not target_id else [job.predictingtarget_set.get(pk=target_id)]
+    logger.info(f"targets: {[t.name for t in targets]}")
     try:
-        for predicting_target in job.predictingtarget_set.all():
+        for predicting_target in targets:
             document_count = 0
             check_if_status_break(job.id)
             logger.debug(f"Cleaning predicting data from target '{predicting_target}'")
             predicting_target.predictingresult_set.all().delete()
             predicting_target.job_status = JobStatus.PROCESSING
             predicting_target.save()
+            if settings.DEBUG:
+                logger.warning("Debug mode, process will limit target data row (10000 rows).")
             input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size,
-                                                                     max_rows=10000 if settings.DEBUG else None,
+                                                                     # max_rows=10000 if settings.DEBUG else None,
                                                                      max_len=int(predicting_target.max_content_length),
                                                                      min_len=int(predicting_target.min_content_length))
             for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size),

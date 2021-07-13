@@ -190,8 +190,9 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
 def start_job(request, pk):
     if request.method == 'POST':
         logger.debug("start predicting")
+        target_id = request.POST.get('target_id', None)
         job = PredictingJob.objects.get(pk=pk)
-        a = AsyncTask(predict_task, job, group="predicting_audience")
+        a = AsyncTask(predict_task, job=job, target_id=target_id, group="predicting_audience")
         a.run()
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
@@ -199,10 +200,11 @@ def start_job(request, pk):
 
 def get_progress(request, pk):
     job = PredictingJob.objects.get(pk=pk)
-
     response_data = {
         'state': job.job_status,
-        'details': {target.name: target.job_status for target in job.predictingtarget_set.all()},
+        'details': {target.id: {"status": target.get_job_status_display(),
+                                "sa_count": target.get_group_by_source_author().count()} for target in
+                    job.predictingtarget_set.all()},
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
@@ -243,6 +245,7 @@ class ResultViewSet(viewsets.ModelViewSet):
     queryset = PredictingResult.objects.all().order_by('-created_at')
     serializer_class = ResultSerializer
     permission_classes = [permissions.IsAuthenticated]
+
     # filter_backends = [filters.OrderingFilter, filters.SearchFilter]
     # search_fields = "__all__"
 

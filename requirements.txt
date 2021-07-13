@@ -1,5 +1,5 @@
 cchardet~=2.1.7
-Django==3.1.8
+Django~=3.1.8
 PyMySQL~=1.0.2
 joblib~=1.0.1
 jieba~=0.39
