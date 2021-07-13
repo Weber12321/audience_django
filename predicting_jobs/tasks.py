@@ -114,8 +114,10 @@ def predict_task(job: PredictingJob, target_id=None):
             predicting_target.predictingresult_set.all().delete()
             predicting_target.job_status = JobStatus.PROCESSING
             predicting_target.save()
+            if settings.DEBUG:
+                logger.warning("Debug mode, process will limit target data row (10000 rows).")
             input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size,
-                                                                     max_rows=10000 if settings.DEBUG else None,
+                                                                     # max_rows=10000 if settings.DEBUG else None,
                                                                      max_len=int(predicting_target.max_content_length),
                                                                      min_len=int(predicting_target.min_content_length))
             for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size),

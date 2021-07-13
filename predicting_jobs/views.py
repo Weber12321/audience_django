@@ -202,7 +202,7 @@ def get_progress(request, pk):
     job = PredictingJob.objects.get(pk=pk)
     response_data = {
         'state': job.job_status,
-        'details': {target.name: target.job_status for target in job.predictingtarget_set.all()},
+        'details': {target.id: target.get_job_status_display() for target in job.predictingtarget_set.all()},
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 

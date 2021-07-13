@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
+from django.db.models import Count
 from django.urls import reverse
 
 from audience_toolkits.settings import PREDICT_DATABASE
@@ -103,6 +104,10 @@ class PredictingTarget(models.Model):
 
     def get_absolute_url(self):
         return reverse('predicting_jobs:job-detail', kwargs={'pk': self.predicting_job_id})
+
+    def get_group_by_source_author_label(self):
+        return self.predictingresult_set.values('source_author', 'label_name').annotate(
+            post_count=Count('source_author')).order_by('source_author')
 
 
 class PredictingResult(models.Model):
