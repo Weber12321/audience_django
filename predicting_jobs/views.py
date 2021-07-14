@@ -199,9 +199,10 @@ def start_job(request, pk):
             a.run()
         else:
             logger.info(f'Predict all targets: {[target.name for target in job.predictingtarget_set.all()]}')
-            for target in job.predictingtarget_set.all():
-                a = AsyncTask(predict_task, job=job, predicting_target=target, group="predicting_audience")
-                a.run()
+            jobs = [AsyncTask(predict_task, job=job, predicting_target=target, group="predicting_audience") for target
+                    in job.predictingtarget_set.all()]
+            for j in jobs:
+                j.run()
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
 
