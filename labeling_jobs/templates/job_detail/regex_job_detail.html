@@ -251,11 +251,11 @@
                         {{ error }}
                         {% for field in label_form %}
                             <div class="form-group">
-                                {% if field.name != 'target_amount' %}
+{#                                {% if field.name != 'target_amount' %}#}
                                     {{ field.label_tag }}
                                     {{ field }}
                                     {{ field.errors }}
-                                {% endif %}
+{#                                {% endif %}#}
                             </div>
                         {% endfor %}
                     </div>
