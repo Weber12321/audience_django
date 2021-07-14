@@ -192,8 +192,16 @@ def start_job(request, pk):
         logger.debug("start predicting")
         target_id = request.POST.get('target_id', None)
         job = PredictingJob.objects.get(pk=pk)
-        a = AsyncTask(predict_task, job=job, target_id=target_id, group="predicting_audience")
-        a.run()
+        if target_id:
+            logger.info(f'Predict target {PredictingTarget.objects.get(pk=target_id)}')
+            target = PredictingTarget.objects.get(pk=target_id)
+            a = AsyncTask(predict_task, job=job, predicting_target=target, group="predicting_audience")
+            a.run()
+        else:
+            logger.info(f'Predict all targets: {[target.name for target in job.predictingtarget_set.all()]}')
+            for target in job.predictingtarget_set.all():
+                a = AsyncTask(predict_task, job=job, predicting_target=target, group="predicting_audience")
+                a.run()
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
 

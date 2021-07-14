@@ -93,7 +93,7 @@ def check_if_status_break(job_id):
         raise ValueError("Something happened or status changed by user.")
 
 
-def predict_task(job: PredictingJob, target_id=None):
+def predict_task(job: PredictingJob, predicting_target: PredictingTarget):
     batch_size = 1000
     job.job_status = JobStatus.PROCESSING
     job.save()
@@ -104,55 +104,52 @@ def predict_task(job: PredictingJob, target_id=None):
     modeling_jobs = [applying_model.modeling_job for applying_model in applying_models]
     logger.info(f"Using models: {[mj.name for mj in modeling_jobs]}")
     # start predicting
-    targets = job.predictingtarget_set.all() if not target_id else [job.predictingtarget_set.get(pk=target_id)]
-    logger.info(f"targets: {[t.name for t in targets]}")
     try:
-        for predicting_target in targets:
-            document_count = 0
+        document_count = 0
+        check_if_status_break(job.id)
+        logger.debug(f"Cleaning predicting data from target '{predicting_target}'")
+        predicting_target.predictingresult_set.all().delete()
+        predicting_target.job_status = JobStatus.PROCESSING
+        predicting_target.save()
+        if settings.DEBUG:
+            logger.warning("Debug mode, process will limit target data row (10000 rows).")
+        input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size,
+                                                                 # max_rows=10000 if settings.DEBUG else None,
+                                                                 max_len=int(predicting_target.max_content_length),
+                                                                 min_len=int(predicting_target.min_content_length))
+        for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size),
+                                  desc=f'{batch_size} documents per iter'):
+            # sleep(1)
             check_if_status_break(job.id)
-            logger.debug(f"Cleaning predicting data from target '{predicting_target}'")
-            predicting_target.predictingresult_set.all().delete()
-            predicting_target.job_status = JobStatus.PROCESSING
-            predicting_target.save()
-            if settings.DEBUG:
-                logger.warning("Debug mode, process will limit target data row (10000 rows).")
-            input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size,
-                                                                     # max_rows=10000 if settings.DEBUG else None,
-                                                                     max_len=int(predicting_target.max_content_length),
-                                                                     min_len=int(predicting_target.min_content_length))
-            for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size),
-                                      desc=f'{batch_size} documents per iter'):
-                # sleep(1)
-                check_if_status_break(job.id)
-                batch_results = predict_worker.run_labeling(example_chunk)
-                # todo save result tags into database
-                for tmp_example, example_results in zip(example_chunk, batch_results):
-                    document_count += 1
-                    # ensemble_results, apply_path = predict_worker.ensemble_results(example_results,
-                    #                                                                bypass_same_label=True)
-                    data_id = tmp_example.id_
-                    for result in example_results:
-                        if not result.labels:
-                            continue
-                        for label in result.labels:
-                            predicting_result = PredictingResult(
-                                predicting_target=predicting_target,
-                                label_name=label,
-                                # score=score,
-                                data_id=data_id,
-                                source_author=f"{tmp_example.s_id}_{tmp_example.author}",
-                                applied_model_id=int(result.model.split("_")[0]) if result.model else None,
-                                applied_meta=result.logits.get(label) if hasattr(result.logits,
-                                                                                 "get") else result.logits,
-                                applied_content=result.value,
-                                applied_feature=result.feature,
-                                created_at=timezone.now()
-                            )
-                            predicting_result.save()
-                        # print(predicting_result.apply_path)
-            logger.debug(f"target: {predicting_target.name} processed {document_count} documents.")
-            predicting_target.job_status = JobStatus.DONE
-            predicting_target.save()
+            batch_results = predict_worker.run_labeling(example_chunk)
+            # todo save result tags into database
+            for tmp_example, example_results in zip(example_chunk, batch_results):
+                document_count += 1
+                # ensemble_results, apply_path = predict_worker.ensemble_results(example_results,
+                #                                                                bypass_same_label=True)
+                data_id = tmp_example.id_
+                for result in example_results:
+                    if not result.labels:
+                        continue
+                    for label in result.labels:
+                        predicting_result = PredictingResult(
+                            predicting_target=predicting_target,
+                            label_name=label,
+                            # score=score,
+                            data_id=data_id,
+                            source_author=f"{tmp_example.s_id}_{tmp_example.author}",
+                            applied_model_id=int(result.model.split("_")[0]) if result.model else None,
+                            applied_meta=result.logits.get(label) if hasattr(result.logits,
+                                                                             "get") else result.logits,
+                            applied_content=result.value,
+                            applied_feature=result.feature,
+                            created_at=timezone.now()
+                        )
+                        predicting_result.save()
+                    # print(predicting_result.apply_path)
+        logger.debug(f"target: {predicting_target.name} processed {document_count} documents.")
+        predicting_target.job_status = JobStatus.DONE
+        predicting_target.save()
 
         # if success
         job.job_status = JobStatus.DONE
