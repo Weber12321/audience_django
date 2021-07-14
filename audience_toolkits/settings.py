@@ -212,7 +212,7 @@ SAMPLE_DATA_FILE_DIRECTORY = 'sample_data_files'
 # ======================================
 Q_CLUSTER = {
     'name': 'audience_toolkits',
-    'workers': 4,
+    'workers': 1,
     'timeout': 10000,
     'retry': 12000,
     'queue_limit': 50,
