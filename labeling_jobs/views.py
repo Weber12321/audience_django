@@ -9,10 +9,13 @@ from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
+from rest_framework import viewsets, permissions, filters, status
+from rest_framework.response import Response
 
 from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm
 from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleData
 # Create your views here.
+from .serializers import LabelingJobSerializer, LabelSerializer
 from .tasks import import_csv_data_task, generate_datasets_task
 
 
@@ -48,22 +51,22 @@ class LabelingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
         context["labeling_job"] = self.object
 
         # label form for modal
-        label_form = LabelForm({'labeling_job': self.object.id, 'target_amount': 200})
+        label_form = LabelForm({'job': self.object.id, 'target_amount': 200})
         context["label_form"] = label_form
 
         # upload file form for modal
-        upload_file_form = UploadFileJobForm({'labeling_job': self.object.id, })
+        upload_file_form = UploadFileJobForm({'job': self.object.id, })
         print(upload_file_form.fields)
         context["upload_file_form"] = upload_file_form
 
         # rule form for keyword rule job
         if self.object.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-            rule_form = RuleForm({'labeling_job': self.object.id, 'score': 1})
+            rule_form = RuleForm({'job': self.object.id, 'score': 1})
             context["rule_form"] = rule_form
 
         # rule form for regex rule job
         if self.object.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
-            regex_form = RegexForm({'labeling_job': self.object.id})
+            regex_form = RegexForm({'job': self.object.id})
             context["regex_form"] = regex_form
 
         return context
@@ -168,7 +171,7 @@ class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
         return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': job_id})
 
     def form_valid(self, form):
-        form.instance.labeling_job_id = self.kwargs.get('job_id')
+        form.instance.job_id = self.kwargs.get('job_id')
         form.instance.created_by = self.request.user
         return super(UploadFileJobCreate, self).form_valid(form)
 
@@ -209,7 +212,7 @@ class LabelCreate(LoginRequiredMixin, generic.CreateView):
     template_name = 'labels/add_form.html'
 
     def form_valid(self, form):
-        form.instance.labeling_job_id = self.kwargs.get('job_id')
+        form.instance.job_id = self.kwargs.get('job_id')
         return super(LabelCreate, self).form_valid(form)
 
     def get_success_url(self):
@@ -249,27 +252,27 @@ class LabelDetail(SingleObjectMixin, generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['label'] = self.object
-        labeling_job = self.object.labeling_job
+        job = self.object.job
         # rule form for keyword rule job
-        if labeling_job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-            rule_form = RuleForm({'labeling_job': labeling_job.id, 'score': 1, 'label': self.object.id})
+        if job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
+            rule_form = RuleForm({'job': job.id, 'score': 1, 'label': self.object.id})
             context["rule_form"] = rule_form
 
         # rule form for regex rule job
-        if labeling_job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
-            regex_form = RegexForm({'labeling_job': labeling_job.id, 'label': self.object.id})
+        if job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
+            regex_form = RegexForm({'job': job.id, 'label': self.object.id})
             context["rule_form"] = regex_form
         return context
 
     def get_template_names(self):
-        if self.object.labeling_job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
+        if self.object.job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
                                                       LabelingJob.DataTypes.REGEX_MODEL}:
             return 'rules/label_rule_detail.html'
         else:
             return 'documents/label_document_detail.html'
 
     def get_queryset(self):
-        if self.object.labeling_job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
+        if self.object.job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
                                                       LabelingJob.DataTypes.REGEX_MODEL}:
             return self.object.rule_set.all()
         else:
@@ -282,7 +285,7 @@ class RuleUpdate(LoginRequiredMixin, generic.UpdateView):
     template_name = 'rules/update_form.html'
 
     def get_form_class(self):
-        if self.object.labeling_job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
+        if self.object.job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
             return RegexForm
         else:
             return RuleForm
@@ -322,7 +325,7 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
 
     def form_valid(self, form):
         # print(form)
-        form.instance.labeling_job_id = self.kwargs.get('job_id')
+        form.instance.job_id = self.kwargs.get('job_id')
         return super(RuleCreate, self).form_valid(form)
 
     def get_success_url(self):
@@ -394,3 +397,32 @@ def download_sample_data(request, sample_data_id):
         response = FileResponse(open(file_path, 'rb'))
         return response
     raise Http404
+
+
+# rest api views
+
+class LabelingJobsSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = LabelingJob.objects.all().order_by("-created_at")
+    serializer_class = LabelingJobSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class LabelSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = Label.objects.all().order_by("-id")
+    serializer_class = LabelSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        job_id = request.data['job_id']
+        job = LabelingJob.objects.filter(id=job_id).first()
+        serializer.save(job=job)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

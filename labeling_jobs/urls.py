@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework import routers
 
 from . import views
 
@@ -13,12 +14,12 @@ urlpatterns = [
     path('<int:job_id>/labeling/set_labels', views.doc_label_update, name="set-labels"),
     path('<int:job_id>/file/upload/', views.UploadFileJobCreate.as_view(), name='upload-job-create'),
     path('<int:job_id>/file/<int:pk>/delete/', views.UploadFileJobDelete.as_view(), name='upload-job-delete'),
-    # label curd
+    # label crud
     path('<int:job_id>/label/add', views.LabelCreate.as_view(), name="label-add"),
     path('<int:job_id>/label/<int:pk>', views.LabelDetail.as_view(), name="label-detail"),
     path('<int:job_id>/label/<int:pk>/update', views.LabelUpdate.as_view(), name="label-update"),
     path('<int:job_id>/label/<int:pk>/delete', views.LabelDelete.as_view(), name="label-delete"),
-    # rule curd
+    # rule crud
     path('<int:job_id>/rule/add', views.RuleCreate.as_view(), name="rule-add"),
     path('<int:job_id>/label/<int:label_id>/rule/add', views.RuleCreate.as_view(), name="label-rule-add"),
     path('<int:job_id>/rule/<int:pk>/update', views.RuleUpdate.as_view(), name="rule-update"),
@@ -29,4 +30,17 @@ urlpatterns = [
     # sample data
     path('sample_data', views.SampleDataListView.as_view(), name='sample-data-list'),
     path('sample_data/download/<int:sample_data_id>', views.download_sample_data, name='download-sample-data')
+]
+
+
+# rest-framework settings
+
+router = routers.DefaultRouter()
+router.register(r"labeling_jobs", views.LabelingJobsSet)
+router.register(r"label", views.LabelSet)
+
+urlpatterns += [
+    # path('apis/jobs/<int:pk>', views.LabelingJobsSet.as_view({'get': 'list'}), name='labelingjob-detail'),
+    path('apis/', include(router.urls)),
+    path('apis/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

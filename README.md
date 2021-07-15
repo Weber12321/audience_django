@@ -34,6 +34,7 @@ python manage.py runserver
 ## available features
 - 待補充
 - 待補充
+
 ## for developers
 > ### 開發原則
 > 避免後續程式測試的困難，請務必注意以下原則：
@@ -48,6 +49,19 @@ You can read and learn everything in [documents](https://docs.djangoproject.com/
 
 ### template
 We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.6.0 template (You can find files in `/static/`).
+
+### django rest-framework
+- 為Django內的框架`rest-framework`，提供完整的CRUD功能
+- 以labeling_jobs api為例子，labeling_jobs app前綴為`labeling_jobs/`，labeling_jobs api前綴為`apis/labeling_jobs/`，完整的網址為`http://127.0.0.1:8000/audience/labeling_jobs/apis/labeling_jobs/`
+- 該功能需要使用者登入後，才能正常操作，假設使用postman進行呼叫需在Authorization內增加`Basic Auth`的`Username`、`Password`
+- 增加欄位`"name"、"description"、"is_multi_label"、"job_data_type"`
+
+| api_path | params | method | action | return |
+|----------|--------|--------|--------|--------|
+| audience/labeling_jobs/apis/labeling_jobs/ | | GET | 取回所有資料 | 回傳DB內所有labeling_jobs | 
+| audience/labeling_jobs/apis/labeling_jobs/ | 增加欄位 | POST | 新增資料 | 回傳DB內所有labeling_jobs | 
+| audience/labeling_jobs/apis/labeling_jobs/1/ | 要更改的欄位 | PUT | 修改該筆ID內的資料 | 回傳該筆資料修改後狀況 | 
+| audience/labeling_jobs/apis/labeling_jobs/1/ | | DELETE | 依照該筆ID刪除資料| | 
 
 ### icons
 We use [font-awesome](https://fontawesome.com/icons?d=gallery&p=1&m=free) icons.
@@ -71,3 +85,10 @@ python manage.py migrate
 ### 如何使用Apple silicon機器開發
 由於部分套件尚未支援arm64環境，需使用rosetta 2轉譯的方式模擬intel x86_64執行python，詳細可參考 [這篇](https://www.caktusgroup.com/blog/2021/04/02/python-django-react-development-apple-silicon/) 的方式安裝python，並使用模擬的python執行檔建立venv即可。
 > 若您的terminal是使用zsh，請確認是否支援rosetta 2轉譯，建議使用文中的方式使用bash。
+
+### (fields.E180) SQLite does not support JSONFields.
+當執行`python manage.py migrate`時，有機會在`windows`發生，解決辦法可參考[這](https://stackoverflow.com/questions/62637458/django-3-1-fields-e180-sqlite-does-not-support-jsonfields)
+> - Check your python installation - is it 32bit or 64bit? run: `python -c "import platform;print(platform.architecture()[0])"`
+> - Download the [precompiled DLL](https://www.sqlite.org/download.html)
+> - Rename (or delete) sqlite3.dll inside the DLLs directory(`C:\Users\<username>\AppData\Local\Programs\Python\Python37\DLLs`).
+> - Now, the JSON1 extension should be ready to be used in Python and Django.
