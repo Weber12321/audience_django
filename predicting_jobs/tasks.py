@@ -80,16 +80,17 @@ def reset_predict_targets(job: PredictingJob, status=JobStatus.WAIT):
         target.save()
 
 
-def check_if_status_break(job_id):
-    job: PredictingJob = PredictingJob.objects.get(pk=job_id)
-    status = job.job_status
+def check_if_status_break(target_id):
+    target = PredictingTarget.objects.get(pk=target_id)
+    status = target.job_status
+    logger.debug(f"{target} is {target.job_status}.")
     if isinstance(status, str):
         status = JobStatus(status)
     if status == JobStatus.BREAK:
-        reset_predict_targets(job, status=JobStatus.BREAK)
+        # reset_predict_targets(job, status=JobStatus.BREAK)
         raise TaskCanceledByUserException("Job canceled by user.")
     if status == JobStatus.ERROR:
-        reset_predict_targets(job, status=JobStatus.BREAK)
+        # reset_predict_targets(job, status=JobStatus.BREAK)
         raise ValueError("Something happened or status changed by user.")
 
 
@@ -97,7 +98,8 @@ def predict_task(job: PredictingJob, predicting_target: PredictingTarget):
     batch_size = 1000
     job.job_status = JobStatus.PROCESSING
     job.save()
-    reset_predict_targets(job)
+    # predicting_target.job_status = JobStatus.WAIT
+    # predicting_target.save()
     applying_models = job.applyingmodel_set.order_by("priority", "created_at")
     models = get_models(applying_models)
     predict_worker = AudienceWorker(models)
@@ -106,7 +108,7 @@ def predict_task(job: PredictingJob, predicting_target: PredictingTarget):
     # start predicting
     try:
         document_count = 0
-        check_if_status_break(job.id)
+        check_if_status_break(predicting_target.id)
         logger.debug(f"Cleaning predicting data from target '{predicting_target}'")
         predicting_target.predictingresult_set.all().delete()
         predicting_target.job_status = JobStatus.PROCESSING
@@ -117,12 +119,11 @@ def predict_task(job: PredictingJob, predicting_target: PredictingTarget):
                                                                  # max_rows=10000 if settings.DEBUG else None,
                                                                  max_len=int(predicting_target.max_content_length),
                                                                  min_len=int(predicting_target.min_content_length))
-        for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size),
-                                  desc=f'{batch_size} documents per iter'):
+        for example_chunk in chunks(input_examples, chunk_size=batch_size):
             # sleep(1)
-            check_if_status_break(job.id)
+            check_if_status_break(predicting_target.id)
             batch_results = predict_worker.run_labeling(example_chunk)
-            # todo save result tags into database
+
             for tmp_example, example_results in zip(example_chunk, batch_results):
                 document_count += 1
                 # ensemble_results, apply_path = predict_worker.ensemble_results(example_results,

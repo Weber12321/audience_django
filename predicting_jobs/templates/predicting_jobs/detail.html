@@ -6,11 +6,26 @@
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="btn-group" role="group" aria-label="predicting job functions">
-            <button type="button" class="btn btn-sm btn-secondary"
-                    id="run-job-btn-{{ predicting_job.id }}"
-                    onclick="run_job({{ predicting_job.id }},'{% url 'predicting_jobs:job_start' predicting_job.id %}')">
-                開始貼標
-            </button>
+{#        {{ predicting_job.job_status }}#}
+        {% if predicting_job.job_status == "wait" %}
+                <button type="button" class="btn btn-sm btn-secondary"
+                        id="run-job-btn-{{ predicting_job.id }}"
+                        onclick="run_job({{ predicting_job.id }},'{% url 'predicting_jobs:start-job' predicting_job.id %}')">
+                    開始貼標
+                </button>
+            {% elif predicting_job.job_status == "processing" %}
+                <button type="button" class="btn btn-sm btn-secondary"
+                        id="run-job-btn-{{ predicting_job.id }}"
+                        onclick="run_job({{ predicting_job.id }},'{% url 'predicting_jobs:cancel-job' predicting_job.id %}')">
+                    取消貼標任務
+                </button>
+            {% else %}
+                <button type="button" class="btn btn-sm btn-secondary"
+                        id="run-job-btn-{{ predicting_job.id }}"
+                        onclick="run_job({{ predicting_job.id }},'{% url 'predicting_jobs:start-job' predicting_job.id %}')">
+                    重新開始
+                </button>
+            {% endif %}
 
             <div class="btn-group" role="group">
                 <button id="btnGroupDrop1" type="button" class="btn btn-sm btn-secondary dropdown-toggle"
@@ -127,8 +142,13 @@
                                         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                                             <button type="button" class="dropdown-item"
                                                     id="run-job-btn-{{ predicting_job.id }}"
-                                                    onclick="run_job({{ predicting_job.id }},'{% url 'predicting_jobs:job_start' predicting_job.id %}?target_id={{ target.id }}')">
+                                                    onclick="run_job({{ predicting_job.id }},'{% url 'predicting_jobs:start-job' predicting_job.id %}?target_id={{ target.id }}')">
                                                 開始貼標
+                                            </button>
+                                            <button type="button" class="dropdown-item"
+                                                    id="run-job-btn-{{ predicting_job.id }}"
+                                                    onclick="run_job({{ predicting_job.id }},'{% url 'predicting_jobs:cancel-job' predicting_job.id %}?target_id={{ target.id }}')">
+                                                取消貼標
                                             </button>
                                             {#                                            {% if target.job_status.lower == "done" %}#}
                                             <a href="{% url 'predicting_jobs:result-samples' predicting_job.id target.id %}"
