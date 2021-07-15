@@ -214,6 +214,7 @@ class LabelCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
+        print(job_id)
         return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
 
 
