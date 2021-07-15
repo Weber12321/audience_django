@@ -6,7 +6,7 @@ from django.db import IntegrityError
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy
 from django.views import generic
-from django_q.tasks import AsyncTask
+from django_q.tasks import AsyncTask, async_task
 from rest_framework import viewsets, permissions, filters
 
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
@@ -190,18 +190,22 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
 def start_job(request, pk):
     if request.method == 'POST':
         logger.debug("start predicting")
-        target_id = request.POST.get('target_id', None)
+        target_id = request.GET.get('target_id', None)
+        logger.info(request.POST)
         job = PredictingJob.objects.get(pk=pk)
+        logger.info(f"=======> target_id={target_id} ")
         if target_id:
             logger.info(f'Predict target {PredictingTarget.objects.get(pk=target_id)}')
             target = PredictingTarget.objects.get(pk=target_id)
-            a = AsyncTask(predict_task, job=job, predicting_target=target, group="predicting_audience")
-            a.run()
+            async_task(predict_task, job=job, predicting_target=target, group="predicting_audience",
+                       task_name=f"{job.name}-{target.name}")
+
         else:
             logger.info(f'Predict all targets: {[target.name for target in job.predictingtarget_set.all()]}')
             for target in job.predictingtarget_set.all():
-                a = AsyncTask(predict_task, job=job, predicting_target=target, group="predicting_audience")
-                a.run()
+                async_task(predict_task, job=job, predicting_target=target, group="predicting_audience",
+                           task_name=f"{job.name}-{target.name}")
+
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
 
