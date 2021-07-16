@@ -54,9 +54,9 @@
                                     - {{ rule.get_match_type_display }}</small>
                                 <span class="d-flex justify-content-end">
                                     <a class="btn btn-link btn-sm text-secondary ml-2"
-                                       href="{% url 'labeling_jobs:rule-update' rule.labeling_job.id rule.id %}">編輯</a>
+                                       href="{% url 'labeling_jobs:rule-update' rule.job.id rule.id %}">編輯</a>
                                     <a class="btn btn-link btn-sm text-danger ml-2"
-                                       href="{% url 'labeling_jobs:rule-delete' rule.labeling_job.id rule.id %}">刪除</a>
+                                       href="{% url 'labeling_jobs:rule-delete' rule.job.id rule.id %}">刪除</a>
                                 </span>
                             </div>
                             <div class="d-flex w-100 justify-content-between">
