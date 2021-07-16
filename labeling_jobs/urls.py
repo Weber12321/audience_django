@@ -36,8 +36,9 @@ urlpatterns = [
 # rest-framework settings
 
 router = routers.DefaultRouter()
-router.register(r"labeling_jobs", views.LabelingJobsSet)
-router.register(r"label", views.LabelSet)
+router.register("labeling_job", views.LabelingJobsSet)
+router.register("label", views.LabelSet)
+router.register("rule", views.RuleSet)
 
 urlpatterns += [
     # path('apis/jobs/<int:pk>', views.LabelingJobsSet.as_view({'get': 'list'}), name='labelingjob-detail'),

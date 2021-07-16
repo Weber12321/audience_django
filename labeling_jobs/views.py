@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm
 from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleData
 # Create your views here.
-from .serializers import LabelingJobSerializer, LabelSerializer
+from .serializers import LabelingJobSerializer, LabelSerializer, RuleSerializer
 from .tasks import import_csv_data_task, generate_datasets_task
 
 
@@ -211,9 +211,24 @@ class LabelCreate(LoginRequiredMixin, generic.CreateView):
     form_class = LabelForm
     template_name = 'labels/add_form.html'
 
+    # def post(self, request, *args, **kwargs):
+    #     """
+    #     Handle POST requests: instantiate a form instance with the passed
+    #     POST variables and then check if it's valid.
+    #     """
+    #     form = self.get_form()
+    #     if form.is_valid():
+    #         return self.form_valid(form)
+    #     else:
+    #         return self.form_invalid(form)
+
     def form_valid(self, form):
         form.instance.job_id = self.kwargs.get('job_id')
         return super(LabelCreate, self).form_valid(form)
+
+    # def form_invalid(self, form):
+    #     print(f"form.errors: {form.errors}")
+    #     return super(LabelCreate, self).form_invalid(form)
 
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
@@ -313,7 +328,7 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
         initial = super(RuleCreate, self).get_initial()
         # Copy the dictionary so we don't accidentally change a mutable dict
         initial = initial.copy()
-        initial['labeling_job'] = self.kwargs.get('job_id')
+        initial['job'] = self.kwargs.get('job_id')
         label_id = self.kwargs.get("label_id")
         if label_id:
             initial['label'] = self.kwargs.get('label_id')
@@ -420,6 +435,26 @@ class LabelSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         job_id = request.data['job_id']
         job = LabelingJob.objects.filter(id=job_id).first()
-        serializer.save(job=job)
+        serializer.save(job=job, )
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class RuleSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = Rule.objects.all().order_by("-id")
+    serializer_class = RuleSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        job_id = request.data["job_id"]
+        job = LabelingJob.objects.filter(id=job_id).first()
+        label_id = request.data["label_id"]
+        label = Label.objects.filter(id=label_id).first()
+        serializer.save(job=job, label=label, created_by=request.user)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

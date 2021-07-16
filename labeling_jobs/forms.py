@@ -37,6 +37,13 @@ class LabelingJobForm(forms.ModelForm):
 
 
 class LabelForm(forms.ModelForm):
+    # def __init__(self, *args, **kwargs):
+    #     super(LabelForm, self).__init__(*args, **kwargs)
+    #     job_data_type = self.data.get("job_data_type", None)
+    #
+    #     if job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
+    #         del self.fields["target_amount"]
+
     class Meta:
         model = Label
         fields = ["job", "name", "description", "target_amount"]
