@@ -52,14 +52,15 @@ def import_csv_data_task(upload_job: UploadFileJob):
     upload_job.save()
     try:
         file = upload_job.file
-        if upload_job.labeling_job.job_data_type in {LabelingJob.DataTypes.SUPERVISE_MODEL,
-                                                     LabelingJob.DataTypes.TERM_WEIGHT_MODEL}:
-            create_documents(file, upload_job.labeling_job, update_labels=True, required_fields=DOCUMENT_FIELDS_MAPPING)
-        elif upload_job.labeling_job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
-                                                       LabelingJob.DataTypes.REGEX_MODEL}:
-            create_rules(file, upload_job.labeling_job, update_labels=True)
+        if upload_job.job.job_data_type in {LabelingJob.DataTypes.SUPERVISE_MODEL,
+                                            LabelingJob.DataTypes.TERM_WEIGHT_MODEL}:
+            print("create documents!!")
+            create_documents(file, upload_job.job, update_labels=True, required_fields=DOCUMENT_FIELDS_MAPPING)
+        elif upload_job.job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
+                                              LabelingJob.DataTypes.REGEX_MODEL}:
+            create_rules(file, upload_job.job, update_labels=True)
         else:
-            raise ValueError(f'Unknown job_data_type {upload_job.labeling_job}.')
+            raise ValueError(f'Unknown job_data_type {upload_job.job}.')
         upload_job.job_status = UploadFileJob.JobStatus.DONE
     except Exception as e:
         print(e)
@@ -130,7 +131,7 @@ def create_rules(file, job: LabelingJob, required_fields=None, update_labels: bo
         if label_str in job_labels_dict:
             label_obj = job_labels_dict.get(label_str)
         elif update_labels:
-            job.label_set.create(name=label_str, labeling_job=job)
+            job.label_set.create(name=label_str, job=job)
             job.save()
             job_labels_dict = job.get_labels_dict()
             label_obj = job_labels_dict.get(label_str)
@@ -153,7 +154,7 @@ def create_rules(file, job: LabelingJob, required_fields=None, update_labels: bo
                 rule = Rule(match_type=Rule.MatchType(match_type),
                             score=score,
                             content=content,
-                            labeling_job=job,
+                            job=job,
                             rule_type=rule_type,
                             label=label_obj)
                 print(rule.label, rule.match_type, rule.score, rule.content)
@@ -162,7 +163,7 @@ def create_rules(file, job: LabelingJob, required_fields=None, update_labels: bo
             rule = Rule(score=score,
                         content=content,
                         rule_type=rule_type,
-                        labeling_job=job,
+                        job=job,
                         label=label_obj)
             rule_bulk_list.append(rule)
 

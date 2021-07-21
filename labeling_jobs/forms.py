@@ -60,6 +60,23 @@ class LabelForm(forms.ModelForm):
         }
 
 
+class KeywordForm(forms.ModelForm):
+    class Meta:
+        model = Label
+        fields = ["job", "name", "description"]
+        exclude = ["target_amount"]
+        widgets = {
+            'job': forms.Select(attrs={'class': 'form-control', 'disabled': False}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+            'created_by': forms.TextInput(attrs={'hidden': True})
+        }
+        labels = {
+            'name': '標籤名稱',
+            'description': '描述與定義'
+        }
+
+
 class RuleForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         # labeling_job_id = kwargs.get('labeling_job', None)

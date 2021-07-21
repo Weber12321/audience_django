@@ -91,7 +91,8 @@
                         <span class="card-link">
                 <a href="" data-toggle="modal" data-target="#labelFormModal"
                    class="btn btn-sm btn-outline-secondary ml-2">新增標籤</a>
-                <a href="" data-toggle="modal" data-target="#ruleFormModal" class="btn btn-sm btn-outline-primary ml-2">新增規則</a>
+                <a href="" data-toggle="modal" data-target="#ruleFormModal"
+                   class="btn btn-sm btn-outline-primary ml-2 new-rule">新增規則</a>
                         </span>
                     </div>
                     <hr>
@@ -128,7 +129,8 @@
                         <span class="card-link">
                 <a href="" data-toggle="modal" data-target="#labelFormModal"
                    class="btn btn-sm btn-outline-secondary ml-2">新增標籤</a>
-                <a href="" data-toggle="modal" data-target="#ruleFormModal" class="btn btn-sm btn-outline-primary ml-2">新增規則</a>
+                <a href="" data-toggle="modal" data-target="#ruleFormModal"
+                   class="btn btn-sm btn-outline-primary ml-2 new-rule">新增規則</a>
                         </span>
                     </div>
                     <hr>
@@ -138,7 +140,7 @@
                             <span class="card-link">
 
                     <a href="" data-toggle="modal" data-target="#ruleFormModal"
-                       class="btn btn-sm btn-outline-primary ml-2">新增規則</a>
+                       class="btn btn-sm btn-outline-primary ml-2 new-rule">新增規則</a>
                         </span>
                         </div>
                         <div class="card-body">
@@ -148,28 +150,30 @@
                                     <th scope="col">#</th>
                                     <th scope="col">詞彙</th>
                                     <th scope="col">標籤</th>
-                                    <th scope="col">權重</th>
+                                    <th scope="col">網址</th>
+                                    <th scope="col">比對方式值</th>
+                                    <th scope="col">比對方式</th>
                                     <th scope="col">功能</th>
                                 </tr>
                                 </thead>
-                                <tbody>
-                                {% for rule in  labeling_job.rule_set.all %}
-                                    <tr>
-                                        <th>{{ rule.id }}</th>
-                                        <td>{{ rule.content }}</td>
-                                        <td>{{ rule.label }}</td>
-                                        <td>{{ rule.get_match_type_display }}</td>
-                                        <td>
-                                           <span class="d-flex justify-content-end">
-                                                <a class="btn btn-link btn-sm text-secondary ml-2"
-                                                   href="{% url 'labeling_jobs:rule-update' rule.job.id rule.id %}">編輯</a>
-                                                <a class="btn btn-link btn-sm text-danger ml-2"
-                                                   href="{% url 'labeling_jobs:rule-delete' rule.job.id rule.id %}">刪除</a>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
+                                {#                                <tbody>#}
+                                {#                                {% for rule in  labeling_job.rule_set.all %}#}
+                                {#                                    <tr>#}
+                                {#                                        <th>{{ rule.id }}</th>#}
+                                {#                                        <td>{{ rule.content }}</td>#}
+                                {#                                        <td>{{ rule.label }}</td>#}
+                                {#                                        <td>{{ rule.get_match_type_display }}</td>#}
+                                {#                                        <td>#}
+                                {#                                           <span class="d-flex justify-content-end">#}
+                                {#                                                <a class="btn btn-link btn-sm text-secondary ml-2"#}
+                                {#                                                   href="{% url 'labeling_jobs:rule-update' rule.job.id rule.id %}">編輯</a>#}
+                                {#                                                <a class="btn btn-link btn-sm text-danger ml-2"#}
+                                {#                                                   href="{% url 'labeling_jobs:rule-delete' rule.job.id rule.id %}">刪除</a>#}
+                                {#                                            </span>#}
+                                {#                                        </td>#}
+                                {#                                    </tr>#}
+                                {#                                {% endfor %}#}
+                                {#                                </tbody>#}
                             </table>
                         </div>
                     </div>
@@ -265,11 +269,11 @@
                         {{ error }}
                         {% for field in label_form %}
                             <div class="form-group">
-                                {% if field.name != 'target_amount' %}
-                                    {{ field.label_tag }}
-                                    {{ field }}
-                                    {{ field.errors }}
-                                {% endif %}
+                                {#                                {% if field.name != 'target_amount' %}#}
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {{ field.errors }}
+                                {#                                {% endif %}#}
                             </div>
                         {% endfor %}
                     </div>
@@ -354,7 +358,7 @@
                     </div>
                     <div class="modal-footer">
                         <input type="hidden" name="next" value="{{ next }}">
-                        <input type="submit" class="btn btn-primary" value="送出">
+                        <input type="submit" class="btn btn-primary" id="submit-rule-form" value="送出">
                     </div>
                 </form>
             </div>
@@ -364,8 +368,135 @@
 
 {% block custom_script %}
     <script>
+        {#$(document).ready(function () {#}
+        {#    $('#rule-table').DataTable();#}
+
+        var table = $('#rule-table').DataTable(
+            {
+                serverSide: true,
+                ajax: "{% url 'labeling_jobs:api-rule-detail' labeling_job.id %}?format=datatables",
+                columnDefs: [
+                    {"visible": false, "targets": [3, 4]}
+                ],
+                columns: [
+                    {
+                        data: 'id',
+                        searchable: false
+                    },
+                    {
+                        data: 'content'
+                    },
+                    {
+                        data: 'label'
+                    },
+                    {
+                        data: 'url'
+                    },
+                    {
+                        data: 'match_type'
+                    },
+                    {
+                        data: 'match_type_display'
+                    },
+                    {
+                        data: 'label_id',
+                        sortable: false,
+                        searchable: false,
+                        render: function (data, type, row, meta) {
+                            edit_btn = '<a href="" ' +
+                                'data-toggle="modal" ' +
+                                'data-target="#ruleFormModal" ' +
+                                `data-rule-url=${row.url} ` +
+                                `data-rule-content=${row.content} ` +
+                                `data-rule-label=${data} ` +
+                                `data-rule-match_type=${row.match_type} ` +
+                                'class="update-rule mr-3">修改</a>'
+                            delete_btn = '<a href="" ' +
+                                `data-rule-url=${row.url} ` +
+                                `data-rule-content=${row.content} ` +
+                                `data-rule-label=${row.label} ` +
+                                'class="delete-rule text-danger">刪除</a>'
+                            return edit_btn + delete_btn
+
+                        }
+                    }
+                ]
+            }
+        );
+
         $(document).ready(function () {
-            $('#rule-table').DataTable();
+            table.ajax.reload()
+        });
+
+        $(document).on("click", ".update-rule", function () {
+            const form = $('#ruleFormModal form');
+            form.data("rule-url", $(this).data('ruleUrl'));
+            $("#ruleFormModalLabel").text('修改詞彙權重');
+            $("#id_content").val($(this).data('ruleContent'));
+            $("#id_label").val($(this).data('ruleLabel'));
+            $("#id_match_type").val($(this).data('ruleMatch_type'));
+        });
+
+        $(document).on("click", ".new-rule", function () {
+            $("#ruleFormModalLabel").text('新增規則');
+            $("#id_content").val("");
+            $("#id_label").val("");
+            $("#id_match_type").val("");
+        });
+
+        $(document).on("click", ".delete-rule", function () {
+            const content = String($(this).data('ruleContent'));
+            const label = String($(this).data('ruleLabel'));
+            const confirm_str = prompt(`確認要刪除屬於「${label}」標籤的詞彙「${content}」嗎？ 請輸入詞彙「${content}」確認刪除。`);
+            if (confirm_str && String(confirm_str).trim() == content.trim()) {
+                $.ajax({
+                    url: $(this).data('ruleUrl'),
+                    type: "DELETE",
+                    beforeSend: function (xhr, settings) {
+                        xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                    },
+                    success: function (data) {
+                        {#alert(`詞彙「${rule}」刪除成功。`)#}
+                        {#table.ajax.reload()#}
+                        console.log("success");
+                    }
+                });
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+            } else {
+                alert(`取消刪除「${content}」`)
+            }
+        });
+
+        $('#submit-rule-form').click(function (e) {
+            if ($("#ruleFormModalLabel").text() === "修改詞彙權重") {
+                const form = $('#ruleFormModal form');
+                serialize_array = form.serializeArray();
+                serialize_array[serialize_array.length] = {
+                    "name": "match_type_display",
+                    "value": $("#id_match_type").find("option:selected").text()
+                };
+                console.log(serialize_array);
+
+                $.ajax({
+                    url: form.data('ruleUrl'),
+                    type: "PUT",
+                    beforeSend: function (xhr, settings) {
+                        xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                    },
+                    data: serialize_array, // serializes the form's elements.
+                    success: function (data) {
+                        console.log(data);
+                        $('#ruleFormModal').modal('hide');
+                        table.ajax.reload()
+                    }
+                });
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+                return false;
+            } else {
+                console.log("create");
+            }
         });
     </script>
 {% endblock %}

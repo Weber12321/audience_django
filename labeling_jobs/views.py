@@ -2,20 +2,26 @@ import os
 import re
 from random import shuffle
 
+from django.db.models import Q
+from django_filters import filters, ChoiceFilter
+from rest_framework import mixins, generics
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect, Http404, HttpResponse, FileResponse
 from django.urls import reverse_lazy, reverse
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.detail import SingleObjectMixin
-from django_q.tasks import AsyncTask
-from rest_framework import viewsets, permissions, filters, status
+from django_q.tasks import AsyncTask, async_task
+from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
+from rest_framework_datatables.django_filters.backends import DatatablesFilterBackend
+from rest_framework_datatables.django_filters.filters import GlobalFilter
+from rest_framework_datatables.django_filters.filterset import DatatablesFilterSet
 
-from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm
+from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm, KeywordForm
 from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleData
 # Create your views here.
-from .serializers import LabelingJobSerializer, LabelSerializer, RuleSerializer
+from .serializers import LabelingJobSerializer, LabelSerializer, RuleSerializer, UploadFileJobSerializer
 from .tasks import import_csv_data_task, generate_datasets_task
 
 
@@ -78,6 +84,8 @@ class LabelingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
             return 'job_detail/regex_job_detail.html'
         else:
             return 'job_detail/supervise_job_detail.html'
+
+    # def get_form(self, form_class=None):
 
 
 class LabelingJobDelete(LoginRequiredMixin, generic.DeleteView):
@@ -165,7 +173,7 @@ class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_success_url(self):
         # 利用django-q實作非同步上傳
-        a = AsyncTask(import_csv_data_task, upload_job=self.object, group='upload_documents')
+        a = async_task(import_csv_data_task, upload_job=self.object, group='upload_documents')
         a.run()
         job_id = self.kwargs['job_id']
         return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': job_id})
@@ -411,6 +419,28 @@ def download_sample_data(request, sample_data_id):
     raise Http404
 
 
+# django-filter datatable
+class GlobalCharFilter(GlobalFilter, filters.CharFilter):
+    pass
+
+
+class GlobalChoiceFilter(GlobalFilter, filters.ChoiceFilter):
+    pass
+
+
+class RuleFilter(DatatablesFilterSet):
+    """Filter name, artist and genre by name with icontains"""
+    id = GlobalCharFilter(field_name='id', lookup_expr='icontains')
+    content = GlobalCharFilter(field_name='content', lookup_expr='icontains')
+    label = GlobalCharFilter(field_name='label__name', lookup_expr='icontains')
+    # todo: 目前只能篩選choice name("start"、"end"、"exactly"、"partially") => display_name("比對開頭"...)
+    match_type_display = GlobalCharFilter(field_name="match_type", lookup_expr='icontains')
+
+    class Meta:
+        model = Rule
+        fields = "__all__"
+
+
 # rest api views
 
 class LabelingJobsSet(viewsets.ModelViewSet):
@@ -448,13 +478,42 @@ class RuleSet(viewsets.ModelViewSet):
     serializer_class = RuleSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    # new: add SearchFilter and search_fields
+    filter_backends = (DatatablesFilterBackend,)
+    filterset_class = RuleFilter
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        job_id = request.data["job_id"]
-        job = LabelingJob.objects.filter(id=job_id).first()
-        label_id = request.data["label_id"]
-        label = Label.objects.filter(id=label_id).first()
+        job = LabelingJob.objects.filter(id=request.data["job_id"]).first()
+        label = Label.objects.filter(id=request.data["label_id"]).first()
         serializer.save(job=job, label=label, created_by=request.user)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def get_queryset(self):
+        job_id = self.kwargs.get("job_id", None)
+        if job_id:
+            return Rule.objects.filter(job_id=job_id).order_by('id')
+        else:
+            return Rule.objects.all().order_by('id')
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        job = LabelingJob.objects.filter(id=request.data["job"]).first()
+        label = Label.objects.filter(id=request.data["label"]).first()
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(job=job, label=label, created_by=instance.created_by)
+
+        return Response(serializer.data)
+
+
+class UploadFileJobSet(mixins.ListModelMixin, mixins.CreateModelMixin,
+                       mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    queryset = UploadFileJob.objects.all().order_by("-id")
+    serializer_class = UploadFileJobSerializer
+    # permissions_classes = [permissions.IsAuthenticated]
+
