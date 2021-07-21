@@ -2,11 +2,10 @@ import os
 import re
 from random import shuffle
 
-from django.db.models import Q
-from django_filters import filters, ChoiceFilter
-from rest_framework import mixins, generics
+from django_filters import filters
+from rest_framework import mixins
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect, Http404, HttpResponse, FileResponse
+from django.http import HttpResponseRedirect, Http404, FileResponse
 from django.urls import reverse_lazy, reverse
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
@@ -18,9 +17,9 @@ from rest_framework_datatables.django_filters.backends import DatatablesFilterBa
 from rest_framework_datatables.django_filters.filters import GlobalFilter
 from rest_framework_datatables.django_filters.filterset import DatatablesFilterSet
 
-from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm, KeywordForm
+from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm
 from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleData
-# Create your views here.
+
 from .serializers import LabelingJobSerializer, LabelSerializer, RuleSerializer, UploadFileJobSerializer
 from .tasks import import_csv_data_task, generate_datasets_task
 
@@ -424,10 +423,6 @@ class GlobalCharFilter(GlobalFilter, filters.CharFilter):
     pass
 
 
-class GlobalChoiceFilter(GlobalFilter, filters.ChoiceFilter):
-    pass
-
-
 class RuleFilter(DatatablesFilterSet):
     """Filter name, artist and genre by name with icontains"""
     id = GlobalCharFilter(field_name='id', lookup_expr='icontains')
@@ -479,6 +474,7 @@ class RuleSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     # new: add SearchFilter and search_fields
+    # https://django-rest-framework-datatables.readthedocs.io/en/latest/django-filters.html
     filter_backends = (DatatablesFilterBackend,)
     filterset_class = RuleFilter
 
