@@ -52,7 +52,7 @@ class ResultSerializer(serializers.ModelSerializer):
     applied_feature = serializers.CharField(source='get_applied_feature_display')
     applied_meta = serializers.SerializerMethodField(read_only=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M")
-    applied_model = serializers.StringRelatedField()
+    # applied_model = serializers.StringRelatedField()
     model_meta = serializers.SerializerMethodField()
     applied_model_url = serializers.HyperlinkedRelatedField(
         many=False,
