@@ -457,8 +457,7 @@
                     },
                     success: function (data) {
                         {#alert(`詞彙「${rule}」刪除成功。`)#}
-                        {#table.ajax.reload()#}
-                        console.log("success");
+                        table.ajax.reload()
                     }
                 });
 
@@ -476,7 +475,6 @@
                     "name": "match_type_display",
                     "value": $("#id_match_type").find("option:selected").text()
                 };
-                console.log(serialize_array);
 
                 $.ajax({
                     url: form.data('ruleUrl'),
@@ -486,7 +484,6 @@
                     },
                     data: serialize_array, // serializes the form's elements.
                     success: function (data) {
-                        console.log(data);
                         $('#ruleFormModal').modal('hide');
                         table.ajax.reload()
                     }
@@ -494,8 +491,6 @@
 
                 e.preventDefault(); // avoid to execute the actual submit of the form.
                 return false;
-            } else {
-                console.log("create");
             }
         });
     </script>
