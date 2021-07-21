@@ -239,7 +239,7 @@ def get_progress(request, pk):
     response_data = {
         'state': job.job_status,
         'details': {target.id: {"status": target.get_job_status_display(),
-                                "sa_count": target.get_group_by_source_author().count()} for target in
+                                "document_count": target.predictingresult_set.count()} for target in
                     job.predictingtarget_set.all()},
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
