@@ -2,7 +2,7 @@
 
 ## requirements
 - python 3.7+
-- Django 3.1
+- mysql
 
 ## usage
 ### initial databases
@@ -55,7 +55,11 @@ We use [font-awesome](https://fontawesome.com/icons?d=gallery&p=1&m=free) icons.
 ## FAQ
 ### 若`makemigrations`時出現找不到資料表錯誤該怎麼辦？
 此問題主要是因為資料庫中的資料表有異動造成，或者與model預設的model name對不起來。
-修正方式建議為重新命名資料表（與程式需求一致），或者可參考以下方法重建資料表：
+首先先嘗試：
+```shell
+python manage.py makemigrations --merge
+```
+若還是無法解決， 可嘗試的修正方式為重新命名資料表（與程式需求一致），或者可參考以下方法重建資料表：
 1. 先將`<app_name>/migrations`資料夾刪除
 1. 將有使用到app資料庫的部分著解掉
    1. `<project_name>/settings.py`中的`INSTALLED_APPS`的admin與其他相關的apps

@@ -168,20 +168,20 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
     template_name = "predicting_target/predict_result.html"
     context_object_name = 'result_rows'
 
-    def get_queryset(self):
-        label_name = self.request.GET.dict().get("label_name")
-        if label_name:
-            return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'), label_name=label_name)
-        else:
-            return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'))
+    # def get_queryset(self):
+    #     label_name = self.request.GET.dict().get("label_name")
+    #     # if label_name:
+    #     #     return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'), label_name=label_name)
+    #     # else:
+    #     #     return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'))
 
     def get_context_data(self, **kwargs):
-        label_name = self.request.GET.dict().get("label_name")
+        # label_name = self.request.GET.dict().get("label_name")
         context = super(PredictResultSamplingListView, self).get_context_data(**kwargs)
         # todo 待測試multi-label時的狀況
-        context['exist_labels'] = sorted(
-            [labels[0] for labels in set(PredictingResult.objects.values_list("label_name"))])
-        context['current_label'] = label_name
+        # context['exist_labels'] = sorted(
+        #     [labels[0] for labels in set(PredictingResult.objects.values_list("label_name"))])
+        # context['current_label'] = label_name
         context['predicting_target'] = PredictingTarget.objects.get(pk=self.kwargs.get('pk'))
         context['predicting_job'] = PredictingJob.objects.get(pk=self.kwargs.get('job_id'))
         return context
@@ -278,12 +278,9 @@ class ResultViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
-    queryset = PredictingResult.objects.all().order_by('-created_at')
+    queryset = PredictingResult.objects.all()
     serializer_class = ResultSerializer
     permission_classes = [permissions.IsAuthenticated]
-
-    # filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    # search_fields = "__all__"
 
     def get_queryset(self):
         """
@@ -291,8 +288,12 @@ class ResultViewSet(viewsets.ModelViewSet):
         the user as determined by the username portion of the URL.
         """
         target_id = self.request.query_params.get('target_id')
+        source_author = self.request.query_params.get('source_author')
         logger.debug(target_id)
+        query_set = PredictingResult.objects.all()
         if target_id:
-            return PredictingResult.objects.filter(predicting_target_id=target_id).order_by('-created_at')
-        else:
-            return PredictingResult.objects.all().order_by('-created_at')
+            query_set = query_set.filter(predicting_target_id=target_id)
+        if source_author:
+            query_set = query_set.filter(source_author=source_author)
+
+        return query_set.order_by('-created_at')
