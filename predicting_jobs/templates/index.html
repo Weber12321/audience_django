@@ -53,7 +53,7 @@
                                 <td>{{ job.created_by }}</td>
                                 <td>{{ job.created_at }}</td>
                                 <td>
-                                    <span id="state-{{ job.id }}"></span>
+                                    <span id="state-{{ job.id }}">{{ job.get_job_status_display }}</span>
                                 </td>
                             </tr>
                         {% endfor %}

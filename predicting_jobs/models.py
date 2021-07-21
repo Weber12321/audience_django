@@ -1,3 +1,7 @@
+import re
+from typing import Type
+
+import math
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -106,12 +110,10 @@ class PredictingTarget(models.Model):
         return reverse('predicting_jobs:job-detail', kwargs={'pk': self.predicting_job_id})
 
     def get_group_by_source_author(self):
-        return self.predictingresult_set.values('source_author').annotate(
-            post_count=Count('source_author')).order_by('source_author')
+        return self.predictingresult_set.values('source_author').distinct()
 
     def get_group_by_source_author_label(self):
-        return self.predictingresult_set.values('source_author', 'label_name').annotate(
-            post_count=Count('source_author')).order_by('source_author')
+        return self.predictingresult_set.values('source_author', 'label_name').distinct()
 
 
 class PredictingResult(models.Model):
