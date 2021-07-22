@@ -165,10 +165,15 @@ def generate_dataset(request, job_id):
     return HttpResponseRedirect(reverse('labeling_jobs:job-detail', kwargs={'pk': job_id}))
 
 
-def label_without_target_amount(kwargs, query_dict):
-    kwargs.pop("data")
-    query_dict.update({"target_amount": 0})
-    kwargs.update({"data": query_dict})
+def label_without_target_amount(obj, kwargs):
+    job = LabelingJob.objects.get(pk=obj.kwargs.get('job_id'))
+    if job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL or \
+            job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
+        if obj.request.method in ('POST', 'PUT'):
+            kwargs.pop("data")
+            query_dict = obj.request.POST.copy()
+            query_dict.update({"target_amount": 0})
+            kwargs.update({"data": query_dict})
 
 
 class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
@@ -212,8 +217,7 @@ class LabelUpdate(LoginRequiredMixin, generic.UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        if self.request.method in ('POST', 'PUT'):
-            label_without_target_amount(kwargs=kwargs, query_dict=self.request.POST.copy())
+        label_without_target_amount(obj=self, kwargs=kwargs)
         return kwargs
 
     def get_success_url(self):
@@ -243,8 +247,7 @@ class LabelCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        if self.request.method in ('POST', 'PUT'):
-            label_without_target_amount(kwargs=kwargs, query_dict=self.request.POST.copy())
+        label_without_target_amount(obj=self, kwargs=kwargs)
         return kwargs
 
     def form_valid(self, form):
@@ -530,4 +533,3 @@ class UploadFileJobSet(mixins.ListModelMixin, mixins.CreateModelMixin,
     queryset = UploadFileJob.objects.all().order_by("-id")
     serializer_class = UploadFileJobSerializer
     # permissions_classes = [permissions.IsAuthenticated]
-
