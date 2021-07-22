@@ -15,10 +15,10 @@ urlpatterns = [
     path('<int:job_id>/file/upload/', views.UploadFileJobCreate.as_view(), name='upload-job-create'),
     path('<int:job_id>/file/<int:pk>/delete/', views.UploadFileJobDelete.as_view(), name='upload-job-delete'),
     # label crud
-    path('<int:job_id>/label/add', views.LabelCreate.as_view(), name="label-add"),
-    path('<int:job_id>/label/<int:pk>', views.LabelDetail.as_view(), name="label-detail"),
-    path('<int:job_id>/label/<int:pk>/update', views.LabelUpdate.as_view(), name="label-update"),
-    path('<int:job_id>/label/<int:pk>/delete', views.LabelDelete.as_view(), name="label-delete"),
+    path('<int:job_id>/label/add', views.LabelCreate.as_view(), name="labels-add"),
+    path('<int:job_id>/label/<int:pk>', views.LabelDetail.as_view(), name="labels-detail"),
+    path('<int:job_id>/label/<int:pk>/update', views.LabelUpdate.as_view(), name="labels-update"),
+    path('<int:job_id>/label/<int:pk>/delete', views.LabelDelete.as_view(), name="labels-delete"),
     # rule crud
     path('<int:job_id>/rule/add', views.RuleCreate.as_view(), name="rule-add"),
     path('<int:job_id>/label/<int:label_id>/rule/add', views.RuleCreate.as_view(), name="label-rule-add"),

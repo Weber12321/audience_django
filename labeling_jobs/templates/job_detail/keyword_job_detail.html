@@ -79,7 +79,6 @@
 
     </div>
     <div class="row">
-
         <!-- Content Column -->
         <div class="col-lg-8 mb-4">
 
@@ -107,11 +106,11 @@
                                         請按編輯添加標籤說明。{% endif %}</div>
                                 <span class="d-flex justify-content-end">
                                         <a class="btn btn-link text-info btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:label-detail' labeling_job.id label.id %}">規則列表</a>
+                                           href="{% url 'labeling_jobs:labels-detail' labeling_job.id label.id %}">規則列表</a>
                                         <a class="btn btn-link text-secondary btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:label-update' labeling_job.id label.id %}">編輯</a>
+                                           href="{% url 'labeling_jobs:labels-update' labeling_job.id label.id %}">編輯</a>
                                         <a class="btn btn-link text-danger btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:label-delete' labeling_job.id label.id %}">刪除</a>
+                                           href="{% url 'labeling_jobs:labels-delete' labeling_job.id label.id %}">刪除</a>
                                 </span>
                             </div>
                         </div>
@@ -226,7 +225,6 @@
                 {% endfor %}
             </div>
         </div>
-
     </div>
 
 
@@ -263,17 +261,17 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form method="post" action="{% url 'labeling_jobs:label-add' labeling_job.id %}">
+                <form method="post" action="{% url 'labeling_jobs:labels-add' labeling_job.id %}">
                     {% csrf_token %}
                     <div class="modal-body">
                         {{ error }}
                         {% for field in label_form %}
                             <div class="form-group">
-                                {#                                {% if field.name != 'target_amount' %}#}
-                                {{ field.label_tag }}
-                                {{ field }}
-                                {{ field.errors }}
-                                {#                                {% endif %}#}
+                                {% if field.name != 'target_amount' %}
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {{ field.errors }}
+                                {% endif %}
                             </div>
                         {% endfor %}
                     </div>
@@ -335,7 +333,7 @@
             </div>
         </div>
     </div>
-    <!-- rule create Modal -->
+    <!-- rule create/update Modal -->
     <div class="modal fade" id="ruleFormModal" tabindex="-1" aria-labelledby="ruleFormModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">

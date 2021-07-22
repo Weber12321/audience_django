@@ -25,7 +25,6 @@ class LabelingJobSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class LabelSerializer(serializers.HyperlinkedModelSerializer):
-    # show
     id = serializers.IntegerField(read_only=True)
     url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:label-detail")
     # 傳三個引數

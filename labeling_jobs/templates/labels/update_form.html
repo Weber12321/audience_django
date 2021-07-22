@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
     <form method="post">
+        {% csrf_token %}
         <legend>修改標籤</legend>
         {{ error }}
         {% for field in form %}

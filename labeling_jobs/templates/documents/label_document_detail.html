@@ -17,9 +17,9 @@
             <div class="dropdown-menu animated--fade-in"
                  aria-labelledby="dropdownMenuButton">
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:label-update' label.labeling_job.id label.id %}?next={{ request.path }}">修改</a>
+                   href="{% url 'labeling_jobs:labels-update' label.labeling_job.id label.id %}?next={{ request.path }}">修改</a>
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:label-delete' label.labeling_job.id label.id %}">刪除</a>
+                   href="{% url 'labeling_jobs:labels-delete' label.labeling_job.id label.id %}">刪除</a>
             </div>
         </div>
     {% endif %}

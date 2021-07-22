@@ -138,11 +138,11 @@
                                 </div>
                                 <span class="d-flex justify-content-end">
                                         <a class="btn btn-link text-info btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:label-detail' labeling_job.id label.id %}">查看資料</a>
+                                           href="{% url 'labeling_jobs:labels-detail' labeling_job.id label.id %}">查看資料</a>
                                         <a class="btn btn-link text-secondary btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:label-update' labeling_job.id label.id %}">編輯</a>
+                                           href="{% url 'labeling_jobs:labels-update' labeling_job.id label.id %}">編輯</a>
                                         <a class="btn btn-link text-danger btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:label-delete' labeling_job.id label.id %}">刪除</a>
+                                           href="{% url 'labeling_jobs:labels-delete' labeling_job.id label.id %}">刪除</a>
                                 </span>
                             </div>
                         </div>
@@ -330,7 +330,7 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form method="post" action="{% url 'labeling_jobs:label-add' labeling_job.id %}">
+                <form method="post" action="{% url 'labeling_jobs:labels-add' labeling_job.id %}">
                     {% csrf_token %}
                     <div class="modal-body">
                         {{ error }}

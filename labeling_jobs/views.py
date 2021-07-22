@@ -165,6 +165,12 @@ def generate_dataset(request, job_id):
     return HttpResponseRedirect(reverse('labeling_jobs:job-detail', kwargs={'pk': job_id}))
 
 
+def label_without_target_amount(kwargs, query_dict):
+    kwargs.pop("data")
+    query_dict.update({"target_amount": 0})
+    kwargs.update({"data": query_dict})
+
+
 class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
     model = UploadFileJob
     form_class = UploadFileJobForm
@@ -204,6 +210,12 @@ class LabelUpdate(LoginRequiredMixin, generic.UpdateView):
     form_class = LabelForm
     template_name = 'labels/update_form.html'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method in ('POST', 'PUT'):
+            label_without_target_amount(kwargs=kwargs, query_dict=self.request.POST.copy())
+        return kwargs
+
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
         pk = self.kwargs.get('pk')
@@ -228,6 +240,12 @@ class LabelCreate(LoginRequiredMixin, generic.CreateView):
     #         return self.form_valid(form)
     #     else:
     #         return self.form_invalid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method in ('POST', 'PUT'):
+            label_without_target_amount(kwargs=kwargs, query_dict=self.request.POST.copy())
+        return kwargs
 
     def form_valid(self, form):
         form.instance.job_id = self.kwargs.get('job_id')
@@ -350,7 +368,7 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
         job_id = self.kwargs.get('job_id')
         label_id = self.kwargs.get("label_id")
         if label_id:
-            return reverse_lazy('labeling_jobs:label-detail', kwargs={"job_id": job_id, 'pk': label_id})
+            return reverse_lazy('labeling_jobs:labels-detail', kwargs={"job_id": job_id, 'pk': label_id})
         else:
             return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
 
