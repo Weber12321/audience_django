@@ -216,7 +216,7 @@ def start_job(request, pk):
                                      task_name=f"{job.name}-{target.name}")
                 target.task_id = task_id
                 target.save()
-                logger.info("task_id=", task_id)
+                logger.info(f"task_id= {task_id}")
             else:
                 logger.warning(f"task: {task_name} exist in queue, skip.")
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
@@ -241,14 +241,13 @@ def cancel_job(request, pk):
             task_id = target.task_id
             task = queued_tasks.get(task_id)
             logger.debug(task)
-
             if task:
                 logger.info(f"Canceling job {target}...")
                 task.delete()
-                target.job_status = JobStatus.BREAK
-                target.error_message = "Canceled by user."
-                target.task_id = None
-                target.save()
+            target.job_status = JobStatus.BREAK
+            target.error_message = "Canceled by user."
+            target.task_id = None
+            target.save()
 
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
