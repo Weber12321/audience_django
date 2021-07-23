@@ -1,10 +1,12 @@
 # Created by https://www.gitignore.io
 ### project ###
-upload_files
+upload_files/
+sample_data_files/
 model_files/
 modeling_jobs/models
 *.pkl
 *.csv
+*.txt
 
 ### OSX ###
 .DS_Store
