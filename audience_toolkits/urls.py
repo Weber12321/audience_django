@@ -17,6 +17,9 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.urls import path, include
 from django.views import static
+# from django.conf.urls.static import static
+
+from audience_toolkits import settings
 
 urlpatterns = [
     path('', include('home.urls')),
@@ -26,8 +29,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     url(r'^static/(?P<path>.*)$', static.serve,
-        {'document_root': 'static'}, name='static'),
+        {'document_root': settings.STATIC_ROOT}, name='static'),
 ]
+# urlpatterns += static(r'^static/(?P<path>.*)$', static_view.serve, document_root=settings.STATIC_ROOT,
+#                       name='static')
 
 # global url prefix
 
