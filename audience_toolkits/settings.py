@@ -18,7 +18,6 @@ pymysql.install_as_MySQLdb()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
@@ -196,12 +195,13 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = URL_PREFIX + '/static/'
+STATIC_ROOT = BASE_DIR / 'static' / 'deploy'  # production時，呼叫 python manage.py collectstatic 統整靜態檔案輸出位置
 LOGIN_URL = URL_PREFIX + '/accounts/login/'
 LOGIN_REDIRECT_URL = URL_PREFIX + '/dashboard/'
 LOGOUT_REDIRECT_URL = URL_PREFIX + '/'
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
+    BASE_DIR / 'static' / 'dev',
 ]
 
 # tmp files
