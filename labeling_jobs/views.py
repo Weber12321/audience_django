@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from random import shuffle
@@ -15,6 +16,8 @@ from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleDat
 # Create your views here.
 from .tasks import import_csv_data_task, generate_datasets_task
 
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
     model = LabelingJob
@@ -392,6 +395,7 @@ def download_sample_data(request, sample_data_id):
     sample_data = SampleData.objects.get(pk=sample_data_id)
     file_path = sample_data.file.path
     if os.path.exists(file_path):
-        response = FileResponse(open(file_path, 'rb'))
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=sample_data.get_file_name())
         return response
+    logger.error(f"File '{file_path}' missing.")
     raise Http404
