@@ -18,9 +18,6 @@ pymysql.install_as_MySQLdb()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-env = environ.Env()
-# env.read_env((BASE_DIR / '.env').open())
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
@@ -95,6 +92,8 @@ if DEBUG:
         }
     }
 else:
+    env = environ.Env()
+    env.read_env((BASE_DIR / '.env').open())
     # read from .env
     DATABASES = {
         'default': {
@@ -197,14 +196,14 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = URL_PREFIX + '/static/'
+STATIC_ROOT = BASE_DIR / 'static'  # production時，呼叫 python manage.py collectstatic 統整靜態檔案輸出位置
 LOGIN_URL = URL_PREFIX + '/accounts/login/'
 LOGIN_REDIRECT_URL = URL_PREFIX + '/dashboard/'
 LOGOUT_REDIRECT_URL = URL_PREFIX + '/'
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
+    BASE_DIR / 'staticfiles',
 ]
-
 # tmp files
 UPLOAD_FILE_DIRECTORY = 'upload_files'
 SAMPLE_DATA_FILE_DIRECTORY = 'sample_data_files'
@@ -213,7 +212,7 @@ SAMPLE_DATA_FILE_DIRECTORY = 'sample_data_files'
 # ======================================
 Q_CLUSTER = {
     'name': 'audience_toolkits',
-    'workers': 4,
+    'workers': 1,
     'timeout': 10000,
     'retry': 12000,
     'queue_limit': 50,

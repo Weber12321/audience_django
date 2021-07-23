@@ -73,7 +73,7 @@ class Label(models.Model):
         PREDICTED = ("predicted", "預測標記")
         HUMAN = ("human", "人類標記")
 
-    job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
+    labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     name = models.CharField(max_length=100, verbose_name="標籤名稱")
     description = models.TextField(verbose_name="標籤定義", blank=True)
     target_amount = models.IntegerField(verbose_name="目標數量", default=200, blank=True)
@@ -88,7 +88,7 @@ class Label(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('labeling_jobs:labels-detail', kwargs={'job_id': self.job.id, 'pk': self.pk})
+        return reverse('labeling_jobs:labels-detail', kwargs={'job_id': self.labeling_job.id, 'pk': self.pk})
 
     def show_document_amount(self):
         return self.document_set.exclude(document_type=Document.TypeChoices.EXT_TEST).count()
@@ -153,7 +153,7 @@ class UploadFileJob(models.Model):
         ERROR = ('error', '錯誤')
         DONE = ('done', '完成')
 
-    job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
+    labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     file = models.FileField(upload_to=settings.UPLOAD_FILE_DIRECTORY, verbose_name="檔案")
     job_status = models.CharField(max_length=20, verbose_name="任務狀態", default=JobStatus.WAIT, choices=JobStatus.choices)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
@@ -194,7 +194,7 @@ class Rule(models.Model):
         EXACTLY = ('exactly', '完全一致')
         PARTIALLY = ('partially', '部分吻合')
 
-    job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE)
+    labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE)
     content = models.CharField(max_length=200, verbose_name="規則內文")
     label = models.ForeignKey(Label, verbose_name="標籤", on_delete=models.CASCADE)
     rule_type = models.CharField(max_length=20, verbose_name="規則類型", choices=RuleType.choices, default=RuleType.KEYWORD)

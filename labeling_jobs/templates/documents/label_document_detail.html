@@ -8,7 +8,7 @@
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="dropdown mb-4">
-            <a class="btn btn-primary" href="{% url 'labeling_jobs:job-detail' label.job.id %}">上一頁</a>
+            <a class="btn btn-primary" href="{% url 'labeling_jobs:job-detail' label.labeling_job.id %}">上一頁</a>
             <button class="btn btn-primary dropdown-toggle" type="button"
                     id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
                     aria-expanded="false">
@@ -17,9 +17,9 @@
             <div class="dropdown-menu animated--fade-in"
                  aria-labelledby="dropdownMenuButton">
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:labels-update' label.job.id label.id %}?next={{ request.path }}">修改</a>
+                   href="{% url 'labeling_jobs:labels-update' label.labeling_job.id label.id %}?next={{ request.path }}">修改</a>
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:labels-delete' label.job.id label.id %}">刪除</a>
+                   href="{% url 'labeling_jobs:labels-delete' label.labeling_job.id label.id %}">刪除</a>
             </div>
         </div>
     {% endif %}
@@ -43,7 +43,7 @@
                             {{ doc.title }}
                         </div>
                         <p>{{ doc.content }}</p>
-                        {% for label in label.job.label_set.all %}
+                        {% for label in label.labeling_job.label_set.all %}
                             <span class="mt-2 badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
                                   data-toggle="tooltip" data-placement="top"
                                   {% if label not in doc.labels.all %}hidden{% endif %}

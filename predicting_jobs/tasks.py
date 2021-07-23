@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import List, Iterable
 
 from django.utils import timezone
+from django_q.models import OrmQ
 from tqdm import tqdm
 
 from audience_toolkits import settings
@@ -80,75 +81,77 @@ def reset_predict_targets(job: PredictingJob, status=JobStatus.WAIT):
         target.save()
 
 
-def check_if_status_break(job_id):
-    job: PredictingJob = PredictingJob.objects.get(pk=job_id)
-    status = job.job_status
+def check_if_status_break(target_id):
+    target = PredictingTarget.objects.get(pk=target_id)
+    status = target.job_status
+    logger.debug(f"{target} is {target.job_status}.")
     if isinstance(status, str):
         status = JobStatus(status)
     if status == JobStatus.BREAK:
-        reset_predict_targets(job, status=JobStatus.BREAK)
+        # reset_predict_targets(job, status=JobStatus.BREAK)
         raise TaskCanceledByUserException("Job canceled by user.")
     if status == JobStatus.ERROR:
-        reset_predict_targets(job, status=JobStatus.BREAK)
+        # reset_predict_targets(job, status=JobStatus.BREAK)
         raise ValueError("Something happened or status changed by user.")
 
 
-def predict_task(job: PredictingJob):
+def predict_task(job: PredictingJob, predicting_target: PredictingTarget):
     batch_size = 1000
     job.job_status = JobStatus.PROCESSING
     job.save()
-    reset_predict_targets(job)
+    # predicting_target.job_status = JobStatus.WAIT
+    # predicting_target.save()
     applying_models = job.applyingmodel_set.order_by("priority", "created_at")
     models = get_models(applying_models)
     predict_worker = AudienceWorker(models)
     modeling_jobs = [applying_model.modeling_job for applying_model in applying_models]
-    logger.debug(f"Using models: {[mj.name for mj in modeling_jobs]}")
+    logger.info(f"Using models: {[mj.name for mj in modeling_jobs]}")
     # start predicting
     try:
-        for predicting_target in job.predictingtarget_set.all():
-            document_count = 0
-            check_if_status_break(job.id)
-            logger.debug(f"Cleaning predicting data from target '{predicting_target}'")
-            predicting_target.predictingresult_set.all().delete()
-            predicting_target.job_status = JobStatus.PROCESSING
-            predicting_target.save()
-            input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size,
-                                                                     max_rows=10000 if settings.DEBUG else None,
-                                                                     max_len=int(predicting_target.max_content_length),
-                                                                     min_len=int(predicting_target.min_content_length))
-            for example_chunk in tqdm(chunks(input_examples, chunk_size=batch_size),
-                                      desc=f'{batch_size} documents per iter'):
-                # sleep(1)
-                check_if_status_break(job.id)
-                batch_results = predict_worker.run_labeling(example_chunk)
-                # todo save result tags into database
-                for tmp_example, example_results in zip(example_chunk, batch_results):
-                    document_count += 1
-                    # ensemble_results, apply_path = predict_worker.ensemble_results(example_results,
-                    #                                                                bypass_same_label=True)
-                    data_id = tmp_example.id_
-                    for result in example_results:
-                        if not result.labels:
-                            continue
-                        for label in result.labels:
-                            predicting_result = PredictingResult(
-                                predicting_target=predicting_target,
-                                label_name=label,
-                                # score=score,
-                                data_id=data_id,
-                                source_author=f"{tmp_example.s_id}_{tmp_example.author}",
-                                applied_model_id=int(result.model.split("_")[0]) if result.model else None,
-                                applied_meta=result.logits.get(label) if hasattr(result.logits,
-                                                                                 "get") else result.logits,
-                                applied_content=result.value,
-                                applied_feature=result.feature,
-                                created_at=timezone.now()
-                            )
-                            predicting_result.save()
-                        # print(predicting_result.apply_path)
-            logger.debug(f"target: {predicting_target.name} processed {document_count} documents.")
-            predicting_target.job_status = JobStatus.DONE
-            predicting_target.save()
+        document_count = 0
+        check_if_status_break(predicting_target.id)
+        logger.debug(f"Cleaning predicting data from target '{predicting_target}'")
+        predicting_target.predictingresult_set.all().delete()
+        predicting_target.job_status = JobStatus.PROCESSING
+        predicting_target.save()
+        if settings.DEBUG:
+            logger.warning("Debug mode, process will limit target data row (10000 rows).")
+        input_examples: Iterable[InputExample] = get_target_data(predicting_target, fetch_size=batch_size,
+                                                                 # max_rows=10000 if settings.DEBUG else None,
+                                                                 max_len=int(predicting_target.max_content_length),
+                                                                 min_len=int(predicting_target.min_content_length))
+        for example_chunk in chunks(input_examples, chunk_size=batch_size):
+            # sleep(1)
+            check_if_status_break(predicting_target.id)
+            batch_results = predict_worker.run_labeling(example_chunk)
+
+            for tmp_example, example_results in zip(example_chunk, batch_results):
+                document_count += 1
+                # ensemble_results, apply_path = predict_worker.ensemble_results(example_results,
+                #                                                                bypass_same_label=True)
+                data_id = tmp_example.id_
+                for result in example_results:
+                    if not result.labels:
+                        continue
+                    for label in result.labels:
+                        predicting_result = PredictingResult(
+                            predicting_target=predicting_target,
+                            label_name=label,
+                            # score=score,
+                            data_id=data_id,
+                            source_author=f"{tmp_example.s_id}_{tmp_example.author}",
+                            applied_model_id=int(result.model.split("_")[0]) if result.model else None,
+                            applied_meta=result.logits.get(label) if hasattr(result.logits,
+                                                                             "get") else result.logits,
+                            applied_content=result.value,
+                            applied_feature=result.feature,
+                            created_at=timezone.now()
+                        )
+                        predicting_result.save()
+                    # print(predicting_result.apply_path)
+        logger.debug(f"target: {predicting_target.name} processed {document_count} documents.")
+        predicting_target.job_status = JobStatus.DONE
+        predicting_target.save()
 
         # if success
         job.job_status = JobStatus.DONE
@@ -163,6 +166,14 @@ def predict_task(job: PredictingJob):
     finally:
         job.save()
 
+
 # todo 貼標結果抽驗
 # 各標籤抽驗
 # 抽驗結果下載
+
+def get_queued_tasks_id():
+    return [t.task_id() for t in OrmQ.objects.all()]
+
+
+def get_queued_tasks_dict():
+    return {t.task_id(): t for t in OrmQ.objects.all()}

@@ -1,7 +1,12 @@
+import re
+from typing import Type
+
+import math
 from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
+from django.db.models import Count
 from django.urls import reverse
 
 from audience_toolkits.settings import PREDICT_DATABASE
@@ -10,6 +15,7 @@ from modeling_jobs.models import ModelingJob
 
 
 class JobStatus(models.TextChoices):
+    CREATED = ('created', 'ˇ已建立')
     WAIT = ('wait', '等待中')
     PROCESSING = ('processing', '處理中')
     BREAK = ('break', '中斷')
@@ -92,6 +98,7 @@ class PredictingTarget(models.Model):
     min_content_length = models.IntegerField(verbose_name='最小文章長度', default=10)
     max_content_length = models.IntegerField(verbose_name='最大文章長度', default=2000)
     job_status = models.CharField(max_length=20, verbose_name="任務狀態", default=JobStatus.WAIT, choices=JobStatus.choices)
+    task_id = models.CharField(max_length=255, verbose_name="排程任務id", null=True, default=None)
     error_message = models.TextField(verbose_name="錯誤訊息", null=True)
 
     def __str__(self):
@@ -103,6 +110,12 @@ class PredictingTarget(models.Model):
 
     def get_absolute_url(self):
         return reverse('predicting_jobs:job-detail', kwargs={'pk': self.predicting_job_id})
+
+    def get_group_by_source_author(self):
+        return self.predictingresult_set.values('source_author').distinct()
+
+    def get_group_by_source_author_label(self):
+        return self.predictingresult_set.values('source_author', 'label_name').distinct()
 
 
 class PredictingResult(models.Model):

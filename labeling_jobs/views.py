@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from random import shuffle
@@ -23,6 +24,9 @@ from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleDat
 from .serializers import LabelingJobSerializer, LabelSerializer, RuleSerializer, UploadFileJobSerializer, \
     DocumentSerializer
 from .tasks import import_csv_data_task, generate_datasets_task
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
@@ -239,6 +243,7 @@ class LabelCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
+        print(job_id)
         return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
 
 
@@ -274,7 +279,7 @@ class LabelDetail(SingleObjectMixin, generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['label'] = self.object
-        job = self.object.job
+        job = self.object.labeling_job
         # rule form for keyword rule job
         if job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
             rule_form = RuleForm({'job': job.id, 'score': 1, 'label': self.object.id})
@@ -287,15 +292,15 @@ class LabelDetail(SingleObjectMixin, generic.ListView):
         return context
 
     def get_template_names(self):
-        if self.object.job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
-                                             LabelingJob.DataTypes.REGEX_MODEL}:
+        if self.object.labeling_job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
+                                                      LabelingJob.DataTypes.REGEX_MODEL}:
             return 'rules/label_rule_detail.html'
         else:
             return 'documents/label_document_detail.html'
 
     def get_queryset(self):
-        if self.object.job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
-                                             LabelingJob.DataTypes.REGEX_MODEL}:
+        if self.object.labeling_job.job_data_type in {LabelingJob.DataTypes.RULE_BASE_MODEL,
+                                                      LabelingJob.DataTypes.REGEX_MODEL}:
             return self.object.rule_set.all()
         else:
             return self.object.document_set.order_by('pk')
@@ -307,7 +312,7 @@ class RuleUpdate(LoginRequiredMixin, generic.UpdateView):
     template_name = 'rules/update_form.html'
 
     def get_form_class(self):
-        if self.object.job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
+        if self.object.labeling_job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
             return RegexForm
         else:
             return RuleForm
@@ -413,8 +418,9 @@ def download_sample_data(request, sample_data_id):
     sample_data = SampleData.objects.get(pk=sample_data_id)
     file_path = sample_data.file.path
     if os.path.exists(file_path):
-        response = FileResponse(open(file_path, 'rb'))
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=sample_data.get_file_name())
         return response
+    logger.error(f"File '{file_path}' missing.")
     raise Http404
 
 
@@ -458,8 +464,8 @@ class LabelSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        job_id = request.data['job_id']
-        job = LabelingJob.objects.filter(id=job_id).first()
+        labeling_job_id = request.data['labeling_job_id']
+        job = LabelingJob.objects.filter(id=labeling_job_id).first()
         serializer.save(job=job, )
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -481,28 +487,28 @@ class RuleSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        job = LabelingJob.objects.filter(id=request.data["job_id"]).first()
-        label = Label.objects.filter(id=request.data["label_id"]).first()
-        serializer.save(job=job, label=label, created_by=request.user)
+        job = LabelingJob.objects.get(pk=request.data["labeling_job_id"])
+        label = Label.objects.get(pk=request.data["label_id"])
+        serializer.save(labeling_job=job, label=label, created_by=request.user)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_queryset(self):
-        job_id = self.kwargs.get("job_id", None)
-        if job_id:
-            return Rule.objects.filter(job_id=job_id).order_by('id')
+        labeling_job_id = self.kwargs.get("labeling_job_id", None)
+        if labeling_job_id:
+            return Rule.objects.filter(labeling_job_id=labeling_job_id).order_by('id')
         else:
             return Rule.objects.all().order_by('id')
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        job = LabelingJob.objects.filter(id=request.data["job"]).first()
-        label = Label.objects.filter(id=request.data["label"]).first()
+        job = LabelingJob.objects.get(pk=request.data["job"])
+        label = Label.objects.get(pk=request.data["label"])
 
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        serializer.save(job=job, label=label, created_by=instance.created_by)
+        serializer.save(labeling_job=job, label=label, created_by=instance.created_by)
 
         return Response(serializer.data)
 
@@ -523,16 +529,16 @@ class DocumentSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        job_id = self.kwargs.get("job_id", None)
-        if job_id:
-            return Document.objects.filter(labeling_job_id=job_id).order_by('id')
+        labeling_job_id = self.kwargs.get("labeling_job_id", None)
+        if labeling_job_id:
+            return Document.objects.filter(labeling_job_id=labeling_job_id).order_by('id')
         else:
             return Document.objects.all().order_by('id')
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        labels = Label.objects.filter(id=request.data["label_id"])
+        labels = Label.objects.get(pk=request.data["label_id"])
 
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)

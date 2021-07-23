@@ -7,7 +7,7 @@ class UploadFileJobForm(forms.ModelForm):
     class Meta:
         model = UploadFileJob
         fields = '__all__'
-        exclude = ['job', 'job_status', 'created_by']
+        exclude = ['labeling_job', 'job_status', 'created_by']
         widgets = {
             'file': forms.FileInput(attrs={'class': '.form-control-file.', }),
         }
@@ -46,9 +46,9 @@ class LabelForm(forms.ModelForm):
 
     class Meta:
         model = Label
-        fields = ["job", "name", "description", "target_amount"]
+        fields = ["labeling_job", "name", "description", "target_amount"]
         widgets = {
-            'job': forms.Select(attrs={'class': 'form-control', 'disabled': False}),
+            'labeling_job': forms.Select(attrs={'class': 'form-control', 'disabled': False}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
             'target_amount': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -63,10 +63,10 @@ class LabelForm(forms.ModelForm):
 class KeywordForm(forms.ModelForm):
     class Meta:
         model = Label
-        fields = ["job", "name", "description"]
+        fields = ["labeling_job", "name", "description"]
         exclude = ["target_amount"]
         widgets = {
-            'job': forms.Select(attrs={'class': 'form-control', 'disabled': False}),
+            'labeling_job': forms.Select(attrs={'class': 'form-control', 'disabled': False}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
             'created_by': forms.TextInput(attrs={'hidden': True})
@@ -99,7 +99,7 @@ class RuleForm(forms.ModelForm):
         fields = "__all__"
         exclude = ['created_at', 'created_by', 'rule_type']
         widgets = {
-            'job': forms.Select(attrs={'class': 'form-control'}),
+            'labeling_job': forms.Select(attrs={'class': 'form-control'}),
             'content': forms.TextInput(attrs={'class': 'form-control', 'rows': 3}),
             'label': forms.Select(attrs={'class': 'form-control'}),
             'match_type': forms.Select(attrs={'class': 'form-control'}),
@@ -119,14 +119,14 @@ class RegexForm(forms.ModelForm):
             self.fields['label'].queryset = Label.objects.filter(
                 job_id=job_id)
         else:
-            self.fields['label'].queryset = self.instance.job.label_set.all()
+            self.fields['label'].queryset = self.instance.labeling_job.label_set.all()
 
     class Meta:
         model = Rule
         fields = "__all__"
         exclude = ['created_at', 'created_by', 'match_type', 'score', 'rule_type']
         widgets = {
-            'job': forms.Select(attrs={'class': 'form-control'}),
+            'labeling_job': forms.Select(attrs={'class': 'form-control'}),
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'label': forms.Select(attrs={'class': 'form-control'}),
         }

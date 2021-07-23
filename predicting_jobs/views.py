@@ -6,13 +6,15 @@ from django.db import IntegrityError
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy
 from django.views import generic
-from django_q.tasks import AsyncTask
+
+from django_q.models import Task
+from django_q.tasks import async_task
 from rest_framework import viewsets, permissions, filters
 
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
-from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult
+from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult, JobStatus
 from predicting_jobs.serializers import JobSerializer, ResultSerializer, TargetSerializer, ApplyingModelSerializer
-from predicting_jobs.tasks import predict_task
+from predicting_jobs.tasks import predict_task, get_queued_tasks_id, get_queued_tasks_dict
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -168,20 +170,20 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
     template_name = "predicting_target/predict_result.html"
     context_object_name = 'result_rows'
 
-    def get_queryset(self):
-        label_name = self.request.GET.dict().get("label_name")
-        if label_name:
-            return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'), label_name=label_name)
-        else:
-            return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'))
+    # def get_queryset(self):
+    #     label_name = self.request.GET.dict().get("label_name")
+    #     # if label_name:
+    #     #     return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'), label_name=label_name)
+    #     # else:
+    #     #     return PredictingResult.objects.filter(predicting_target=self.kwargs.get('pk'))
 
     def get_context_data(self, **kwargs):
-        label_name = self.request.GET.dict().get("label_name")
+        # label_name = self.request.GET.dict().get("label_name")
         context = super(PredictResultSamplingListView, self).get_context_data(**kwargs)
         # todo 待測試multi-label時的狀況
-        context['exist_labels'] = sorted(
-            [labels[0] for labels in set(PredictingResult.objects.values_list("label_name"))])
-        context['current_label'] = label_name
+        # context['exist_labels'] = sorted(
+        #     [labels[0] for labels in set(PredictingResult.objects.values_list("label_name"))])
+        # context['current_label'] = label_name
         context['predicting_target'] = PredictingTarget.objects.get(pk=self.kwargs.get('pk'))
         context['predicting_job'] = PredictingJob.objects.get(pk=self.kwargs.get('job_id'))
         return context
@@ -189,20 +191,75 @@ class PredictResultSamplingListView(LoginRequiredMixin, generic.ListView):
 
 def start_job(request, pk):
     if request.method == 'POST':
-        logger.debug("start predicting")
+        target_id = request.GET.get('target_id', None)
+        logger.info(request.POST)
         job = PredictingJob.objects.get(pk=pk)
-        a = AsyncTask(predict_task, job, group="predicting_audience")
-        a.run()
+
+        if target_id:
+            target_set = [job.predictingtarget_set.get(pk=target_id)]
+        else:
+            target_set = job.predictingtarget_set.all()
+
+        for target in target_set:
+            target.job_status = JobStatus.WAIT
+            target.error_message = ""
+            target.save()
+
+        logger.info(f'Predict targets: {[target.name for target in target_set]}')
+        queued_tasks: dict = get_queued_tasks_dict()
+        for target in target_set:
+            task_name = f"{job.name}-{target.name}"
+            task_id = target.task_id
+            task = queued_tasks.get(task_id)
+            if not task:
+                task_id = async_task(predict_task, job=job, predicting_target=target, group="predicting_audience",
+                                     task_name=f"{job.name}-{target.name}")
+                target.task_id = task_id
+                target.save()
+                logger.info(f"task_id= {task_id}")
+            else:
+                logger.warning(f"task: {task_name} exist in queue, skip.")
+        return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
+    return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
+
+
+def cancel_job(request, pk):
+    if request.method == 'POST':
+        target_id = request.GET.get('target_id', None)
+        logger.info(request.POST)
+        job = PredictingJob.objects.get(pk=pk)
+
+        if target_id:
+            target_set = [job.predictingtarget_set.get(pk=target_id)]
+        else:
+            target_set = job.predictingtarget_set.all()
+
+        logger.info(f'Canceling targets: {[target.name for target in target_set]}')
+
+        queued_tasks: dict = get_queued_tasks_dict()
+        for target in target_set:
+            task_id = target.task_id
+            task = queued_tasks.get(task_id)
+            logger.debug(task)
+            if task:
+                logger.info(f"Canceling job {target}...")
+                task.delete()
+            target.job_status = JobStatus.BREAK
+            target.error_message = "Canceled by user."
+            target.task_id = None
+            target.save()
+
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
 
 
 def get_progress(request, pk):
     job = PredictingJob.objects.get(pk=pk)
-
     response_data = {
         'state': job.job_status,
-        'details': {target.name: target.job_status for target in job.predictingtarget_set.all()},
+        'details': {target.id: {"status": target.get_job_status_display(),
+                                "document_count": target.predictingresult_set.count()} for target in
+                    job.predictingtarget_set.all()},
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
@@ -240,11 +297,9 @@ class ResultViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
-    queryset = PredictingResult.objects.all().order_by('-created_at')
+    queryset = PredictingResult.objects.all()
     serializer_class = ResultSerializer
     permission_classes = [permissions.IsAuthenticated]
-    # filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    # search_fields = "__all__"
 
     def get_queryset(self):
         """
@@ -252,8 +307,12 @@ class ResultViewSet(viewsets.ModelViewSet):
         the user as determined by the username portion of the URL.
         """
         target_id = self.request.query_params.get('target_id')
+        source_author = self.request.query_params.get('source_author')
         logger.debug(target_id)
+        query_set = PredictingResult.objects.all()
         if target_id:
-            return PredictingResult.objects.filter(predicting_target_id=target_id).order_by('-created_at')
-        else:
-            return PredictingResult.objects.all().order_by('-created_at')
+            query_set = query_set.filter(predicting_target_id=target_id)
+        if source_author:
+            query_set = query_set.filter(source_author=source_author)
+
+        return query_set.order_by('-created_at')

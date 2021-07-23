@@ -38,10 +38,10 @@ class LabelSerializer(serializers.HyperlinkedModelSerializer):
     #     lookup_field='labeling_job_id',
     #     lookup_url_kwarg="pk",
     # )
-    job = serializers.StringRelatedField()
+    labeling_job = serializers.StringRelatedField()
 
     # job_id用來指定對應到的job
-    job_id = serializers.IntegerField(label="Job ID", required=True)
+    labeling_job_id = serializers.IntegerField(label="Job ID", required=True)
 
     class Meta:
         model = Label
@@ -53,8 +53,8 @@ class LabelSerializer(serializers.HyperlinkedModelSerializer):
 class RuleSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
     url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:rule-detail")
-    job = serializers.StringRelatedField()
-    job_id = serializers.IntegerField(label="Job ID", required=False)
+    labeling_job = serializers.StringRelatedField()
+    labeling_job_id = serializers.IntegerField(label="Job ID", required=False)
     label = serializers.StringRelatedField()
     label_id = serializers.IntegerField(label="Label ID", required=False)
     created_by = serializers.StringRelatedField()
@@ -68,8 +68,8 @@ class RuleSerializer(serializers.HyperlinkedModelSerializer):
 
 class UploadFileJobSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    job = serializers.StringRelatedField()
-    job_id = serializers.IntegerField(label="Job ID", required=False)
+    labeling_job = serializers.StringRelatedField()
+    labeling_job_id = serializers.IntegerField(label="Job ID", required=False)
     # jobRef = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:job-detail")
     file = serializers.CharField(label="file")
     created_by = serializers.StringRelatedField()
@@ -104,7 +104,7 @@ class DocumentSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_all_labels(self, obj):
         all_labels = Label.objects.filter(
-            job_id=obj.labeling_job_id
+            labeling_job_id=obj.labeling_job_id
         ).values_list(
             "id", "name"
         )
