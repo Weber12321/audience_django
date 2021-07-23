@@ -195,15 +195,14 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = URL_PREFIX + '/static/'
-STATIC_ROOT = BASE_DIR / 'static' / 'deploy'  # production時，呼叫 python manage.py collectstatic 統整靜態檔案輸出位置
+STATIC_ROOT = BASE_DIR / 'static'  # production時，呼叫 python manage.py collectstatic 統整靜態檔案輸出位置
 LOGIN_URL = URL_PREFIX + '/accounts/login/'
 LOGIN_REDIRECT_URL = URL_PREFIX + '/dashboard/'
 LOGOUT_REDIRECT_URL = URL_PREFIX + '/'
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'static' / 'dev',
+    BASE_DIR / 'staticfiles',
 ]
-
 # tmp files
 UPLOAD_FILE_DIRECTORY = 'upload_files'
 SAMPLE_DATA_FILE_DIRECTORY = 'sample_data_files'

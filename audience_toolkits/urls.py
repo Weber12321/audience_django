@@ -15,9 +15,9 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.contrib.staticfiles import views
 from django.views import static
-# from django.conf.urls.static import static
 
 from audience_toolkits import settings
 
@@ -31,8 +31,11 @@ urlpatterns = [
     url(r'^static/(?P<path>.*)$', static.serve,
         {'document_root': settings.STATIC_ROOT}, name='static'),
 ]
-# urlpatterns += static(r'^static/(?P<path>.*)$', static_view.serve, document_root=settings.STATIC_ROOT,
-#                       name='static')
+
+if settings.DEBUG:
+    urlpatterns += [
+        re_path(r'^static/(?P<path>.*)$', views.serve),
+    ]
 
 # global url prefix
 
