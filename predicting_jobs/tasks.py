@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import List, Iterable
 
 from django.utils import timezone
+from django_q.models import OrmQ
 from tqdm import tqdm
 
 from audience_toolkits import settings
@@ -165,6 +166,14 @@ def predict_task(job: PredictingJob, predicting_target: PredictingTarget):
     finally:
         job.save()
 
+
 # todo 貼標結果抽驗
 # 各標籤抽驗
 # 抽驗結果下載
+
+def get_queued_tasks_id():
+    return [t.task_id() for t in OrmQ.objects.all()]
+
+
+def get_queued_tasks_dict():
+    return {t.task_id(): t for t in OrmQ.objects.all()}

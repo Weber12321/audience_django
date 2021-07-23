@@ -6,13 +6,15 @@ from django.db import IntegrityError
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy
 from django.views import generic
-from django_q.tasks import AsyncTask, async_task
+
+from django_q.models import Task
+from django_q.tasks import async_task
 from rest_framework import viewsets, permissions, filters
 
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
 from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult, JobStatus
 from predicting_jobs.serializers import JobSerializer, ResultSerializer, TargetSerializer, ApplyingModelSerializer
-from predicting_jobs.tasks import predict_task
+from predicting_jobs.tasks import predict_task, get_queued_tasks_id, get_queued_tasks_dict
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -197,17 +199,26 @@ def start_job(request, pk):
             target_set = [job.predictingtarget_set.get(pk=target_id)]
         else:
             target_set = job.predictingtarget_set.all()
+
         for target in target_set:
             target.job_status = JobStatus.WAIT
             target.error_message = ""
             target.save()
 
         logger.info(f'Predict targets: {[target.name for target in target_set]}')
-
+        queued_tasks: dict = get_queued_tasks_dict()
         for target in target_set:
-            async_task(predict_task, job=job, predicting_target=target, group="predicting_audience",
-                       task_name=f"{job.name}-{target.name}")
-
+            task_name = f"{job.name}-{target.name}"
+            task_id = target.task_id
+            task = queued_tasks.get(task_id)
+            if not task:
+                task_id = async_task(predict_task, job=job, predicting_target=target, group="predicting_audience",
+                                     task_name=f"{job.name}-{target.name}")
+                target.task_id = task_id
+                target.save()
+                logger.info("task_id=", task_id)
+            else:
+                logger.warning(f"task: {task_name} exist in queue, skip.")
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
 
@@ -217,6 +228,7 @@ def cancel_job(request, pk):
         target_id = request.GET.get('target_id', None)
         logger.info(request.POST)
         job = PredictingJob.objects.get(pk=pk)
+
         if target_id:
             target_set = [job.predictingtarget_set.get(pk=target_id)]
         else:
@@ -224,11 +236,19 @@ def cancel_job(request, pk):
 
         logger.info(f'Canceling targets: {[target.name for target in target_set]}')
 
+        queued_tasks: dict = get_queued_tasks_dict()
         for target in target_set:
-            logger.info(f"Canceling job {target}...")
-            target.job_status = JobStatus.BREAK
-            target.error_message = "Canceled by user."
-            target.save()
+            task_id = target.task_id
+            task = queued_tasks.get(task_id)
+            logger.debug(task)
+
+            if task:
+                logger.info(f"Canceling job {target}...")
+                task.delete()
+                target.job_status = JobStatus.BREAK
+                target.error_message = "Canceled by user."
+                target.task_id = None
+                target.save()
 
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
