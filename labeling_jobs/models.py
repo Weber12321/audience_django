@@ -76,7 +76,7 @@ class Label(models.Model):
     job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     name = models.CharField(max_length=100, verbose_name="標籤名稱")
     description = models.TextField(verbose_name="標籤定義", blank=True)
-    target_amount = models.IntegerField(verbose_name="目標數量", default=200)
+    target_amount = models.IntegerField(verbose_name="目標數量", default=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
 

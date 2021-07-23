@@ -220,7 +220,7 @@ def create_documents(file, job: LabelingJob, required_fields=None, document_type
                 if label_object:
                     doc.labels.add(label_object)
                 elif update_labels:
-                    doc.labels.create(name=_label_name, labeling_job_id=job.id)
+                    doc.labels.create(name=_label_name, job_id=job.id)
                     doc.save()
                     job_labels_dict = job.get_labels_dict()
     return documents.count()

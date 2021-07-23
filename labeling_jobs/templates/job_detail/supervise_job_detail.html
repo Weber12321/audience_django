@@ -152,6 +152,37 @@
                         沒有設定標籤
                     </div>
                 {% endfor %}
+
+                <div class="col-lg-12">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="h5">文章列表</h6>
+                        <span class="card-link">
+                            <a href="" data-toggle="modal" data-target="#labelFormModal"
+                               class="btn btn-sm btn-outline-primary">新增標籤</a>
+                        </span>
+                    </div>
+                    <hr>
+                    <div class="card mb-4">
+                        <div class="card-header py-3 d-flex justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">文章列表</h6>
+                        </div>
+                        <div class="card-body">
+                            <table id="content-table" class="table">
+                                <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">內文</th>
+                                    <th scope="col">標籤</th>
+                                    <th scope="col">資料類型</th>
+                                    <th scope="col">所選標籤</th>
+                                    <th scope="col">網址</th>
+                                    <th scope="col">功能</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -248,7 +279,8 @@
         </div>
     </div>
     <!-- Modal -->
-    <div class="modal fade" id="jobUpdateModal" tabindex="-1" aria-labelledby="jobUpdateModalLabel" aria-hidden="true">
+    <div class="modal fade" id="jobUpdateModal" tabindex="-1" aria-labelledby="jobUpdateModalLabel"
+         aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -350,4 +382,105 @@
             </div>
         </div>
     </div>
+{% endblock %}
+{% block custom_script %}
+    <script>
+        var table = $("#content-table").DataTable({
+            serverSide: true,
+            ajax: "{% url 'labeling_jobs:api-document-detail' labeling_job.id %}?format=datatables",
+            columnDefs: [
+                {"visible": false, "targets": [4, 5]}
+            ],
+            columns: [
+                {
+                    data: 'id',
+                    searchable: false
+                },
+                {
+                    data: 'content'
+                },
+                {
+                    data: 'labels',
+                    render: function (data, type, row, meta) {
+                        return data[0].name;
+                    }
+                },
+                {
+                    data: 'document_type',
+                    render: function (data, type, row, meta) {
+                        if (!data) {
+                            return "沒被分配到任何資料集";
+                        } else {
+                            return data;
+                        }
+                    }
+                },
+                {
+                    data: 'all_labels',
+                },
+                {
+                    data: 'url'
+                },
+                {
+                    data: 'labeling_job',
+                    sortable: false,
+                    searchable: false,
+                    render: function (data, type, row, meta) {
+                        edit_btn = '<a href="" ' +
+                            'data-toggle="modal" ' +
+                            'data-target="#ruleFormModal" ' +
+                            `data-rule-url=${row.url} ` +
+                            `data-rule-content=${row.content} ` +
+                            `data-rule-label=${data} ` +
+                            `data-rule-match_type=${row.match_type} ` +
+                            'class="update-rule mr-3">修改</a>'
+                        delete_btn = '<a href="" ' +
+                            `data-rule-url=${row.url} ` +
+                            `data-rule-content=${row.content} ` +
+                            `data-rule-labels=${row.labels[0].name} ` +
+                            'class="delete-rule text-danger">刪除</a>'
+                        return edit_btn + delete_btn
+
+                    }
+                }
+            ]
+        });
+
+        $(document).ready(function () {
+            table.ajax.reload()
+        });
+
+        // todo: update content list
+        $(document).on("click", ".update-rule", function () {
+            const form = $('#ruleFormModal form');
+            form.data("rule-url", $(this).data('ruleUrl'));
+            $("#ruleFormModalLabel").text('修改詞彙權重');
+            $("#id_content").val($(this).data('ruleContent'));
+            $("#id_label").val($(this).data('ruleLabel'));
+            $("#id_match_type").val($(this).data('ruleMatch_type'));
+        });
+
+        $(document).on("click", ".delete-rule", function () {
+            const content = String($(this).data('ruleContent'));
+            const label = String($(this).data('ruleLabels'));
+            const confirm_str = prompt(`確認要刪除屬於「${label}」標籤的詞彙「${content}」嗎？ 請輸入詞彙「${content}」確認刪除。`);
+            if (confirm_str && String(confirm_str).trim() === content.trim()) {
+                $.ajax({
+                    url: $(this).data('ruleUrl'),
+                    type: "DELETE",
+                    beforeSend: function (xhr, settings) {
+                        xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                    },
+                    success: function (data) {
+                        {#alert(`詞彙「${rule}」刪除成功。`)#}
+                        table.ajax.reload()
+                    }
+                });
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+            } else {
+                alert(`取消刪除「${content}」`)
+            }
+        });
+    </script>
 {% endblock %}

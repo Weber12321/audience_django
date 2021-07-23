@@ -1,7 +1,9 @@
+import json
+
 from django_q.tasks import async_task
 from rest_framework import serializers
 
-from labeling_jobs.models import LabelingJob, Label, Rule, UploadFileJob
+from labeling_jobs.models import LabelingJob, Label, Rule, UploadFileJob, Document
 from labeling_jobs.tasks import import_csv_data_task
 
 
@@ -83,3 +85,29 @@ class UploadFileJobSerializer(serializers.ModelSerializer):
         )
         async_task(import_csv_data_task, upload_job=upload_file_job, group='upload_documents')
         return upload_file_job
+
+
+class DocumentSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:document-detail")
+    labeling_job = serializers.StringRelatedField()
+    labeling_job_id = serializers.IntegerField(label="Labeling Job ID", required=False)
+
+    # labels = serializers.StringRelatedField(many=True)
+    labels = LabelSerializer(many=True)
+    all_labels = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        # fields = ["id", "url", "labeling_job", "labels_name"]
+        fields = "__all__"
+
+    def get_all_labels(self, obj):
+        all_labels = Label.objects.filter(
+            job_id=obj.labeling_job_id
+        ).values_list(
+            "id", "name"
+        )
+        return [{"id": i, "name": name} for i, name in all_labels]
+
+

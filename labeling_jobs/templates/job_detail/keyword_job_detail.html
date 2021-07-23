@@ -366,9 +366,6 @@
 
 {% block custom_script %}
     <script>
-        {#$(document).ready(function () {#}
-        {#    $('#rule-table').DataTable();#}
-
         var table = $('#rule-table').DataTable(
             {
                 serverSide: true,
@@ -446,7 +443,7 @@
             const content = String($(this).data('ruleContent'));
             const label = String($(this).data('ruleLabel'));
             const confirm_str = prompt(`確認要刪除屬於「${label}」標籤的詞彙「${content}」嗎？ 請輸入詞彙「${content}」確認刪除。`);
-            if (confirm_str && String(confirm_str).trim() == content.trim()) {
+            if (confirm_str && String(confirm_str).trim() === content.trim()) {
                 $.ajax({
                     url: $(this).data('ruleUrl'),
                     type: "DELETE",

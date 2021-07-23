@@ -20,7 +20,8 @@ from rest_framework_datatables.django_filters.filterset import DatatablesFilterS
 from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm
 from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleData
 
-from .serializers import LabelingJobSerializer, LabelSerializer, RuleSerializer, UploadFileJobSerializer
+from .serializers import LabelingJobSerializer, LabelSerializer, RuleSerializer, UploadFileJobSerializer, \
+    DocumentSerializer
 from .tasks import import_csv_data_task, generate_datasets_task
 
 
@@ -165,17 +166,6 @@ def generate_dataset(request, job_id):
     return HttpResponseRedirect(reverse('labeling_jobs:job-detail', kwargs={'pk': job_id}))
 
 
-def label_without_target_amount(obj, kwargs):
-    job = LabelingJob.objects.get(pk=obj.kwargs.get('job_id'))
-    if job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL or \
-            job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-        if obj.request.method in ('POST', 'PUT'):
-            kwargs.pop("data")
-            query_dict = obj.request.POST.copy()
-            query_dict.update({"target_amount": 0})
-            kwargs.update({"data": query_dict})
-
-
 class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
     model = UploadFileJob
     form_class = UploadFileJobForm
@@ -183,8 +173,7 @@ class UploadFileJobCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_success_url(self):
         # 利用django-q實作非同步上傳
-        a = async_task(import_csv_data_task, upload_job=self.object, group='upload_documents')
-        a.run()
+        async_task(import_csv_data_task, upload_job=self.object, group='upload_documents')
         job_id = self.kwargs['job_id']
         return reverse_lazy('labeling_jobs:job-detail', kwargs={'pk': job_id})
 
@@ -215,11 +204,6 @@ class LabelUpdate(LoginRequiredMixin, generic.UpdateView):
     form_class = LabelForm
     template_name = 'labels/update_form.html'
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        label_without_target_amount(obj=self, kwargs=kwargs)
-        return kwargs
-
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
         pk = self.kwargs.get('pk')
@@ -244,11 +228,6 @@ class LabelCreate(LoginRequiredMixin, generic.CreateView):
     #         return self.form_valid(form)
     #     else:
     #         return self.form_invalid(form)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        label_without_target_amount(obj=self, kwargs=kwargs)
-        return kwargs
 
     def form_valid(self, form):
         form.instance.job_id = self.kwargs.get('job_id')
@@ -463,7 +442,7 @@ class LabelingJobsSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
-    queryset = LabelingJob.objects.all().order_by("-created_at")
+    queryset = LabelingJob.objects.all().order_by("created_at")
     serializer_class = LabelingJobSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -472,7 +451,7 @@ class LabelSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
-    queryset = Label.objects.all().order_by("-id")
+    queryset = Label.objects.all().order_by("id")
     serializer_class = LabelSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -490,7 +469,7 @@ class RuleSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
-    queryset = Rule.objects.all().order_by("-id")
+    queryset = Rule.objects.all().order_by("id")
     serializer_class = RuleSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -530,6 +509,33 @@ class RuleSet(viewsets.ModelViewSet):
 
 class UploadFileJobSet(mixins.ListModelMixin, mixins.CreateModelMixin,
                        mixins.DestroyModelMixin, viewsets.GenericViewSet):
-    queryset = UploadFileJob.objects.all().order_by("-id")
+    queryset = UploadFileJob.objects.all().order_by("id")
     serializer_class = UploadFileJobSerializer
     # permissions_classes = [permissions.IsAuthenticated]
+
+
+class DocumentSet(viewsets.ModelViewSet):
+    """
+    Document CRUD API endpoint that allows users to be viewed.
+    """
+    queryset = Document.objects.all().order_by("id")
+    serializer_class = DocumentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        job_id = self.kwargs.get("job_id", None)
+        if job_id:
+            return Document.objects.filter(labeling_job_id=job_id).order_by('id')
+        else:
+            return Document.objects.all().order_by('id')
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        labels = Label.objects.filter(id=request.data["label_id"])
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(labels=labels)
+
+        return Response(serializer.data)
