@@ -15,7 +15,7 @@ from modeling_jobs.models import ModelingJob
 
 
 class JobStatus(models.TextChoices):
-    CREATED = ('created', 'ˇ已建立')
+    CREATED = ('created', '已建立')
     WAIT = ('wait', '等待中')
     PROCESSING = ('processing', '處理中')
     BREAK = ('break', '中斷')

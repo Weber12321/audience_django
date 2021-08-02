@@ -8,8 +8,8 @@ from predicting_jobs.models import PredictingJob, PredictingResult, PredictingTa
 
 
 class TargetSerializer(serializers.ModelSerializer):
-    results = serializers.HyperlinkedIdentityField(lookup_field='id', lookup_url_kwarg='target_id',
-                                                   view_name='predicting_jobs:target-results')
+    # results = serializers.HyperlinkedIdentityField(lookup_field='id', lookup_url_kwarg='predicting_target_id',
+    #                                                view_name='predicting_jobs:target-results')
 
     class Meta:
         model = PredictingTarget
@@ -25,7 +25,7 @@ class TargetSerializer(serializers.ModelSerializer):
             "error_message",
             "predicting_job",
             "source",
-            "results"
+            # "results"
         ]
     # todo 如何設定label
 
@@ -88,4 +88,5 @@ class ResultSerializer(serializers.ModelSerializer):
             'created_at',
             'model_meta',
             'applied_model_url',
+            'predicting_target',
         ]
