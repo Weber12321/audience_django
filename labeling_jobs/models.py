@@ -76,7 +76,7 @@ class Label(models.Model):
     labeling_job = models.ForeignKey(LabelingJob, on_delete=models.CASCADE, verbose_name="所屬任務")
     name = models.CharField(max_length=100, verbose_name="標籤名稱")
     description = models.TextField(verbose_name="標籤定義", blank=True)
-    target_amount = models.IntegerField(verbose_name="目標數量", default=200)
+    target_amount = models.IntegerField(verbose_name="目標數量", default=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="最後更改")
 
@@ -88,7 +88,7 @@ class Label(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('labeling_jobs:label-detail', kwargs={'job_id': self.labeling_job.id, 'pk': self.pk})
+        return reverse('labeling_jobs:labels-detail', kwargs={'job_id': self.labeling_job.id, 'pk': self.pk})
 
     def show_document_amount(self):
         return self.document_set.exclude(document_type=Document.TypeChoices.EXT_TEST).count()
@@ -208,7 +208,7 @@ class Rule(models.Model):
         return f"<'{self.label}'>, {self.score}, {self.content}"
 
     def get_absolute_url(self):
-        return reverse('labeling_jobs:job-detail', kwargs={'pk': self.labeling_job.id})
+        return reverse('labeling_jobs:job-detail', kwargs={'pk': self.job.id})
 
     class Meta:
         verbose_name = "規則"

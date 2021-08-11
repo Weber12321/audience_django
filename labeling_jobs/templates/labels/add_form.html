@@ -6,7 +6,7 @@
         {% for field in form %}
             <div class="form-group">
                 {% if field.name == 'target_amount' %}
-                    {% if label.labeling_job.job_data_type == 'supervise_model' %}
+                    {% if label.job.job_data_type == 'supervise_model' or label.job.job_data_type == 'term_weight' %}
                         {{ field.label_tag }}
                         {{ field }}
                         {{ field.errors }}
