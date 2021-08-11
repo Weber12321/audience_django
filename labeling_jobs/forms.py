@@ -85,14 +85,14 @@ class RuleForm(forms.ModelForm):
         # print("label_id", label_id)
         super(RuleForm, self).__init__(*args, **kwargs)
 
-        job_id = self.data.get('job', None)
+        labeling_job_id = self.data.get('labeling_job', None)
 
         if label_id:
             self.fields['label'].queryset = Label.objects.filter(label_id=label_id)
         else:
-            if job_id:
+            if labeling_job_id:
                 self.fields['label'].queryset = Label.objects.filter(
-                    job_id=job_id)
+                    labeling_job_id=labeling_job_id)
 
     class Meta:
         model = Rule
