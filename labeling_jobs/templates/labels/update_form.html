@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
     <form method="post">
+        {% csrf_token %}
         <legend>修改標籤</legend>
         {{ error }}
         {% for field in form %}
             <div class="form-group">
                 {% if field.name == 'target_amount' %}
-                    {% if label.labeling_job.job_data_type == 'supervise_model' %}
+                    {% if label.labeling_job.job_data_type == 'supervise_model' or label.labeling_job.job_data_type == 'term_weight' %}
                         {{ field.label_tag }}
                         {{ field }}
                         {{ field.errors }}

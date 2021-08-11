@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'gemt7w)9ay($n(wbnj0*7t2g-f@^*q$z2-fuob)drj&0mkc=ls'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 URL_PREFIX = '/audience'
 
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_q',
     'rest_framework',
+    'django_filters',
 ]
 
 MIDDLEWARE = [

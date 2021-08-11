@@ -6,15 +6,17 @@ from django.db import IntegrityError
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy
 from django.views import generic
-
-from django_q.models import Task
 from django_q.tasks import async_task
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions
+from django_filters import filters
+from rest_framework_datatables.django_filters.backends import DatatablesFilterBackend
+from rest_framework_datatables.django_filters.filters import GlobalFilter
+from rest_framework_datatables.django_filters.filterset import DatatablesFilterSet
 
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
 from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult, JobStatus
 from predicting_jobs.serializers import JobSerializer, ResultSerializer, TargetSerializer, ApplyingModelSerializer
-from predicting_jobs.tasks import predict_task, get_queued_tasks_id, get_queued_tasks_dict
+from predicting_jobs.tasks import predict_task, get_queued_tasks_dict
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -293,6 +295,31 @@ class TargetViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
+# django-filter datatable
+class GlobalCharFilter(GlobalFilter, filters.CharFilter):
+    pass
+
+
+class PredictingResultFilter(DatatablesFilterSet):
+    """Filter name, artist and genre by name with icontains"""
+    id = GlobalCharFilter(field_name='id', lookup_expr='icontains')
+    applied_content = GlobalCharFilter(field_name='applied_content', lookup_expr='icontains')
+    label = GlobalCharFilter(field_name='label__name', lookup_expr='icontains')
+
+    class Meta:
+        model = PredictingResult
+        fields = [
+            'id',
+            'source_author',
+            'data_id',
+            'label_name',
+            'applied_model',
+            'applied_feature',
+            'applied_content',
+            'created_at'
+        ]
+
+
 class ResultViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
@@ -300,6 +327,8 @@ class ResultViewSet(viewsets.ModelViewSet):
     queryset = PredictingResult.objects.all()
     serializer_class = ResultSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = (DatatablesFilterBackend,)
+    filterset_class = PredictingResultFilter
 
     def get_queryset(self):
         """

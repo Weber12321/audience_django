@@ -37,6 +37,13 @@ class LabelingJobForm(forms.ModelForm):
 
 
 class LabelForm(forms.ModelForm):
+    # def __init__(self, *args, **kwargs):
+    #     super(LabelForm, self).__init__(*args, **kwargs)
+    #     job_data_type = self.data.get("job_data_type", None)
+    #
+    #     if job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
+    #         del self.fields["target_amount"]
+
     class Meta:
         model = Label
         fields = ["labeling_job", "name", "description", "target_amount"]
@@ -53,6 +60,23 @@ class LabelForm(forms.ModelForm):
         }
 
 
+class KeywordForm(forms.ModelForm):
+    class Meta:
+        model = Label
+        fields = ["labeling_job", "name", "description"]
+        exclude = ["target_amount"]
+        widgets = {
+            'labeling_job': forms.Select(attrs={'class': 'form-control', 'disabled': False}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+            'created_by': forms.TextInput(attrs={'hidden': True})
+        }
+        labels = {
+            'name': '標籤名稱',
+            'description': '描述與定義'
+        }
+
+
 class RuleForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         # labeling_job_id = kwargs.get('labeling_job', None)
@@ -61,14 +85,14 @@ class RuleForm(forms.ModelForm):
         # print("label_id", label_id)
         super(RuleForm, self).__init__(*args, **kwargs)
 
-        labeling_job_id = self.data.get('labeling_job', None)
+        job_id = self.data.get('job', None)
 
         if label_id:
             self.fields['label'].queryset = Label.objects.filter(label_id=label_id)
         else:
-            if labeling_job_id:
+            if job_id:
                 self.fields['label'].queryset = Label.objects.filter(
-                    labeling_job_id=labeling_job_id)
+                    job_id=job_id)
 
     class Meta:
         model = Rule
@@ -85,15 +109,15 @@ class RuleForm(forms.ModelForm):
 
 class RegexForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        labeling_job_id = kwargs.pop('labeling_job_id', None)
+        job_id = kwargs.pop('job_id', None)
         label_id = kwargs.pop('label', None)
         super(RegexForm, self).__init__(*args, **kwargs)
 
-        labeling_job_id = self.data.get('labeling_job', labeling_job_id)
+        job_id = self.data.get('job', job_id)
 
-        if labeling_job_id:
+        if job_id:
             self.fields['label'].queryset = Label.objects.filter(
-                labeling_job_id=labeling_job_id)
+                job_id=job_id)
         else:
             self.fields['label'].queryset = self.instance.labeling_job.label_set.all()
 
@@ -113,4 +137,4 @@ class DocumentForm(forms.ModelForm):
         super(DocumentForm, self).__init__(*args, **kwargs)
         if self.instance.labeling_job_id:
             self.fields['labels'].queryset = Label.objects.filter(
-                labeling_job_id=self.instance.labeling_job_id)
+                job_id=self.instance.labeling_job_id)
