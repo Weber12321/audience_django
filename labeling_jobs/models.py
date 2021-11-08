@@ -208,7 +208,7 @@ class Rule(models.Model):
         return f"<'{self.label}'>, {self.score}, {self.content}"
 
     def get_absolute_url(self):
-        return reverse('labeling_jobs:job-detail', kwargs={'pk': self.job.id})
+        return reverse('labeling_jobs:job-detail', kwargs={'pk': self.labeling_job.id})
 
     class Meta:
         verbose_name = "規則"

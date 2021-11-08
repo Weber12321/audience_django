@@ -369,7 +369,7 @@
         var table = $('#rule-table').DataTable(
             {
                 serverSide: true,
-                ajax: "{% url 'labeling_jobs:api-rule-detail' labeling_job.id %}?format=datatables",
+                ajax: "{% url 'labeling_jobs:api-rule-detail' %}?job={{ labeling_job.id }}",
                 columnDefs: [
                     {"visible": false, "targets": [3, 4]}
                 ],

@@ -282,12 +282,12 @@ class LabelDetail(SingleObjectMixin, generic.ListView):
         job = self.object.labeling_job
         # rule form for keyword rule job
         if job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-            rule_form = RuleForm({'job': job.id, 'score': 1, 'label': self.object.id})
+            rule_form = RuleForm({'labeling_job': job.id, 'score': 1, 'label': self.object.id})
             context["rule_form"] = rule_form
 
         # rule form for regex rule job
         if job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
-            regex_form = RegexForm({'job': job.id, 'label': self.object.id})
+            regex_form = RegexForm({'labeling_job': job.id, 'label': self.object.id})
             context["rule_form"] = regex_form
         return context
 
@@ -450,7 +450,7 @@ class LabelingJobsSet(viewsets.ModelViewSet):
     """
     queryset = LabelingJob.objects.all().order_by("created_at")
     serializer_class = LabelingJobSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
 
 class LabelSet(viewsets.ModelViewSet):
@@ -460,6 +460,13 @@ class LabelSet(viewsets.ModelViewSet):
     queryset = Label.objects.all().order_by("id")
     serializer_class = LabelSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        labeling_job_id = self.request.GET.get('labeling_job')
+        if labeling_job_id:
+            return Label.objects.filter(labeling_job_id=labeling_job_id).order_by('id')
+        else:
+            return Label.objects.all().order_by('id')
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -494,7 +501,7 @@ class RuleSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_queryset(self):
-        labeling_job_id = self.kwargs.get("labeling_job_id", None)
+        labeling_job_id = self.request.GET.get('labeling_job')
         if labeling_job_id:
             return Rule.objects.filter(labeling_job_id=labeling_job_id).order_by('id')
         else:
@@ -529,7 +536,7 @@ class DocumentSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        labeling_job_id = self.kwargs.get("labeling_job_id", None)
+        labeling_job_id = self.request.GET.get('labeling_job')
         if labeling_job_id:
             return Document.objects.filter(labeling_job_id=labeling_job_id).order_by('id')
         else:

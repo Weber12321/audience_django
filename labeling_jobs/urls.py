@@ -36,15 +36,16 @@ urlpatterns = [
 # rest-framework settings
 
 router = routers.DefaultRouter()
-router.register("labeling_job", views.LabelingJobsSet)
+router.register("jobs", views.LabelingJobsSet)
 router.register("label", views.LabelSet)
 router.register("rule", views.RuleSet)
 router.register("upload_file_jobs", views.UploadFileJobSet)
 router.register("document", views.DocumentSet)
 
 urlpatterns += [
-    path('apis/rule/<int:job_id>', views.RuleSet.as_view({'get': 'list'}), name='api-rule-detail'),
-    path('apis/document/<int:job_id>', views.DocumentSet.as_view({'get': 'list'}), name='api-document-detail'),
+    path('apis/labels', views.LabelSet.as_view({'get': 'list'}), name='api-label-detail'),
+    path('apis/rules', views.RuleSet.as_view({'get': 'list'}), name='api-rule-detail'),
+    path('apis/documents', views.DocumentSet.as_view({'get': 'list'}), name='api-document-detail'),
     path('apis/', include(router.urls)),
     path('apis/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

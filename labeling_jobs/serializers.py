@@ -11,6 +11,7 @@ class LabelingJobSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
     url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labelingjob-detail")
     created_by = serializers.StringRelatedField()
+    labels = serializers.SerializerMethodField()
 
     class Meta:
         model = LabelingJob
@@ -24,6 +25,12 @@ class LabelingJobSerializer(serializers.HyperlinkedModelSerializer):
             **validated_data
         )
         return labeling_job
+
+    def get_labels(self, object):
+        labels = object.label_set.values_list(
+            "id", "name"
+        )
+        return [{"id": i, "name": name} for i, name in labels]
 
 
 class LabelSerializer(serializers.HyperlinkedModelSerializer):
@@ -109,5 +116,3 @@ class DocumentSerializer(serializers.HyperlinkedModelSerializer):
             "id", "name"
         )
         return [{"id": i, "name": name} for i, name in all_labels]
-
-

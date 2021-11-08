@@ -109,15 +109,24 @@ class RuleForm(forms.ModelForm):
 
 class RegexForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        job_id = kwargs.pop('job_id', None)
-        label_id = kwargs.pop('label', None)
+        if 'data' in kwargs:
+            job_id = kwargs.get('data').get('labeling_job')
+            label_id = kwargs.get('data').get('label')
+        elif 'instance' in kwargs:
+            instance = kwargs.get('instance')
+            job_id = instance.labeling_job_id
+            label_id = instance.label_id
+        else:
+            data = args[0]
+            job_id = data.get('job', None) if 'job' in data else data.get('labeling_job', None)
+            label_id = args[0].pop('label', None)
         super(RegexForm, self).__init__(*args, **kwargs)
 
-        job_id = self.data.get('job', job_id)
+        job_id = self.data.get('job_id', job_id)
 
         if job_id:
             self.fields['label'].queryset = Label.objects.filter(
-                job_id=job_id)
+                id=job_id)
         else:
             self.fields['label'].queryset = self.instance.labeling_job.label_set.all()
 

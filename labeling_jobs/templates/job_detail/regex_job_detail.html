@@ -251,11 +251,11 @@
                         {{ error }}
                         {% for field in label_form %}
                             <div class="form-group">
-{#                                {% if field.name != 'target_amount' %}#}
-                                    {{ field.label_tag }}
-                                    {{ field }}
-                                    {{ field.errors }}
-{#                                {% endif %}#}
+                                {#                                {% if field.name != 'target_amount' %}#}
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {{ field.errors }}
+                                {#                                {% endif %}#}
                             </div>
                         {% endfor %}
                     </div>
@@ -296,4 +296,41 @@
             </div>
         </div>
     </div>
+
+    {% verbatim %}
+    <!-- anywhere on the page -->
+    <template id="example">
+        {{ store.count }}
+        <button @click="store.getJobs">
+            inc
+        </button>
+        {{ store.data }}
+    </template>
+    <div v-scope="incFunc({count: 50})"></div>
+    {% endverbatim %}
 {% endblock %}
+
+
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script type="module">
+    import {createApp, reactive} from "https://unpkg.com/petite-vue?module";
+
+    const store = reactive({
+        count: 0,
+        data: [],
+        async getJobs() {
+            const response = await axios.get('http://127.0.0.1:8000/audience/labeling_jobs/apis/jobs')
+            const data = response.data
+            this.jobs = data.results
+            console.log(data)
+        },
+    })
+
+    function incFunc() {
+        return {
+            $template: '#example'
+        }
+    }
+
+    createApp({incFunc, store}).mount()
+</script>

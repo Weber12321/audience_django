@@ -387,7 +387,7 @@
     <script>
         var table = $("#content-table").DataTable({
             serverSide: true,
-            ajax: "{% url 'labeling_jobs:api-document-detail' labeling_job.id %}?format=datatables",
+            ajax: "{% url 'labeling_jobs:api-document-detail' %}?api-document-detail={{ labeling_job.id }}&format=datatables",
             columnDefs: [
                 {"visible": false, "targets": [4, 5]}
             ],

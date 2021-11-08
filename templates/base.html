@@ -17,6 +17,8 @@
     <title>{% block title %}Audience Toolkits{% endblock %}</title>
 </head>
 <body id="page-top">
+<script src="https://unpkg.com/petite-vue"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
 <!-- Page Wrapper -->
 <div id="wrapper">
@@ -45,18 +47,20 @@
 
         <!-- Nav Item - labeling jobs -->
         <li class="nav-item">
-                <a class="nav-link" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-                     <i class="fas fa-fw fa-tags"></i>
-                    <span>資料準備任務</span>
-                </a>
-                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar" style="">
-                    <div class="bg-white py-2 collapse-inner rounded">
-{#                        <h6 class="collapse-header"></h6>#}
-                        <a class="collapse-item" href="{% url 'labeling_jobs:index' %}">任務列表</a>
-                        <a class="collapse-item" href="{% url 'labeling_jobs:sample-data-list' %}">範例資料下載</a>
-                    </div>
+            <a class="nav-link" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true"
+               aria-controls="collapseTwo">
+                <i class="fas fa-fw fa-tags"></i>
+                <span>資料準備任務</span>
+            </a>
+            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar"
+                 style="">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    {#                        <h6 class="collapse-header"></h6>#}
+                    <a class="collapse-item" href="{% url 'labeling_jobs:index' %}">任務列表</a>
+                    <a class="collapse-item" href="{% url 'labeling_jobs:sample-data-list' %}">範例資料下載</a>
                 </div>
-            </li>
+            </div>
+        </li>
 
 
         <!-- Nav Item - ML Models -->
@@ -148,7 +152,8 @@
                 </div>
                 {% block page_info %}{% endblock %}
                 {% block page_description %}{% endblock %}
-                {% block content %}{% endblock %}
+
+                <div id="app">{% block content %}{% endblock %}</div>
             </div>
             <!-- /.container-fluid -->
         </div>
@@ -192,8 +197,8 @@
     </div>
 </div>
 <!-- swal JavaScript-->
-<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://unpkg.com/vue@next"></script>
 
 <!-- Bootstrap core JavaScript-->
 <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
@@ -211,5 +216,6 @@
         $('[data-toggle="tooltip"]').tooltip()
     })
 </script>
+
 </body>
 </html>
