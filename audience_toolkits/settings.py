@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 import pymysql
 import environ
+from corsheaders.defaults import default_headers
 
 pymysql.install_as_MySQLdb()
 
@@ -44,19 +45,24 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_q',
+    'corsheaders',
     'rest_framework',
     'django_filters',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+CORS_ALLOW_HEADERS = ('x-csrftoken', 'authorization', 'content-type', 'Access-Control-Allow-Origin')
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 ROOT_URLCONF = 'audience_toolkits.urls'
 
@@ -84,7 +90,7 @@ WSGI_APPLICATION = 'audience_toolkits.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-if DEBUG:
+if not DEBUG:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

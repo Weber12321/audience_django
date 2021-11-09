@@ -300,10 +300,16 @@ class GlobalCharFilter(GlobalFilter, filters.CharFilter):
     pass
 
 
+# django-filter datatable
+class GlobalChoiceFilter(GlobalFilter, filters.ChoiceFilter):
+    pass
+
+
 class PredictingResultFilter(DatatablesFilterSet):
     """Filter name, artist and genre by name with icontains"""
     id = GlobalCharFilter(field_name='id', lookup_expr='icontains')
     applied_content = GlobalCharFilter(field_name='applied_content', lookup_expr='icontains')
+    applied_feature = GlobalCharFilter(field_name='applied_feature', lookup_expr='icontains')
     label = GlobalCharFilter(field_name='label__name', lookup_expr='icontains')
 
     class Meta:

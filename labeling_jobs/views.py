@@ -61,22 +61,22 @@ class LabelingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
         context["labeling_job"] = self.object
 
         # label form for modal
-        label_form = LabelForm({'job': self.object.id, 'target_amount': 200})
+        label_form = LabelForm({'labeling_job': self.object.id, 'target_amount': 200})
         context["label_form"] = label_form
 
         # upload file form for modal
-        upload_file_form = UploadFileJobForm({'job': self.object.id, })
+        upload_file_form = UploadFileJobForm({'labeling_job': self.object.id, })
         print(upload_file_form.fields)
         context["upload_file_form"] = upload_file_form
 
         # rule form for keyword rule job
         if self.object.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-            rule_form = RuleForm({'job': self.object.id, 'score': 1})
+            rule_form = RuleForm({'labeling_job': self.object.id, 'score': 1})
             context["rule_form"] = rule_form
 
         # rule form for regex rule job
         if self.object.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
-            regex_form = RegexForm({'job': self.object.id})
+            regex_form = RegexForm({'labeling_job': self.object.id})
             context["regex_form"] = regex_form
 
         return context
@@ -209,37 +209,20 @@ class LabelUpdate(LoginRequiredMixin, generic.UpdateView):
     template_name = 'labels/update_form.html'
 
     def get_success_url(self):
-        job_id = self.kwargs.get('job_id')
-        pk = self.kwargs.get('pk')
+        job_id = self.kwargs.get('pk')
         # if self.object.labeling_job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+        return reverse_lazy('labeling_jobs:labels-detail', kwargs={"pk": job_id})
         # else:
         #     return reverse_lazy('labeling_jobs:label-detail', kwargs={"job_id": job_id, "pk": pk})
 
 
 class LabelCreate(LoginRequiredMixin, generic.CreateView):
-    # model = PredictingTarget
     form_class = LabelForm
     template_name = 'labels/add_form.html'
-
-    # def post(self, request, *args, **kwargs):
-    #     """
-    #     Handle POST requests: instantiate a form instance with the passed
-    #     POST variables and then check if it's valid.
-    #     """
-    #     form = self.get_form()
-    #     if form.is_valid():
-    #         return self.form_valid(form)
-    #     else:
-    #         return self.form_invalid(form)
 
     def form_valid(self, form):
         form.instance.job_id = self.kwargs.get('job_id')
         return super(LabelCreate, self).form_valid(form)
-
-    # def form_invalid(self, form):
-    #     print(f"form.errors: {form.errors}")
-    #     return super(LabelCreate, self).form_invalid(form)
 
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
@@ -260,8 +243,8 @@ class LabelDelete(LoginRequiredMixin, generic.DeleteView):
             return super(LabelDelete, self).post(request, *args, **kwargs)
 
     def get_success_url(self):
-        job_id = self.kwargs.get('job_id')
-        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+        job_id = self.kwargs.get('pk')
+        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": self.object.labeling_job.id})
 
 
 class LabelDetail(SingleObjectMixin, generic.ListView):
@@ -282,12 +265,12 @@ class LabelDetail(SingleObjectMixin, generic.ListView):
         job = self.object.labeling_job
         # rule form for keyword rule job
         if job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-            rule_form = RuleForm({'job': job.id, 'score': 1, 'label': self.object.id})
+            rule_form = RuleForm(initial={'labeling_job': job.id, 'score': 1, 'label': self.object.id})
             context["rule_form"] = rule_form
 
         # rule form for regex rule job
         if job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
-            regex_form = RegexForm({'job': job.id, 'label': self.object.id})
+            regex_form = RegexForm(initial={'labeling_job': job.id, 'label': self.object.id})
             context["rule_form"] = regex_form
         return context
 
@@ -328,13 +311,13 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
     #     return kwargs
 
     def get_form_class(self):
-        job = LabelingJob.objects.get(pk=self.kwargs.get('job_id'))
-        if job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
+        label = Label.objects.get(pk=self.kwargs.get('label_id'))
+        if label.labeling_job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
             return RegexForm
-        elif job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
+        elif label.labeling_job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
             return RuleForm
         else:
-            raise ValueError(f"job {job} is not a rule-base job.")
+            raise ValueError(f"job {label.labeling_job} is not a rule-base job.")
 
     def get_initial(self):
         initial = super(RuleCreate, self).get_initial()
@@ -349,13 +332,17 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
     def form_valid(self, form):
         form.instance.job_id = self.kwargs.get('job_id')
         form.instance.created_by = self.request.user
+        rule_content = form.instance.content
+        if Rule.objects.filter(content=rule_content).exists():
+            form.add_error('content', "此規則已存在")
+            return self.form_invalid(form)
         return super(RuleCreate, self).form_valid(form)
 
     def get_success_url(self):
         job_id = self.kwargs.get('job_id')
         label_id = self.kwargs.get("label_id")
         if label_id:
-            return reverse_lazy('labeling_jobs:labels-detail', kwargs={"job_id": job_id, 'pk': label_id})
+            return reverse_lazy('labeling_jobs:labels-detail', kwargs={'pk': label_id})
         else:
             return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
 
@@ -373,10 +360,9 @@ class RuleDelete(LoginRequiredMixin, generic.DeleteView):
             return super(RuleDelete, self).post(request, *args, **kwargs)
 
     def get_success_url(self):
-        # label_id = self.object.label.id
-        job_id = self.kwargs.get('job_id')
-        # return reverse_lazy('labeling_jobs:label-detail', kwargs={"job_id": job_id, 'pk': label_id})
-        return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+        rule_id = self.kwargs.get('pk')
+        rule = Rule.objects.get(pk=rule_id)
+        return reverse_lazy('labeling_jobs:labels-detail', kwargs={'pk': rule.label_id})
 
 
 class DocumentDetailView(LoginRequiredMixin, generic.DetailView):
@@ -450,7 +436,7 @@ class LabelingJobsSet(viewsets.ModelViewSet):
     """
     queryset = LabelingJob.objects.all().order_by("created_at")
     serializer_class = LabelingJobSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
 
 class LabelSet(viewsets.ModelViewSet):
@@ -460,6 +446,13 @@ class LabelSet(viewsets.ModelViewSet):
     queryset = Label.objects.all().order_by("id")
     serializer_class = LabelSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        labeling_job_id = self.request.GET.get('labeling_job')
+        if labeling_job_id:
+            return Label.objects.filter(labeling_job_id=labeling_job_id).order_by('id')
+        else:
+            return Label.objects.all().order_by('id')
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -494,7 +487,7 @@ class RuleSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_queryset(self):
-        labeling_job_id = self.kwargs.get("labeling_job_id", None)
+        labeling_job_id = self.request.GET.get('labeling_job')
         if labeling_job_id:
             return Rule.objects.filter(labeling_job_id=labeling_job_id).order_by('id')
         else:
@@ -529,7 +522,7 @@ class DocumentSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        labeling_job_id = self.kwargs.get("labeling_job_id", None)
+        labeling_job_id = self.request.GET.get('labeling_job')
         if labeling_job_id:
             return Document.objects.filter(labeling_job_id=labeling_job_id).order_by('id')
         else:

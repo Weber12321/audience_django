@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}{{ labeling_job.name }} | 資料準備任務{% endblock %}
-{% block nav_title %}{{ labeling_job.get_job_data_type_display }}{% endblock %}
-{% block page_title %}{{ labeling_job.name }}{% endblock %}
+{% block title %}資料準備任務{% endblock %}
+{% block nav_title %}資料準備任務{% endblock %}
+{% block page_title %}[[ job.name ]]{% endblock %}
 {% block page_functions %}
     {% if user.is_staff %}
         <div class="dropdown mb-4">
@@ -21,12 +21,11 @@
 {% endblock %}
 {% block page_info %}
     <div class="mb-2">
-        <small><strong>{{ labeling_job.created_by }}</strong> created this job at
-            <strong>{{ labeling_job.created_at }}</strong></small>
-        {#        <span class="badge badge-success">規則模型</span>#}
+        <small><b>[[ job.created_by ]]</b> 於
+            <b>[[ job.created_at ]]</b> 建立這個任務</small>
     </div>
 {% endblock %}
-{% block page_description %}<p class="mb-4">{{ labeling_job.description }}</p>{% endblock %}
+{% block page_description %}<p class="mb-4">[[ job.description ]]</p>{% endblock %}
 {% block content %}
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
@@ -38,7 +37,7 @@
                                 資料類型
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ labeling_job.get_job_data_type_display }}
+                                [[ job.data_type ]]
                             </div>
                         </div>
                     </div>
@@ -55,7 +54,7 @@
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 標籤類別數量
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ labeling_job.label_set.count }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">[[ labels.count ]]</div>
                         </div>
                     </div>
                 </div>
@@ -71,7 +70,7 @@
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 規則數量
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ labeling_job.rule_set.count }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">[[ rules.count ]]</div>
                         </div>
                     </div>
                 </div>
@@ -98,26 +97,25 @@
                     </div>
                     <hr>
                 </div>
-                {% for label in labeling_job.label_set.all %}
-                    <div class="col-lg-6 mb-4">
-                        <div class="card shadow">
-                            <div class="card-body">
-                                <div class="h5 d-flex justify-content-start text-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}">{{ label.name }}</div>
-                                <div class="text-secondary small">
-                                    {% if label.description %}{{ label.description }}{% else %}
-                                        請按編輯添加標籤說明。{% endif %}</div>
-                                <span class="d-flex justify-content-end">
-                                        <a class="btn btn-link text-info btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:labels-detail' labeling_job.id label.id %}">規則列表</a>
-                                        <a class="btn btn-link text-secondary btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:labels-update' labeling_job.id label.id %}">編輯</a>
-                                        <a class="btn btn-link text-danger btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:labels-delete' labeling_job.id label.id %}">刪除</a>
-                                </span>
+                <div class="col-lg-6 mb-4" v-for="(label, idx) in labels.results" :key="label.id">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <div class="h5 d-flex justify-content-start text-primary">[[ label.name ]]</div>
+                            <div class="text-secondary small">
+                                [[ label.description ? label.description : '請按編輯添加標籤說明。' ]]
                             </div>
+                            <span class="d-flex justify-content-end">
+                                        <a class="btn btn-link text-info btn-sm ml-2"
+                                           :href="label.url">規則列表</a>
+                                        <a class="btn btn-link text-secondary btn-sm ml-2"
+                                           :href="label.update_url">編輯</a>
+                                        <a class="btn btn-link text-danger btn-sm ml-2"
+                                           :href="label.delete_url">刪除</a>
+                                </span>
                         </div>
                     </div>
-                {% endfor %}
+                </div>
+
             </div>
         </div>
 
@@ -144,7 +142,7 @@
                                 <div class="mt-2">
                                     {% if upload_job.job_status == 'done' %}
                                         <span class="badge badge-success">完成</span>
-                                    {% elif upload_job.job_status == 'processing' %}
+                                    {% elif uplㄍoad_job.job_status == 'processing' %}
                                         <span class="badge badge-primary">處理中</span>
                                     {% elif upload_job.job_status == 'wait' %}
                                         <span class="badge badge-warning">等待中</span>
@@ -251,11 +249,11 @@
                         {{ error }}
                         {% for field in label_form %}
                             <div class="form-group">
-{#                                {% if field.name != 'target_amount' %}#}
-                                    {{ field.label_tag }}
-                                    {{ field }}
-                                    {{ field.errors }}
-{#                                {% endif %}#}
+                                {#                                {% if field.name != 'target_amount' %}#}
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {{ field.errors }}
+                                {#                                {% endif %}#}
                             </div>
                         {% endfor %}
                     </div>
@@ -296,4 +294,53 @@
             </div>
         </div>
     </div>
+{% endblock %}
+{% block custom_script %}
+    <script>
+        const Job = {
+            data() {
+                return {
+                    jobsUrl: '/audience/labeling_jobs/api/jobs/{{ labeling_job.id }}',
+                    labelsUrl: '/audience/labeling_jobs/api/labels/?labeling_job={{ labeling_job.id }}',
+                    rulesUrl: '/audience/labeling_jobs/api/rules/?labeling_job={{ labeling_job.id }}',
+                    job: '',
+                    labels: '',
+                    rules: ''
+                }
+            },
+            mounted() {
+                this.getJobs(this.jobsUrl)
+                this.getLabels()
+                this.getRules()
+            },
+            computed: {
+                jobs() {
+                    return this.job.results
+                }
+            },
+            methods: {
+                async getJobs(url) {
+                    url = url ? url : this.jobsUrl
+                    const response = await axios.get(url)
+                    this.job = await response.data
+                    console.log(this.job)
+                },
+                async getLabels(url) {
+                    url = url ? url : this.labelsUrl
+                    const response = await axios.get(url)
+                    this.labels = await response.data
+                    console.log(this.labels)
+                },
+                async getRules(url) {
+                    url = url ? url : this.rulesUrl
+                    const response = await axios.get(url)
+                    this.rules = await response.data
+                    console.log(this.rules)
+                }
+            }
+        }
+        const app = Vue.createApp(Job)
+        app.config.compilerOptions.delimiters = ['[[', ']]']
+        app.mount('#wrapper')
+    </script>
 {% endblock %}

@@ -24,55 +24,41 @@
 {% endblock %}
 {% block content %}
     <!-- Page Heading -->
-
     <div class="row">
         <div class="col-md-9">
             <div class="row">
-                {% if labeling_jobs %}
-                    {% for labeling_job in labeling_jobs %}
-                        <div class="col-md-12 mb-2">
-                            <div class="card shadow">
-                                <!-- Card Body -->
-                                <div class="card-body">
-                                    <div class="card-title font-weight-bold text-dark">
-                                        <small>#{{ labeling_job.id }}</small> {{ labeling_job.name }}
-                                        {% if labeling_job.job_data_type == 'supervise_model' %}
-                                            <span class="badge badge-success float-right">{{ labeling_job.get_job_data_type_display }}</span>
-                                        {% elif labeling_job.job_data_type == 'rule_base' %}
-                                            <span class="badge badge-primary float-right">{{ labeling_job.get_job_data_type_display }}</span>
-                                        {% elif labeling_job.job_data_type == 'regex' %}
-                                            <span class="badge badge-info float-right">{{ labeling_job.get_job_data_type_display }}</span>
-                                        {% else %}
-                                            <span class="badge badge-secondary float-right">{{ labeling_job.get_job_data_type_display }}</span>
-                                        {% endif %}
-                                    </div>
-                                    <h6 class="card-subtitle mb-2 text-muted"><small class="text-muted">
-                                        <strong>由 {{ labeling_job.created_by.username }}</strong>
-                                        於 {{ labeling_job.created_at }} 建立。</small>
-                                    </h6>
-                                    <p class="card-text">
-                                        {% for label in labeling_job.label_set.all %}
-                                            {% if ',' not in label.name %}
-                                                <span class="badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
-                                                      data-toggle="tooltip" data-placement="top"
-                                                      title="{{ label.description }}">
-                                            <i class="fas fa-tag"></i> {{ label }}
-                                        </span>
-                                            {% endif %}
-                                        {% endfor %}
-                                        {% resetcycle %}
-                                    </p>
-                                    <p class="card-text">{{ labeling_job.description }}</p>
-                                    <a class="stretched-link"
-                                       href="{% url 'labeling_jobs:job-detail' labeling_job.id %}"></a>
-                                </div>
+                <div class="col-md-12" v-if="jobs">
+                    <div class="card shadow mb-2" v-for="(job) in jobs" :key="job.id">
+                        <!-- Card Body -->
+                        <div class="card-body">
+                            <div class="card-title font-weight-bold text-dark">
+                                <small>#[[ job.id ]]</small> [[ job.name ]]
+                                <span class="badge badge-success float-right">[[ job.data_type ]]</span>
                             </div>
+                            <h6 class="card-subtitle mb-2 text-muted"><small class="text-muted">
+                                <strong>由 [[ job.created_by ]]</strong>
+                                於 [[ job.created_at ]] 建立。</small>
+                            </h6>
+                            <p class="card-text">
+                                    <span>
+                                        <span class="badge badge-pill badge-secondary mr-2"
+                                              v-for="label in job.labels" :key="label.id">
+                                            <i class="fas fa-tag"></i> [[ label.name ]]
+                                        </span>
+                                    </span>
+                            </p>
+                            <p class="card-text">[[ job.description ]]</p>
+                            <a class="stretched-link"
+                               :href="job.url"></a>
                         </div>
+                    </div>
 
-                    {% endfor %}
-                {% else %}
-                    <p>目前沒有標記任務</p>
-                {% endif %}
+                    <button class="btn" @click="previous_page" :disabled="!previous_page_url">上一頁</button>
+                    <button class="btn" @click="next_page":disabled="!next_page_url">下一頁</button>
+                </div>
+
+                <p v-else>目前沒有標記任務</p>
+
             </div>
         </div>
         <div class="col-md-3">
@@ -187,9 +173,48 @@
     </div>
 {% endblock %}
 {% block custom_script %}
-    <script>
-        $(document).ready(function () {
-            $('#job-table').DataTable();
-        });
+    <script type="module">
+        const Jobs = {
+            data() {
+                return {
+                    job_api_url: '/audience/labeling_jobs/api/jobs',
+                    data: '',
+                    next_page_url: null,
+                    previous_page_url: null,
+                }
+            },
+            mounted() {
+                this.getJobs()
+            },
+            computed: {
+                jobs() {
+                    return this.data.results
+                }
+            },
+            methods: {
+                async getJobs(url) {
+                    url = url ? url : this.job_api_url
+                    const response = await axios.get(url)
+                    this.data = await response.data
+                    this.next_page_url = this.data.next
+                    this.previous_page_url = this.data.previous
+                },
+                next_page() {
+                    console.log(this.next_page_url)
+                    if (this.next_page_url) {
+                        this.getJobs(this.next_page_url)
+                    }
+                },
+                previous_page() {
+                    console.log(this.previous_page_url)
+                    if (this.previous_page_url) {
+                        this.getJobs(this.previous_page_url)
+                    }
+                }
+            }
+        }
+        const app = Vue.createApp(Jobs)
+        app.config.compilerOptions.delimiters = ['[[', ']]']
+        app.mount('#wrapper')
     </script>
 {% endblock %}

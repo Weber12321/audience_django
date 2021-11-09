@@ -106,11 +106,11 @@
                                         請按編輯添加標籤說明。{% endif %}</div>
                                 <span class="d-flex justify-content-end">
                                         <a class="btn btn-link text-info btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:labels-detail' labeling_job.id label.id %}">規則列表</a>
+                                           href="{% url 'labeling_jobs:labels-detail' label.id %}">規則列表</a>
                                         <a class="btn btn-link text-secondary btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:labels-update' labeling_job.id label.id %}">編輯</a>
+                                           href="{% url 'labeling_jobs:labels-update' label.id %}">編輯</a>
                                         <a class="btn btn-link text-danger btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:labels-delete' labeling_job.id label.id %}">刪除</a>
+                                           href="{% url 'labeling_jobs:labels-delete' label.id %}">刪除</a>
                                 </span>
                             </div>
                         </div>
@@ -155,24 +155,6 @@
                                     <th scope="col">功能</th>
                                 </tr>
                                 </thead>
-                                {#                                <tbody>#}
-                                {#                                {% for rule in  labeling_job.rule_set.all %}#}
-                                {#                                    <tr>#}
-                                {#                                        <th>{{ rule.id }}</th>#}
-                                {#                                        <td>{{ rule.content }}</td>#}
-                                {#                                        <td>{{ rule.label }}</td>#}
-                                {#                                        <td>{{ rule.get_match_type_display }}</td>#}
-                                {#                                        <td>#}
-                                {#                                           <span class="d-flex justify-content-end">#}
-                                {#                                                <a class="btn btn-link btn-sm text-secondary ml-2"#}
-                                {#                                                   href="{% url 'labeling_jobs:rule-update' rule.job.id rule.id %}">編輯</a>#}
-                                {#                                                <a class="btn btn-link btn-sm text-danger ml-2"#}
-                                {#                                                   href="{% url 'labeling_jobs:rule-delete' rule.job.id rule.id %}">刪除</a>#}
-                                {#                                            </span>#}
-                                {#                                        </td>#}
-                                {#                                    </tr>#}
-                                {#                                {% endfor %}#}
-                                {#                                </tbody>#}
                             </table>
                         </div>
                     </div>
@@ -212,7 +194,7 @@
                                     {% endif %}
                                 </div>
                                 <div class="card-link mt-2">
-                                    <a href="{% url 'labeling_jobs:upload-job-delete' labeling_job.id upload_job.id %}">
+                                    <a href="{% url 'labeling_jobs:upload-job-delete' upload_job.id %}">
                                         清除此紀錄</a>
                                 </div>
                             </div>
@@ -343,7 +325,7 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form method="post" action="{% url 'labeling_jobs:rule-add' labeling_job.id %}">{% csrf_token %}
+                <form method="post" action="{% url 'labeling_jobs:rule-add' %}">{% csrf_token %}
                     <div class="modal-body">
                         {{ error }}
                         {% for field in rule_form %}
@@ -369,7 +351,7 @@
         var table = $('#rule-table').DataTable(
             {
                 serverSide: true,
-                ajax: "{% url 'labeling_jobs:api-rule-detail' labeling_job.id %}?format=datatables",
+                ajax: "{% url 'labeling_jobs:api-rule-detail' %}?job={{ labeling_job.id }}",
                 columnDefs: [
                     {"visible": false, "targets": [3, 4]}
                 ],

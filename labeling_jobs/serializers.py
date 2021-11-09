@@ -9,8 +9,10 @@ from labeling_jobs.tasks import import_csv_data_task
 
 class LabelingJobSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labelingjob-detail")
+    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:job-detail")
     created_by = serializers.StringRelatedField()
+    labels = serializers.SerializerMethodField()
+    data_type = serializers.CharField(source='get_job_data_type_display')
 
     class Meta:
         model = LabelingJob
@@ -25,10 +27,18 @@ class LabelingJobSerializer(serializers.HyperlinkedModelSerializer):
         )
         return labeling_job
 
+    def get_labels(self, object):
+        labels = object.label_set.values_list(
+            "id", "name"
+        )
+        return [{"id": i, "name": name} for i, name in labels]
+
 
 class LabelSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:label-detail")
+    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labels-detail")
+    update_url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labels-update")
+    delete_url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labels-delete")
     # 傳三個引數
     # view_name='test':路由名字,用來反向解析
     # lookup_field='publish_id':要反向解析的引數值
@@ -109,5 +119,3 @@ class DocumentSerializer(serializers.HyperlinkedModelSerializer):
             "id", "name"
         )
         return [{"id": i, "name": name} for i, name in all_labels]
-
-

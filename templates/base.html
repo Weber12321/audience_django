@@ -45,18 +45,20 @@
 
         <!-- Nav Item - labeling jobs -->
         <li class="nav-item">
-                <a class="nav-link" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-                     <i class="fas fa-fw fa-tags"></i>
-                    <span>資料準備任務</span>
-                </a>
-                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar" style="">
-                    <div class="bg-white py-2 collapse-inner rounded">
-{#                        <h6 class="collapse-header"></h6>#}
-                        <a class="collapse-item" href="{% url 'labeling_jobs:index' %}">任務列表</a>
-                        <a class="collapse-item" href="{% url 'labeling_jobs:sample-data-list' %}">範例資料下載</a>
-                    </div>
+            <a class="nav-link" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true"
+               aria-controls="collapseTwo">
+                <i class="fas fa-fw fa-tags"></i>
+                <span>資料準備任務</span>
+            </a>
+            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar"
+                 style="">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    {#                        <h6 class="collapse-header"></h6>#}
+                    <a class="collapse-item" href="{% url 'labeling_jobs:index' %}">任務列表</a>
+                    <a class="collapse-item" href="{% url 'labeling_jobs:sample-data-list' %}">範例資料下載</a>
                 </div>
-            </li>
+            </div>
+        </li>
 
 
         <!-- Nav Item - ML Models -->
@@ -107,15 +109,7 @@
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                                 aria-labelledby="userDropdown">
-                                {#                                <a class="dropdown-item" href="#">#}
-                                {#                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>#}
-                                {#                                    Profile#}
-                                {#                                </a>#}
-                                {#                                <a class="dropdown-item" href="#">#}
-                                {#                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>#}
-                                {#                                    Settings#}
-                                {#                                </a>#}
+                                 aria-labelledby="userDropdown">=
                                 {% if user.is_staff %}
                                     <a class="dropdown-item" href="{% url 'admin:index' %}">
                                         <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
@@ -148,6 +142,7 @@
                 </div>
                 {% block page_info %}{% endblock %}
                 {% block page_description %}{% endblock %}
+
                 {% block content %}{% endblock %}
             </div>
             <!-- /.container-fluid -->
@@ -192,8 +187,8 @@
     </div>
 </div>
 <!-- swal JavaScript-->
-<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://unpkg.com/vue@next"></script>
 
 <!-- Bootstrap core JavaScript-->
 <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
@@ -211,5 +206,6 @@
         $('[data-toggle="tooltip"]').tooltip()
     })
 </script>
+
 </body>
 </html>
