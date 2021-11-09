@@ -3,13 +3,15 @@ import json
 from django_q.tasks import async_task
 from rest_framework import serializers
 
+from audience_toolkits.serializers import HyperlinkedRetrieveIdentityField
 from labeling_jobs.models import LabelingJob, Label, Rule, UploadFileJob, Document
 from labeling_jobs.tasks import import_csv_data_task
 
 
 class LabelingJobSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:job-detail")
+    # url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:job-detail")
+    url = HyperlinkedRetrieveIdentityField(view_name="labeling_jobs:job-detail")
     created_by = serializers.StringRelatedField()
     labels = serializers.SerializerMethodField()
     data_type = serializers.CharField(source='get_job_data_type_display')
@@ -36,9 +38,9 @@ class LabelingJobSerializer(serializers.HyperlinkedModelSerializer):
 
 class LabelSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labels-detail")
-    update_url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labels-update")
-    delete_url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labels-delete")
+    url = HyperlinkedRetrieveIdentityField(view_name="labeling_jobs:labels-detail")
+    update_url = HyperlinkedRetrieveIdentityField(view_name="labeling_jobs:labels-update")
+    delete_url = HyperlinkedRetrieveIdentityField(view_name="labeling_jobs:labels-delete")
     # 傳三個引數
     # view_name='test':路由名字,用來反向解析
     # lookup_field='publish_id':要反向解析的引數值
@@ -62,7 +64,7 @@ class LabelSerializer(serializers.HyperlinkedModelSerializer):
 
 class RuleSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:rule-detail")
+    url = HyperlinkedRetrieveIdentityField(view_name="labeling_jobs:rule-detail")
     labeling_job = serializers.StringRelatedField()
     labeling_job_id = serializers.IntegerField(label="Job ID", required=False)
     label = serializers.StringRelatedField()
@@ -99,7 +101,7 @@ class UploadFileJobSerializer(serializers.ModelSerializer):
 
 class DocumentSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:document-detail")
+    url = HyperlinkedRetrieveIdentityField(view_name="labeling_jobs:document-detail")
     labeling_job = serializers.StringRelatedField()
     labeling_job_id = serializers.IntegerField(label="Labeling Job ID", required=False)
 
