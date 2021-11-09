@@ -311,26 +311,35 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
     #     return kwargs
 
     def get_form_class(self):
-        label = Label.objects.get(pk=self.kwargs.get('label_id'))
+        label_id = self.kwargs.get('label_id', None)
+        if not label_id:
+            label_id = self.request.POST.get('label')
+        label = Label.objects.get(pk=label_id)
         if label.labeling_job.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
             return RegexForm
         elif label.labeling_job.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
             return RuleForm
         else:
-            raise ValueError(f"job {label.labeling_job} is not a rule-base job.")
-
-    def get_initial(self):
-        initial = super(RuleCreate, self).get_initial()
-        # Copy the dictionary so we don't accidentally change a mutable dict
-        initial = initial.copy()
-        initial['job'] = self.kwargs.get('job_id')
-        label_id = self.kwargs.get("label_id")
-        if label_id:
-            initial['label'] = self.kwargs.get('label_id')
-        return initial
+            return RegexForm
+            # raise ValueError(f"job {label.labeling_job} is not a rule-base job.")
+    #
+    # def get_initial(self):
+    #     initial = super(RuleCreate, self).get_initial()
+    #     # Copy the dictionary so we don't accidentally change a mutable dict
+    #     initial = initial.copy()
+    #     job_id = self.kwargs.get('job_id')
+    #     if job_id:
+    #         initial['labeling_job'] = self.kwargs.get('job_id')
+    #     label_id = self.kwargs.get("label_id")
+    #     if label_id:
+    #         initial['label'] = self.kwargs.get('label_id')
+    #     return initial
 
     def form_valid(self, form):
-        form.instance.job_id = self.kwargs.get('job_id')
+        # label_id = self.kwargs.get('label_id')
+        # label = Label.objects.get(pk=label_id)
+        # form.instance.label = label
+        # form.instance.labeling_job = label.labeling_job
         form.instance.created_by = self.request.user
         rule_content = form.instance.content
         if Rule.objects.filter(content=rule_content).exists():
@@ -339,12 +348,11 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
         return super(RuleCreate, self).form_valid(form)
 
     def get_success_url(self):
-        job_id = self.kwargs.get('job_id')
-        label_id = self.kwargs.get("label_id")
-        if label_id:
-            return reverse_lazy('labeling_jobs:labels-detail', kwargs={'pk': label_id})
-        else:
-            return reverse_lazy('labeling_jobs:job-detail', kwargs={"pk": job_id})
+        # label_id = self.kwargs.get("label_id")
+        # if not label_id:
+        label_id = self.object.label.id
+
+        return reverse_lazy('labeling_jobs:labels-detail', kwargs={"pk": label_id})
 
 
 class RuleDelete(LoginRequiredMixin, generic.DeleteView):
