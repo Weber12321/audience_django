@@ -322,6 +322,7 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
         else:
             return RegexForm
             # raise ValueError(f"job {label.labeling_job} is not a rule-base job.")
+
     #
     # def get_initial(self):
     #     initial = super(RuleCreate, self).get_initial()
@@ -342,7 +343,7 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
         # form.instance.labeling_job = label.labeling_job
         form.instance.created_by = self.request.user
         rule_content = form.instance.content
-        if Rule.objects.filter(label=form.instance.label_id,content=rule_content).exists():
+        if Label.objects.get(pk=form.instance.label_id).rule_set.filter(content=rule_content).exists():
             form.add_error('content', "此規則已存在")
             return self.form_invalid(form)
         return super(RuleCreate, self).form_valid(form)
