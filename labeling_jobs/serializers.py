@@ -36,7 +36,9 @@ class LabelingJobSerializer(serializers.HyperlinkedModelSerializer):
 
 class LabelSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:label-detail")
+    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labels-detail")
+    update_url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labels-update")
+    delete_url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labels-delete")
     # 傳三個引數
     # view_name='test':路由名字,用來反向解析
     # lookup_field='publish_id':要反向解析的引數值

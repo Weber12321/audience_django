@@ -88,7 +88,7 @@ class Label(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('labeling_jobs:labels-detail', kwargs={'labeling_job_id': self.labeling_job.id, 'pk': self.pk})
+        return reverse('labeling_jobs:label-detail', kwargs={'pk': self.pk})
 
     def show_document_amount(self):
         return self.document_set.exclude(document_type=Document.TypeChoices.EXT_TEST).count()

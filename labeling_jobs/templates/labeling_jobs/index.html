@@ -177,17 +177,13 @@
         const Jobs = {
             data() {
                 return {
-                    job_api_url: '/audience/labeling_jobs/apis/jobs',
-                    counter: 0,
+                    job_api_url: '/audience/labeling_jobs/api/jobs',
                     data: '',
                     next_page_url: null,
                     previous_page_url: null,
                 }
             },
             mounted() {
-                setInterval(() => {
-                    this.counter++
-                }, 1000)
                 this.getJobs()
             },
             computed: {
@@ -219,6 +215,6 @@
         }
         const app = Vue.createApp(Jobs)
         app.config.compilerOptions.delimiters = ['[[', ']]']
-        app.mount('#app')
+        app.mount('#wrapper')
     </script>
 {% endblock %}

@@ -28,22 +28,9 @@ class LabelingJobForm(forms.ModelForm):
             'job_data_type': forms.Select(attrs={'class': 'form-control'}),
             'created_by': forms.TextInput(attrs={'hidden': True})
         }
-        # labels = {
-        #     'name': '任務名稱',
-        #     'job_type': '任務類型',
-        #     'description': '描述與定義',
-        #     "is_multi_label": '是否為多標籤分類'
-        # }
 
 
 class LabelForm(forms.ModelForm):
-    # def __init__(self, *args, **kwargs):
-    #     super(LabelForm, self).__init__(*args, **kwargs)
-    #     job_data_type = self.data.get("job_data_type", None)
-    #
-    #     if job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-    #         del self.fields["target_amount"]
-
     class Meta:
         model = Label
         fields = ["labeling_job", "name", "description", "target_amount"]
@@ -79,10 +66,7 @@ class KeywordForm(forms.ModelForm):
 
 class RuleForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        # labeling_job_id = kwargs.get('labeling_job', None)
         label_id = kwargs.pop('label', None)
-        # print("labeling_job_id", labeling_job_id)
-        # print("label_id", label_id)
         super(RuleForm, self).__init__(*args, **kwargs)
 
         labeling_job_id = self.data.get('labeling_job', None)
@@ -116,6 +100,10 @@ class RegexForm(forms.ModelForm):
             instance = kwargs.get('instance')
             job_id = instance.labeling_job_id
             label_id = instance.label_id
+        elif 'initial' in kwargs:
+            instance = kwargs.get('initial')
+            job_id = instance.get('labeling_job')
+            label_id = instance.get('label')
         else:
             data = args[0]
             job_id = data.get('job', None) if 'job' in data else data.get('labeling_job', None)
@@ -123,10 +111,11 @@ class RegexForm(forms.ModelForm):
         super(RegexForm, self).__init__(*args, **kwargs)
 
         job_id = self.data.get('job_id', job_id)
-
+        if label_id:
+            self.fields['label'].initial = label_id
         if job_id:
             self.fields['label'].queryset = Label.objects.filter(
-                id=job_id)
+                labeling_job_id=job_id)
         else:
             self.fields['label'].queryset = self.instance.labeling_job.label_set.all()
 

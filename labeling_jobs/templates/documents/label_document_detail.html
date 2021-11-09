@@ -17,9 +17,9 @@
             <div class="dropdown-menu animated--fade-in"
                  aria-labelledby="dropdownMenuButton">
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:labels-update' label.labeling_job.id label.id %}?next={{ request.path }}">修改</a>
+                   href="{% url 'labeling_jobs:labels-update' label.id %}?next={{ request.path }}">修改</a>
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:labels-delete' label.labeling_job.id label.id %}">刪除</a>
+                   href="{% url 'labeling_jobs:labels-delete' label.id %}">刪除</a>
             </div>
         </div>
     {% endif %}
@@ -37,7 +37,7 @@
                 <div class="card shadow mb-4 {% if doc.labels.all %}border-left-primary{% else %}border-left-warning{% endif %}">
                     <div class="card-body">
                         <div class="h5">
-                            <a href="{% url 'labeling_jobs:doc-detail' doc.labeling_job.id doc.id %}">
+                            <a href="{% url 'labeling_jobs:doc-detail' doc.id %}">
                                 {{ doc.id }}
                             </a>
                             {{ doc.title }}

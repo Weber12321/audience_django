@@ -138,11 +138,11 @@
                                 </div>
                                 <span class="d-flex justify-content-end">
                                         <a class="btn btn-link text-info btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:labels-detail' labeling_job.id label.id %}">查看資料</a>
+                                           href="{% url 'labeling_jobs:labels-detail' label.id %}">查看資料</a>
                                         <a class="btn btn-link text-secondary btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:labels-update' labeling_job.id label.id %}">編輯</a>
+                                           href="{% url 'labeling_jobs:labels-update' label.id %}">編輯</a>
                                         <a class="btn btn-link text-danger btn-sm ml-2"
-                                           href="{% url 'labeling_jobs:labels-delete' labeling_job.id label.id %}">刪除</a>
+                                           href="{% url 'labeling_jobs:labels-delete' label.id %}">刪除</a>
                                 </span>
                             </div>
                         </div>
@@ -264,7 +264,7 @@
                                     {% endif %}
                                 </div>
                                 <div class="card-link mt-2">
-                                    <a href="{% url 'labeling_jobs:upload-job-delete' labeling_job.id upload_job.id %}">
+                                    <a href="{% url 'labeling_jobs:upload-job-delete' upload_job.id %}">
                                         清除此紀錄</a>
                                 </div>
                             </div>

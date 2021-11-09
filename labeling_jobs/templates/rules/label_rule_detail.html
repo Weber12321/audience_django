@@ -17,9 +17,9 @@
             <div class="dropdown-menu animated--fade-in"
                  aria-labelledby="dropdownMenuButton">
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:labels-update' label.labeling_job.id label.id %}?next={{ request.path }}">修改</a>
+                   href="{% url 'labeling_jobs:labels-update' label.id %}">修改</a>
                 <a class="dropdown-item"
-                   href="{% url 'labeling_jobs:labels-delete' label.labeling_job.id label.id %}">刪除</a>
+                   href="{% url 'labeling_jobs:labels-delete' label.id %}">刪除</a>
             </div>
         </div>
     {% endif %}
@@ -56,9 +56,9 @@
                                     {{ rule.labeling_job.id }}
                                     {{ rule.id }}
                                     <a class="btn btn-link btn-sm text-secondary ml-2"
-                                       href="{% url 'labeling_jobs:rule-update' rule.labeling_job.id rule.id %}">編輯</a>
-{#                                    <a class="btn btn-link btn-sm text-danger ml-2"#}
-{#                                       href="{% url 'labeling_jobs:rule-delete' rule.labeling_job_id rule.id %}">刪除</a>#}
+                                       href="{% url 'labeling_jobs:rule-update' rule.id %}">編輯</a>
+                                    <a class="btn btn-link btn-sm text-danger ml-2"
+                                       href="{% url 'labeling_jobs:rule-delete' rule.id %}">刪除</a>
                                 </span>
                             </div>
                             <div class="d-flex w-100 justify-content-between">
@@ -123,7 +123,7 @@
                     </button>
                 </div>
                 <form method="post"
-                      action="{% url 'labeling_jobs:label-rule-add' label.labeling_job.id label.id %}">{% csrf_token %}
+                      action="{% url 'labeling_jobs:label-rule-add' label.id %}">{% csrf_token %}
                     <div class="modal-body">
                         {{ error }}
                         {% for field in rule_form %}
