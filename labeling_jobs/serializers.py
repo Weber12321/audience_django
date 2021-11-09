@@ -9,9 +9,10 @@ from labeling_jobs.tasks import import_csv_data_task
 
 class LabelingJobSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:labelingjob-detail")
+    url = serializers.HyperlinkedIdentityField(view_name="labeling_jobs:job-detail")
     created_by = serializers.StringRelatedField()
     labels = serializers.SerializerMethodField()
+    data_type = serializers.CharField(source='get_job_data_type_display')
 
     class Meta:
         model = LabelingJob
