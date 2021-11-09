@@ -123,7 +123,7 @@
                     </button>
                 </div>
                 <form method="post"
-                      action="{% url 'labeling_jobs:label-rule-add' label.id %}">{% csrf_token %}
+                      action="{% url 'labeling_jobs:rule-add'  %}">{% csrf_token %}
                     <div class="modal-body">
                         {{ error }}
                         {% for field in rule_form %}

@@ -151,7 +151,7 @@
                                     {% endif %}
                                 </div>
                                 <div class="card-link mt-2">
-                                    <a href="{% url 'labeling_jobs:upload-job-delete' labeling_job.id upload_job.id %}">
+                                    <a href="{% url 'labeling_jobs:upload-job-delete' upload_job.id %}">
                                         清除此紀錄</a>
                                 </div>
                             </div>
@@ -275,7 +275,7 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form method="post" action="{% url 'labeling_jobs:rule-add' labeling_job.id %}">{% csrf_token %}
+                <form method="post" action="{% url 'labeling_jobs:label-rule-add' labeling_job.id %}">{% csrf_token %}
                     <div class="modal-body">
                         {{ error }}
                         {% for field in regex_form %}
