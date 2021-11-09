@@ -342,7 +342,7 @@ class RuleCreate(LoginRequiredMixin, generic.CreateView):
         # form.instance.labeling_job = label.labeling_job
         form.instance.created_by = self.request.user
         rule_content = form.instance.content
-        if Rule.objects.filter(content=rule_content).exists():
+        if Rule.objects.filter(label=form.instance.label_id,content=rule_content).exists():
             form.add_error('content', "此規則已存在")
             return self.form_invalid(form)
         return super(RuleCreate, self).form_valid(form)
