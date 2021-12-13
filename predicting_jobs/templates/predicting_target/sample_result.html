@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load result_extras %}
+{% block page_title %}
+    {{ predicting_target.name }}
+{% endblock %}
+{% block page_description %}
+    {{ predicting_job.name }}
+{% endblock %}
+{% block content %}
+
+    {% if error_message %}
+    <b>{{ error_message }}</b>
+    {% endif %}
+
+    {% if sample_data %}
+    <div class="row">
+        <div class="col-12">
+            <table id="result-table" class="table table-striped table-bordered" style="width:100%">
+                <thead>
+                    <tr>
+                        <th data-data="task_id">任務ID</th>
+                        <th data-data="source_author">來源作者</th>
+                        <th data-data="panel">標籤</th>
+                        <th data-data="create_time">爬取時間</th>
+                        <th data-data="field_content">來源ID</th>
+                        <th data-data="match_content">命中內容</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in sample_data %}
+                    <tr>
+                        <td>{{ row.task_id }}</td>
+                        <td>{{ row.source_author }}</td>
+                        <td>{{ row.panel }}</td>
+                        <td>{{ row.create_time }}</td>
+                        <td>{{ row.field_content }}</td>
+                        <td>{{ row.match_content }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+
+{% endblock %}

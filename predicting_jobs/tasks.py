@@ -1,6 +1,7 @@
 import logging
+from collections import defaultdict
 from datetime import datetime
-from typing import List, Iterable
+from typing import List, Iterable, Dict, Optional
 
 from django.utils import timezone
 from django_q.models import OrmQ
@@ -177,3 +178,245 @@ def get_queued_tasks_id():
 
 def get_queued_tasks_dict():
     return {t.task_id(): t for t in OrmQ.objects.all()}
+
+
+
+
+# =========================
+#       Audience API
+# =========================
+
+import csv
+import json
+import requests
+import pandas as pd
+from audience_toolkits.settings import API_HEADERS, API_PATH
+
+
+# create_task
+def call_create_task(job: PredictingJob, predicting_target: PredictingTarget, output_db = 'audience_result'):
+    applying_models = job.applyingmodel_set.order_by("priority", "created_at")
+    models = get_temp_rule(applying_models)
+    rule = {k:v for model in models for k,v in model.items()}
+    # === 優先度還是有差的
+    model_type = applying_models[0].modeling_job.model_name.lower()
+
+
+
+    if model_type == 'regex_model':
+        model_type = 'rule_model'
+        pattern = defaultdict(list)
+        for k, v in rule.items():
+            for i in v:
+                pattern[k].append(i[0])
+        pattern = dict(pattern)
+    else:
+        pattern = rule
+
+    predict_type = applying_models[0].modeling_job.feature.lower()
+
+    job.job_status = JobStatus.PROCESSING
+    job.save()
+
+    source: Source = predicting_target.source
+
+    api_path = f'{API_PATH}/api/tasks/'
+
+    api_headers = API_HEADERS
+
+    api_request_body = {
+        "MODEL_TYPE": model_type,
+        "PREDICT_TYPE": predict_type + '_name' if predict_type == 'author' else predict_type,
+        "START_TIME": f"{predicting_target.begin_post_time}",
+        "END_TIME": f"{predicting_target.end_post_time}",
+        "PATTERN": pattern,
+        "INPUT_SCHEMA": source.schema,
+        "INPUT_TABLE": source.tablename,
+        "OUTPUT_SCHEMA": output_db,
+        "COUNTDOWN": 5,
+        "SITE_CONFIG": {"host": source.host,
+                        "port": source.port,
+                        "user": source.username,
+                        "password": source.password,
+                        'db': source.schema,
+                        'charset': 'utf8mb4'}
+    }
+
+    try:
+        predicting_target.job_status = JobStatus.PROCESSING
+        predicting_target.save()
+
+        r = requests.post(api_path, headers=api_headers, data=json.dumps(api_request_body))
+
+        logger.info(f"HTTP status_code: {r.status_code}; response: {r.json()}")
+
+        if r.status_code != 200:
+            predicting_target.job_status = JobStatus.ERROR
+            predicting_target.save()
+
+        response_dict = r.json()
+        return response_dict
+
+    except Exception as e:
+        # if something wrong
+        logger.error(e)
+        job.error_message = e
+        job.job_status = JobStatus.ERROR
+
+    finally:
+        job.save()
+
+# result_samples
+def call_result_samples(task_id):
+    sample_path = f'{API_PATH}/api/tasks/{task_id}/sample/'
+    api_headers = {
+        'accept': 'application/json',
+    }
+
+    r = requests.get(sample_path, headers=api_headers)
+
+    sample_data: Optional[Dict] = r.json()
+
+    return sample_data
+
+# check_status
+def call_check_status(task_id):
+    check_status_path = f'{API_PATH}/api/tasks/{task_id}'
+    api_headers = {
+        'accept': 'application/json',
+    }
+
+    r = requests.get(check_status_path, headers=api_headers)
+
+    if r.status_code != 200:
+        return
+
+    check_status_result = r.json()
+
+    return check_status_result
+
+# abort_task
+def call_abort_task(job: PredictingJob, predicting_target:  PredictingTarget):
+
+    task_id = predicting_target.task_id
+
+    if not task_id:
+        return
+
+    api_path = f'{API_PATH}/api/tasks/abort/'
+
+    api_headers = API_HEADERS
+
+    api_request_body = {
+        "TASK_ID": task_id
+    }
+
+    try:
+        r = requests.post(api_path, headers=api_headers, data=json.dumps(api_request_body))
+        logger.info(f"HTTP status_code: {r.status_code}; response: {r.json()}")
+
+        if r.status_code != 200:
+            predicting_target.job_status = JobStatus.ERROR
+            predicting_target.save()
+
+        else:
+            predicting_target.job_status = JobStatus.BREAK
+            predicting_target.save()
+
+
+        response_dict = r.json()
+        return response_dict
+
+    except Exception as e:
+        # if something wrong
+        logger.error(e)
+        job.error_message = e
+        job.job_status = JobStatus.ERROR
+        job.save()
+
+
+def get_temp_rule(applying_models: List[ApplyingModel]) -> List[Dict]:
+    model_list = []
+
+    for applying_model in applying_models:
+        if applying_model.modeling_job.model_name.lower() == 'regex_model':
+            model = get_model(applying_model.modeling_job)
+            # print(model.model_dir_name)
+            if model.patterns:
+                model_list.append(dict(model.patterns))
+        if applying_model.modeling_job.model_name.lower() == 'keyword_model':
+            model = get_model(applying_model.modeling_job)
+            # print(model.model_dir_name)
+            if model.rules:
+                model_list.append(dict(model.rules))
+
+    return model_list
+
+
+def check_job_status(job: PredictingJob):
+
+    check_targets_status(job)
+    targets = job.predictingtarget_set.all()
+
+    try:
+        for target in targets:
+            if target.job_status == JobStatus.DONE:
+                continue
+            if target.job_status == JobStatus.PROCESSING:
+                return
+            if target.job_status == JobStatus.ERROR:
+                job.status = JobStatus.ERROR
+                job.save()
+                return
+            if target.job_status == JobStatus.BREAK:
+                job.status = JobStatus.BREAK
+                job.save()
+                return
+        job.status = JobStatus.DONE
+        job.save()
+    except Exception as e:
+        job.status = JobStatus.ERROR
+        job.save()
+
+
+def check_jobs_status(jobs: List[PredictingJob]):
+    for job in jobs:
+        check_job_status(job)
+
+def check_targets_status(job: PredictingJob):
+    targets = job.predictingtarget_set.all()
+    for target in targets:
+
+        if target.job_status == JobStatus.PROCESSING:
+            _result_dict = call_check_status(target.task_id)
+            if isinstance(_result_dict['error_message'], Dict):
+                if _result_dict['error_message']['prod_stat'] == 'finish':
+                    target.job_status = JobStatus.DONE
+                    target.save()
+                if _result_dict['error_message']['stat'] == 'FAILURE':
+                    target.job_status = JobStatus.ERROR
+                    target.save()
+            else:
+                pass
+
+def check_target_status(target: PredictingTarget):
+    _result_dict = call_check_status(target.task_id)
+    if isinstance(_result_dict['error_message'], Dict):
+        if _result_dict['error_message']['prod_stat'] == 'finish':
+            target.job_status = JobStatus.DONE
+            target.save()
+        if _result_dict['error_message']['prod_stat'] == 'no_data':
+            target.job_status = JobStatus.DONE
+            target.save()
+        if _result_dict['error_message']['stat'] == 'FAILURE':
+            target.job_status = JobStatus.ERROR
+            target.save()
+        if _result_dict['error_message']['stat'] == 'BREAK':
+            target.job_status = JobStatus.BREAK
+            target.save()
+    else:
+        pass
+
+    return _result_dict
+
+

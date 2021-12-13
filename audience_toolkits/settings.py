@@ -311,3 +311,30 @@ PREDICT_DATABASE = {
         'PORT': '3306',
     }
 }
+
+# ======================================
+#     Audience API settings
+# ======================================
+env = environ.Env()
+if env('PREDICT_ENV') == 'production':
+    IS_PRODUCTION = True
+else:
+    IS_PRODUCTION = False
+PORT = 8000
+
+if IS_PRODUCTION:
+    API_PATH = f'http://0.0.0.0:{PORT}'
+else:
+    API_PATH = f'http://127.0.0.1:{PORT}'
+
+API_HEADERS = {
+  'accept': 'application/json',
+}
+
+MODEL_TYPE = 'keyword_model'
+
+PREDICT_TYPE = 'author_name'
+
+OUTPUT_DB = 'audience_result'
+
+
