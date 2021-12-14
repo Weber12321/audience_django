@@ -220,6 +220,11 @@ def call_create_task(job: PredictingJob, predicting_target: PredictingTarget, ou
 
     source: Source = predicting_target.source
 
+    if predicting_target.begin_post_time > predicting_target.end_post_time:
+        predicting_target.job_status = JobStatus.ERROR
+        predicting_target.save()
+        return
+
     api_path = f'{API_PATH}/api/tasks/'
 
     api_headers = API_HEADERS

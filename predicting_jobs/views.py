@@ -231,11 +231,14 @@ def start_job(request, pk):
             #     logger.warning(f"task: {task_name} exist in queue, skip.")
 
             api_response: Dict = call_create_task(job, target,output_db=OUTPUT_DB)
-
+            if not api_response:
+                continue
             target.task_id = api_response['error_message']['task_id']
             target.save()
 
             if api_response['error_code'] != 200:
+                target.job_status = JobStatus.ERROR
+                target.save()
                 logger.warning(f"{task_name} with task_id {target.task_id} failed")
                 logger.warning(f"task error_code {api_response['error_code']} "
                                f"with error_msg {api_response['error_message']}")
@@ -280,18 +283,28 @@ def cancel_job(request, pk):
 def get_progress(request, pk):
     job = PredictingJob.objects.get(pk=pk)
 
-    # response_data = {
-    #     'state': job.job_status,
-    #     'details': {target.id: {"status": target.get_job_status_display(),
-    #                             "document_count": target.predictingresult_set.count()} for target in
-    #                 job.predictingtarget_set.all()},
-    # }
-
     check_dict = {}
-    for target in job.predictingtarget_set.all():
-        check_dict.update({
-            target.task_id : check_target_status(target)
-        })
+    targets = job.predictingtarget_set.all()
+    target_task_id_list = [target.task_id for target in targets]
+    if None in target_task_id_list:
+        if sum(x is None for x in target_task_id_list) == len(targets):
+            job.job_status = JobStatus.WAIT
+            job.save()
+        else:
+            job.job_status = JobStatus.PROCESSING
+            job.save()
+
+            for target in targets:
+                if not target.task_id:
+                    continue
+                if target.job_status == JobStatus.ERROR:
+                    job.job_status = JobStatus.ERROR
+
+    else:
+        for target in targets:
+            check_dict.update({
+                target.task_id : check_target_status(target)
+            })
 
     success_count = 0
     # if job.job_status == "processing":
@@ -308,10 +321,11 @@ def get_progress(request, pk):
                 continue
             if stat == 'PENDING':
                 continue
-        else:
-            success_count +=1
+        if prod == 'finish':
+            success_count += 1
 
-    if success_count == len(check_dict):
+
+    if success_count == len(targets):
         job.job_status = JobStatus.DONE
         job.save()
 
