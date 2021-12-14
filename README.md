@@ -1,6 +1,7 @@
-# Audience Toolkits Django version
+# Audience Toolkits Django v1.1
 
 ## requirements
+
 - python 3.7+
 - mysql
 
@@ -13,8 +14,10 @@ python manage.py migrate
 
 ### run service
 ```shell
-# 本地端測試站台，服務預設IP為 127.0.0.1:8080
+# 本地端測試站台，服務IP為 127.0.0.1:5000
 make run_server_local
+# 遠端機部署站台，服務IP為 0.0.0.0:5000
+make run_server_remote
 # 終端機測試
 make run_shell
 ```

@@ -299,9 +299,11 @@ def get_progress(request, pk):
                     continue
                 if target.job_status == JobStatus.ERROR:
                     job.job_status = JobStatus.ERROR
+                    job.save()
 
-    else:
-        for target in targets:
+
+    for target in targets:
+        if target.task_id:
             check_dict.update({
                 target.task_id : check_target_status(target)
             })
