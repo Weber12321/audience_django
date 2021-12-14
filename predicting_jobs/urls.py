@@ -23,6 +23,7 @@ urlpatterns = [
     path('<int:job_id>/target/<int:pk>/delete', views.PredictingTargetDelete.as_view(), name='job-target-delete'),
     # path('<int:job_id>/target/<int:pk>/result_samples', views.PredictResultSamplingListView.as_view(),
     #      name='result-samples'),
+    # ==== 重構 ====
     path('<int:job_id>/target/<int:pk>/result_samples', views.render_sample_results, name='result-samples'),
     # ==== 新增 ====
     path('<int:job_id>/target/<int:pk>/task_list', views.render_status, name='task-list'),
