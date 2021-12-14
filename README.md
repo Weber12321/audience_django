@@ -13,10 +13,10 @@ python manage.py migrate
 
 ### run service
 ```shell
-# 啟動任務管理器
-python manage.py qcluster
-# 啟動伺服器
-python manage.py runserver
+# 本地端測試站台，服務預設IP為 127.0.0.1:8080
+make run_server_local
+# 終端機測試
+make run_shell
 ```
 
 ## available models

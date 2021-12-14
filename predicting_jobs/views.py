@@ -1,9 +1,12 @@
 import json
 import logging
+from typing import Dict
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.shortcuts import render
+from django.template import loader
 from django.urls import reverse_lazy
 from django.views import generic
 from django_q.tasks import async_task
@@ -13,10 +16,12 @@ from rest_framework_datatables.django_filters.backends import DatatablesFilterBa
 from rest_framework_datatables.django_filters.filters import GlobalFilter
 from rest_framework_datatables.django_filters.filterset import DatatablesFilterSet
 
+from audience_toolkits.settings import MODEL_TYPE, PREDICT_TYPE, OUTPUT_DB
 from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, ApplyingModelForm
 from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult, JobStatus
 from predicting_jobs.serializers import JobSerializer, ResultSerializer, TargetSerializer, ApplyingModelSerializer
-from predicting_jobs.tasks import predict_task, get_queued_tasks_dict
+from predicting_jobs.tasks import predict_task, get_queued_tasks_dict, call_create_task, call_result_samples, \
+    call_check_status, check_job_status, check_jobs_status, check_targets_status, call_abort_task, check_target_status
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -46,10 +51,11 @@ class PredictingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     template_name = 'predicting_jobs/detail.html'
     form_class = PredictingJobForm
 
+
     def get_context_data(self, **kwargs):
+
         context = super().get_context_data(**kwargs)
         context["predicting_job"] = self.object
-
         apply_model_form = ApplyingModelForm({'predicting_job': self.object, 'priority': 0})
         context["apply_model_form"] = apply_model_form
         predicting_target_form = PredictingTargetForm(
@@ -60,6 +66,7 @@ class PredictingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_success_url(self):
         _pk = self.kwargs['pk']
         return reverse_lazy('predicting_jobs:job-detail', kwargs={'pk': _pk})
+
 
 
 class PredictingJobCreate(LoginRequiredMixin, generic.CreateView):
@@ -208,19 +215,36 @@ def start_job(request, pk):
             target.save()
 
         logger.info(f'Predict targets: {[target.name for target in target_set]}')
-        queued_tasks: dict = get_queued_tasks_dict()
+
+        # queued_tasks: dict = get_queued_tasks_dict()
         for target in target_set:
             task_name = f"{job.name}-{target.name}"
-            task_id = target.task_id
-            task = queued_tasks.get(task_id)
-            if not task:
-                task_id = async_task(predict_task, job=job, predicting_target=target, group="predicting_audience",
-                                     task_name=f"{job.name}-{target.name}")
-                target.task_id = task_id
+            # task_id = target.task_id
+            # task = queued_tasks.get(task_id)
+            # if not task:
+            #     task_id = async_task(predict_task, job=job, predicting_target=target, group="predicting_audience",
+            #                          task_name=f"{job.name}-{target.name}")
+            #     target.task_id = task_id
+            #     target.save()
+            #     logger.info(f"task_id= {task_id}")
+            # else:
+            #     logger.warning(f"task: {task_name} exist in queue, skip.")
+
+            api_response: Dict = call_create_task(job, target,output_db=OUTPUT_DB)
+            if not api_response:
+                continue
+            target.task_id = api_response['error_message']['task_id']
+            target.save()
+
+            if api_response['error_code'] != 200:
+                target.job_status = JobStatus.ERROR
                 target.save()
-                logger.info(f"task_id= {task_id}")
-            else:
-                logger.warning(f"task: {task_name} exist in queue, skip.")
+                logger.warning(f"{task_name} with task_id {target.task_id} failed")
+                logger.warning(f"task error_code {api_response['error_code']} "
+                               f"with error_msg {api_response['error_message']}")
+
+
+
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
 
@@ -238,17 +262,18 @@ def cancel_job(request, pk):
 
         logger.info(f'Canceling targets: {[target.name for target in target_set]}')
 
-        queued_tasks: dict = get_queued_tasks_dict()
+        # queued_tasks: dict = get_queued_tasks_dict()
         for target in target_set:
             task_id = target.task_id
-            task = queued_tasks.get(task_id)
-            logger.debug(task)
-            if task:
-                logger.info(f"Canceling job {target}...")
-                task.delete()
-            target.job_status = JobStatus.BREAK
+            # task = queued_tasks.get(task_id)
+            # logger.debug(task)
+            # if target.job_status != JobStatus.PROCESSING:
+            #     return
+            logger.info(f"Canceling job {target}...")
+            call_abort_task(job, target)
+            # target.job_status = JobStatus.BREAK
             target.error_message = "Canceled by user."
-            target.task_id = None
+            # target.task_id = None
             target.save()
 
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
@@ -257,12 +282,58 @@ def cancel_job(request, pk):
 
 def get_progress(request, pk):
     job = PredictingJob.objects.get(pk=pk)
+
+    check_dict = {}
+    targets = job.predictingtarget_set.all()
+    target_task_id_list = [target.task_id for target in targets]
+    if None in target_task_id_list:
+        if sum(x is None for x in target_task_id_list) == len(targets):
+            job.job_status = JobStatus.WAIT
+            job.save()
+        else:
+            job.job_status = JobStatus.PROCESSING
+            job.save()
+
+            for target in targets:
+                if not target.task_id:
+                    continue
+                if target.job_status == JobStatus.ERROR:
+                    job.job_status = JobStatus.ERROR
+
+    else:
+        for target in targets:
+            check_dict.update({
+                target.task_id : check_target_status(target)
+            })
+
+    success_count = 0
+    # if job.job_status == "processing":
+    for t_id,t_response in check_dict.items():
+        prod = t_response['error_message']['prod_stat']
+        stat = t_response['error_message']['stat']
+        if prod == 'no_data':
+            success_count += 1
+        if prod != 'finish':
+            if stat == 'FAILURE':
+                job.job_status = JobStatus.ERROR
+                job.save()
+            if stat == 'BREAK':
+                continue
+            if stat == 'PENDING':
+                continue
+        if prod == 'finish':
+            success_count += 1
+
+
+    if success_count == len(targets):
+        job.job_status = JobStatus.DONE
+        job.save()
+
     response_data = {
         'state': job.job_status,
-        'details': {target.id: {"status": target.get_job_status_display(),
-                                "document_count": target.predictingresult_set.count()} for target in
-                    job.predictingtarget_set.all()},
+        'details': check_dict,
     }
+
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
 
@@ -351,3 +422,87 @@ class ResultViewSet(viewsets.ModelViewSet):
             query_set = query_set.filter(source_author=source_author)
 
         return query_set.order_by('-created_at')
+
+
+# =========================
+#       Audience API
+# =========================
+import csv
+def sample_download(request, pk):
+    # Create the HttpResponse object with the appropriate CSV header.
+    target = PredictingTarget.objects.get(pk=pk)
+    sample_data: Dict = call_result_samples(target.task_id)
+
+    if sample_data['error_code'] != 200:
+        raise Http404(f'{sample_data["error_message"]}')
+
+    response = HttpResponse(
+        content_type='text/csv',
+        headers={'Content-Disposition': 'attachment; filename="sample_results.csv"'},
+    )
+
+    fieldnames = list(sample_data['error_message'][0].keys())
+    writer = csv.DictWriter(response, fieldnames=fieldnames)
+    for i in sample_data['error_message']:
+        writer.writerow(i)
+
+    return response
+
+def render_sample_results(request, job_id, pk):
+    target = PredictingTarget.objects.get(pk=pk)
+    sample_data: Dict = call_result_samples(target.task_id)
+    template = loader.get_template('predicting_target/sample_result.html')
+
+    if sample_data['error_code'] != 200:
+        context = {
+            'error_message': "抽樣資料錯誤，錯誤訊息 :" + " " + sample_data['error_message']
+        }
+        return HttpResponse(template.render(context, request))
+    else:
+        context = {
+            'sample_data' : sample_data['error_message']
+        }
+        return HttpResponse(template.render(context, request))
+
+def render_status(request, job_id, pk):
+    target = PredictingTarget.objects.get(pk=pk)
+    template = loader.get_template('predicting_target/task_list.html')
+
+
+    status_data = call_check_status(target.task_id)
+    if status_data['error_code'] != 200:
+        context = {
+            'error': status_data['error_message'],
+        }
+        return HttpResponse(template.render(context, request))
+
+
+    context = {
+        'status' : status_data['error_message'],
+    }
+    return HttpResponse(template.render(context, request))
+
+
+def render_all_status(request, pk):
+    job = PredictingJob.objects.get(pk=pk)
+    targets = job.predictingtarget_set.all()
+    # template = loader.get_template('predicting_target/job_task_list.html')
+
+    status = []
+    for target in targets:
+
+        if target.task_id:
+            status_data = call_check_status(target.task_id)
+        else:
+            continue
+
+        status.append(status_data['error_message'])
+
+    return render(request, 'predicting_target/job_task_list.html', {'status':status})
+
+
+
+
+
+
+

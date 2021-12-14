@@ -10,15 +10,23 @@ urlpatterns = [
     path('create/', views.PredictingJobCreate.as_view(), name='job-create'),
     path('<int:pk>/update/', views.PredictingJobUpdate.as_view(), name='job-update'),
     path('<int:pk>/delete/', views.PredictingJobDelete.as_view(), name='job-delete'),
+    # ==== 重構 ====
     path('<int:pk>/run/', views.start_job, name='start-job'),
+    # ==== 重構 ====
     path('<int:pk>/cancel/', views.cancel_job, name='cancel-job'),
+    # ==== 新增 ====
+    path('<int:pk>/task_list', views.render_all_status, name='job-task-list'),
 
     # targets
     path('<int:job_id>/target/add', views.PredictingTargetCreate.as_view(), name='job-target-add'),
     path('<int:job_id>/target/<int:pk>/update', views.PredictingTargetUpdate.as_view(), name='job-target-update'),
     path('<int:job_id>/target/<int:pk>/delete', views.PredictingTargetDelete.as_view(), name='job-target-delete'),
-    path('<int:job_id>/target/<int:pk>/result_samples', views.PredictResultSamplingListView.as_view(),
-         name='result-samples'),
+    # path('<int:job_id>/target/<int:pk>/result_samples', views.PredictResultSamplingListView.as_view(),
+    #      name='result-samples'),
+    path('<int:job_id>/target/<int:pk>/result_samples', views.render_sample_results, name='result-samples'),
+    # ==== 新增 ====
+    path('<int:job_id>/target/<int:pk>/task_list', views.render_status, name='task-list'),
+
 
     # applying models
     path('<int:job_id>/applying-model/add', views.ApplyingModelCreate.as_view(), name='job-applying-model-add'),
@@ -28,6 +36,7 @@ urlpatterns = [
          name='job-applying-model-delete'),
 
     # apis
+    # ==== 重構 ====
     path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),
 ]
 

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load result_extras %}
+{% block page_title %}
+    {{ predicting_target.name }}
+{% endblock %}
+{% block page_description %}
+    {{ predicting_job.name }}
+{% endblock %}
+{% block content %}
+
+    {% if status %}
+    <div class="row">
+        <div class="col-12">
+            <table id="result-table" class="table table-striped table-bordered" style="width:100%">
+                <thead>
+                    <tr>
+                        <th data-data="task_id">任務ID</th>
+                        <th data-data="target_source">來源</th>
+                        <th data-data="stat">貼標進度</th>
+                        <th data-data="prod_stat">任務狀態</th>
+                        <th data-data="create_time">開始時間</th>
+                        <th data-data="model_type">應用模型</th>
+                        <th data-data="predict_type">預測對象</th>
+                        <th data-data="rate_of_label">貼標率</th>
+                        <th data-data="check_point">檢查點</th>
+                        <th data-data="error_message">錯誤訊息</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ status.task_id }}</td>
+                        <td>{{ status.target_table }}</td>
+                        <td>{{ status.stat }}</td>
+                        <td>{{ status.prod_stat }}</td>
+                        <td>{{ status.create_time }}</td>
+                        <td>{{ status.model_type }}</td>
+                        <td>{{ status.predict_type }}</td>
+                        <td>{{ status.rate_of_label }}</td>
+                        <td>{{ status.check_point }}</td>
+                        <td>{{ status.error_message }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+        <b>{{ error }}</b>
+    {% endif %}
+
+{% endblock %}
