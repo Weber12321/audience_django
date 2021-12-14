@@ -323,7 +323,7 @@ else:
 PORT = 8000
 
 if IS_PRODUCTION:
-    API_PATH = f'http://0.0.0.0:{PORT}'
+    API_PATH = f'http://172.18.20.190:{PORT}'
 else:
     API_PATH = f'http://127.0.0.1:{PORT}'
 
