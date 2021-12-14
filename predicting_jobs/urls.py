@@ -14,6 +14,8 @@ urlpatterns = [
     path('<int:pk>/run/', views.start_job, name='start-job'),
     # ==== 重構 ====
     path('<int:pk>/cancel/', views.cancel_job, name='cancel-job'),
+    # ==== 新增 ====
+    path('<int:pk>/task_list', views.render_all_status, name='job-task-list'),
 
     # targets
     path('<int:job_id>/target/add', views.PredictingTargetCreate.as_view(), name='job-target-add'),

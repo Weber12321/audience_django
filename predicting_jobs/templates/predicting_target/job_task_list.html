@@ -27,20 +27,22 @@
 
                     </tr>
                 </thead>
+                {% for row in status %}
                 <tbody>
                     <tr>
-                        <td>{{ status.task_id }}</td>
-                        <td>{{ status.target_table }}</td>
-                        <td>{{ status.stat }}</td>
-                        <td>{{ status.prod_stat }}</td>
-                        <td>{{ status.create_time }}</td>
-                        <td>{{ status.model_type }}</td>
-                        <td>{{ status.predict_type }}</td>
-                        <td>{{ status.rate_of_label }}</td>
-                        <td>{{ status.check_point }}</td>
-                        <td>{{ status.error_message }}</td>
+                        <td>{{ row.task_id }}</td>
+                        <td>{{ row.target_table }}</td>
+                        <td>{{ row.stat }}</td>
+                        <td>{{ row.prod_stat }}</td>
+                        <td>{{ row.create_time }}</td>
+                        <td>{{ row.model_type }}</td>
+                        <td>{{ row.predict_type }}</td>
+                        <td>{{ row.rate_of_label }}</td>
+                        <td>{{ row.check_point }}</td>
+                        <td>{{ row.error_message }}</td>
                     </tr>
                 </tbody>
+                {% endfor%}
             </table>
         </div>
     </div>

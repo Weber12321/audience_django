@@ -5,6 +5,7 @@ from typing import Dict
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.shortcuts import render
 from django.template import loader
 from django.urls import reverse_lazy
 from django.views import generic
@@ -466,6 +467,24 @@ def render_status(request, job_id, pk):
         'status' : status_data['error_message'],
     }
     return HttpResponse(template.render(context, request))
+
+
+def render_all_status(request, pk):
+    job = PredictingJob.objects.get(pk=pk)
+    targets = job.predictingtarget_set.all()
+    # template = loader.get_template('predicting_target/job_task_list.html')
+
+    status = []
+    for target in targets:
+
+        if target.task_id:
+            status_data = call_check_status(target.task_id)
+        else:
+            continue
+
+        status.append(status_data['error_message'])
+
+    return render(request, 'predicting_target/job_task_list.html', {'status':status})
 
 
 
