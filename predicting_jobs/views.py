@@ -21,7 +21,8 @@ from predicting_jobs.forms import PredictingJobForm, PredictingTargetForm, Apply
 from predicting_jobs.models import PredictingJob, PredictingTarget, ApplyingModel, PredictingResult, JobStatus
 from predicting_jobs.serializers import JobSerializer, ResultSerializer, TargetSerializer, ApplyingModelSerializer
 from predicting_jobs.tasks import predict_task, get_queued_tasks_dict, call_create_task, call_result_samples, \
-    call_check_status, check_job_status, check_jobs_status, check_targets_status, call_abort_task, check_target_status
+    call_check_status, check_job_status, check_jobs_status, check_targets_status, call_abort_task, check_target_status, \
+    call_delete_task
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -219,21 +220,17 @@ def start_job(request, pk):
         # queued_tasks: dict = get_queued_tasks_dict()
         for target in target_set:
             task_name = f"{job.name}-{target.name}"
-            # task_id = target.task_id
-            # task = queued_tasks.get(task_id)
-            # if not task:
-            #     task_id = async_task(predict_task, job=job, predicting_target=target, group="predicting_audience",
-            #                          task_name=f"{job.name}-{target.name}")
-            #     target.task_id = task_id
-            #     target.save()
-            #     logger.info(f"task_id= {task_id}")
-            # else:
-            #     logger.warning(f"task: {task_name} exist in queue, skip.")
 
-            api_response: Dict = call_create_task(job, target,output_db=OUTPUT_DB)
+            if target.task_id:
+                logger.info(f'task is already exist...delete task {target.task_id} first')
+                response_dict = call_delete_task(job=job, predicting_target=target)
+                logger.info(f'{response_dict}')
+
+
+            api_response: Dict = call_create_task(job, target, output_db=OUTPUT_DB)
             if not api_response:
                 continue
-            target.task_id = api_response['error_message']['task_id']
+            target.task_id = api_response['error_message']
             target.save()
 
             if api_response['error_code'] != 200:
@@ -279,7 +276,6 @@ def cancel_job(request, pk):
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
 
-
 def get_progress(request, pk):
     job = PredictingJob.objects.get(pk=pk)
 
@@ -300,7 +296,6 @@ def get_progress(request, pk):
                 if target.job_status == JobStatus.ERROR:
                     job.job_status = JobStatus.ERROR
                     job.save()
-
 
     for target in targets:
         if target.task_id:

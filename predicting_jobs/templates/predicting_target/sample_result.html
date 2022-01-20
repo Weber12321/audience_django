@@ -13,9 +13,19 @@
     {% endif %}
 
     {% if sample_data %}
+
+    <style>
+        .divScroll {
+        overflow:scroll;
+        height:1000px;
+        width:auto;
+        }
+    </style>
+
     <div class="row">
         <div class="col-12">
-            <table id="result-table" class="table table-striped table-bordered" style="width:100%">
+            <div class="divScroll">
+            <table id="result-table" class="table table-striped table-bordered" style="width:120%">
                 <thead>
                     <tr>
                         <th data-data="task_id">任務ID</th>
@@ -24,6 +34,7 @@
                         <th data-data="create_time">爬取時間</th>
                         <th data-data="field_content">來源ID</th>
                         <th data-data="match_content">命中內容</th>
+                        <th data-data="match_meta">命中規則</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -35,10 +46,12 @@
                         <td>{{ row.create_time }}</td>
                         <td>{{ row.field_content }}</td>
                         <td>{{ row.match_content }}</td>
+                        <td>{{ row.match_meta }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
     {% endif %}

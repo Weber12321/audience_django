@@ -5,7 +5,6 @@ from typing import List, Iterable, Dict, Optional
 
 from django.utils import timezone
 from django_q.models import OrmQ
-from tqdm import tqdm
 
 from audience_toolkits import settings
 from core.audience.audience_worker import AudienceWorker
@@ -186,34 +185,16 @@ def get_queued_tasks_dict():
 #       Audience API
 # =========================
 
-import csv
 import json
 import requests
-import pandas as pd
 from audience_toolkits.settings import API_HEADERS, API_PATH
 
 
 # create_task
-def call_create_task(job: PredictingJob, predicting_target: PredictingTarget, output_db = 'audience_result'):
+def call_create_task(job: PredictingJob, predicting_target, output_db):
     applying_models = job.applyingmodel_set.order_by("priority", "created_at")
-    models = get_temp_rule(applying_models)
-    rule = {k:v for model in models for k,v in model.items()}
-    # === 優先度還是有差的
-    model_type = applying_models[0].modeling_job.model_name.lower()
+    pattern: List[Dict] = get_temp_rule(applying_models)
 
-
-
-    if model_type == 'regex_model':
-        model_type = 'rule_model'
-        pattern = defaultdict(list)
-        for k, v in rule.items():
-            for i in v:
-                pattern[k].append(i[0])
-        pattern = dict(pattern)
-    else:
-        pattern = rule
-
-    predict_type = applying_models[0].modeling_job.feature.lower()
 
     job.job_status = JobStatus.PROCESSING
     job.save()
@@ -225,13 +206,11 @@ def call_create_task(job: PredictingJob, predicting_target: PredictingTarget, ou
         predicting_target.save()
         return
 
-    api_path = f'{API_PATH}/api/tasks/'
+    api_path = f'{API_PATH}/tasks/'
 
     api_headers = API_HEADERS
 
     api_request_body = {
-        "MODEL_TYPE": model_type,
-        "PREDICT_TYPE": predict_type + '_name' if predict_type == 'author' else predict_type,
         "START_TIME": f"{predicting_target.begin_post_time}",
         "END_TIME": f"{predicting_target.end_post_time}",
         "PATTERN": pattern,
@@ -239,6 +218,8 @@ def call_create_task(job: PredictingJob, predicting_target: PredictingTarget, ou
         "INPUT_TABLE": source.tablename,
         "OUTPUT_SCHEMA": output_db,
         "COUNTDOWN": 5,
+        "QUEUE": "queue1",
+        "MODEL_JOB_LIST": [apply_model.modeling_job.id for apply_model in applying_models],
         "SITE_CONFIG": {"host": source.host,
                         "port": source.port,
                         "user": source.username,
@@ -273,7 +254,7 @@ def call_create_task(job: PredictingJob, predicting_target: PredictingTarget, ou
 
 # result_samples
 def call_result_samples(task_id):
-    sample_path = f'{API_PATH}/api/tasks/{task_id}/sample/'
+    sample_path = f'{API_PATH}/tasks/{task_id}/sample/'
     api_headers = {
         'accept': 'application/json',
     }
@@ -286,7 +267,7 @@ def call_result_samples(task_id):
 
 # check_status
 def call_check_status(task_id):
-    check_status_path = f'{API_PATH}/api/tasks/{task_id}'
+    check_status_path = f'{API_PATH}/tasks/{task_id}'
     api_headers = {
         'accept': 'application/json',
     }
@@ -301,14 +282,14 @@ def call_check_status(task_id):
     return check_status_result
 
 # abort_task
-def call_abort_task(job: PredictingJob, predicting_target:  PredictingTarget):
+def call_abort_task(job: PredictingJob, predicting_target: PredictingTarget):
 
     task_id = predicting_target.task_id
 
     if not task_id:
         return
 
-    api_path = f'{API_PATH}/api/tasks/abort/'
+    api_path = f'{API_PATH}/tasks/abort/'
 
     api_headers = API_HEADERS
 
@@ -339,6 +320,44 @@ def call_abort_task(job: PredictingJob, predicting_target:  PredictingTarget):
         job.job_status = JobStatus.ERROR
         job.save()
 
+# delete_task
+def call_delete_task(job: PredictingJob, predicting_target: PredictingTarget):
+
+    task_id = predicting_target.task_id
+
+    if not task_id:
+        return
+
+    api_path = f'{API_PATH}/tasks/delete/'
+
+    api_headers = API_HEADERS
+
+    api_request_body = {
+        "TASK_ID": task_id
+    }
+
+    try:
+        r = requests.post(api_path, headers=api_headers, data=json.dumps(api_request_body))
+        logger.info(f"HTTP status_code: {r.status_code}; response: {r.json()}")
+
+        if r.status_code != 200:
+            predicting_target.job_status = JobStatus.ERROR
+            predicting_target.save()
+
+        else:
+            predicting_target.job_status = JobStatus.WAIT
+            predicting_target.save()
+
+        response_dict = r.json()
+        return response_dict
+
+    except Exception as e:
+        # if something wrong
+        logger.error(e)
+        job.error_message = e
+        job.job_status = JobStatus.ERROR
+        job.save()
+
 
 def get_temp_rule(applying_models: List[ApplyingModel]) -> List[Dict]:
     model_list = []
@@ -346,12 +365,15 @@ def get_temp_rule(applying_models: List[ApplyingModel]) -> List[Dict]:
     for applying_model in applying_models:
         if applying_model.modeling_job.model_name.lower() == 'regex_model':
             model = get_model(applying_model.modeling_job)
-            # print(model.model_dir_name)
             if model.patterns:
-                model_list.append(dict(model.patterns))
+                rule = dict(model.patterns)
+                pattern = defaultdict(list)
+                for k, v in rule.items():
+                    for i in v:
+                        pattern[k].append(i[0])
+                model_list.append(dict(pattern))
         if applying_model.modeling_job.model_name.lower() == 'keyword_model':
             model = get_model(applying_model.modeling_job)
-            # print(model.model_dir_name)
             if model.rules:
                 model_list.append(dict(model.rules))
 
