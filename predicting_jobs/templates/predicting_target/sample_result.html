@@ -14,18 +14,23 @@
 
     {% if sample_data %}
 
+    <script>
+    var messageBody = document.querySelector('#messageBody');
+    messageBody.scrollTop = messageBody.scrollHeight
+    </script>
+
     <style>
         .divScroll {
-        overflow:scroll;
-        height:1000px;
-        width:auto;
+        height: 80vh;
+        width: 100%;
+        overflow: scroll;
         }
     </style>
 
     <div class="row">
         <div class="col-12">
-            <div class="divScroll">
-            <table id="result-table" class="table table-striped table-bordered" style="width:120%">
+            <div class="divScroll" id="messageBody">
+                <table id="result-table" class="table table-striped table-bordered">
                 <thead>
                     <tr>
                         <th data-data="task_id">任務ID</th>
@@ -54,6 +59,9 @@
             </div>
         </div>
     </div>
+
+
+
     {% endif %}
 
 
