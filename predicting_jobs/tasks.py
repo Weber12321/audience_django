@@ -210,6 +210,12 @@ def call_create_task(job: PredictingJob, predicting_target, output_db):
 
     api_headers = API_HEADERS
 
+    # check if the model information is set in the backends, remove this method later
+    check_model_record(model_id_list=[i.modeling_job.id for i in applying_models],
+                       model_types=[i.modeling_job.model_name for i in applying_models],
+                       features=[i.modeling_job.feature.upper() for i in applying_models])
+
+
     api_request_body = {
         "START_TIME": f"{predicting_target.begin_post_time}",
         "END_TIME": f"{predicting_target.end_post_time}",
@@ -446,4 +452,31 @@ def check_target_status(target: PredictingTarget):
 
     return _result_dict
 
+def check_model_record(model_id_list: List[int], model_types: List[str], features: List[str]):
+    for idx, model_type, feature in zip(model_id_list, model_types, features):
+        r = requests.get(url=f"{API_PATH}/models/{idx}")
+        if isinstance(r.json(), str):
+            result=call_model_preparing(model_job_id=idx, model_type=model_type, feature=feature)
+            if result.status_code != 200:
+                raise ValueError(f'Cannot prepare the model {idx} at the backend tasks')
+            if not isinstance(result.json(), dict):
+                raise ValueError(f'Cannot prepare the model {idx} at the backend tasks')
+        else:
+            continue
 
+def call_model_preparing(model_job_id: int, model_type: str, feature: str):
+    api_path=f'{API_PATH}/models/prepare/'
+    api_headers=API_HEADERS
+    body = {
+      "QUEUE": "queue2",
+      "DATASET_DB": "audience-toolkit-django",
+      "DATASET_NO": 1,
+      "MODEL_JOB_ID": model_job_id,
+      "PREDICT_TYPE": feature,
+      "MODEL_TYPE": model_type,
+      "MODEL_INFO": {
+        "model_path": f"{model_job_id}_{model_type}"
+      }
+    }
+    r = requests.post(api_path, headers=api_headers, data=json.dumps(body))
+    return r
