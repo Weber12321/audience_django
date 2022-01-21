@@ -258,3 +258,9 @@ def eval_dataset(model, job: ModelingJob, dataset, dataset_type: Document.TypeCh
         else:
             raise ValueError(f"Unknown prediction data format {type(pred)}")
         pr.save()
+
+# ===================================
+#           Modeling API
+# ===================================
+
+# def call_model_preparing_api(job: ModelingJob):
