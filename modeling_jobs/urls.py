@@ -20,7 +20,6 @@ urlpatterns = [
     path('<int:job_id>/import', views.UploadModelJobCreate.as_view(), name='import-model'),
     path('<int:pk>/ext_test', views.testing_model_via_ext_data, name='api-ext-testing-model'),
     path('<int:modeling_job_id>/result_page', views.result_page, name='api-doc-result-page'),
-
     path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),
     # report curd
     path('<int:job_id>/report/<int:pk>', views.ReportDetail.as_view(), name="report-detail"),
