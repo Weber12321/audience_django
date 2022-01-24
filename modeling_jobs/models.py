@@ -75,7 +75,6 @@ class ModelingJob(models.Model):
         report = self.report_set.filter(dataset_type=Document.TypeChoices.EXT_TEST).last()
         return report
 
-
 class Report(models.Model):
     dataset_type = models.CharField(max_length=10, choices=Document.TypeChoices.choices, default=None, null=True)
     accuracy = models.FloatField(max_length=10, verbose_name='準確率', blank=True)

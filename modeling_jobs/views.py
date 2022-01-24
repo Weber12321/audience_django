@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView
 from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions
 
 from core.audience.models.base_model import RuleBaseModel, SuperviseModel
 from labeling_jobs.models import LabelingJob, Document

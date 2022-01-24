@@ -8,6 +8,7 @@ from django.db.models import QuerySet
 from sklearn import preprocessing
 
 from audience_toolkits import settings
+from audience_toolkits.settings import API_HEADERS, API_PATH
 from core.audience.models.base_model import SuperviseModel, RuleBaseModel
 from core.audience.models.classic.term_weight_model import TermWeightModel
 from core.dao.input_example import Features, InputExample
@@ -262,5 +263,36 @@ def eval_dataset(model, job: ModelingJob, dataset, dataset_type: Document.TypeCh
 # ===================================
 #           Modeling API
 # ===================================
-
-# def call_model_preparing_api(job: ModelingJob):
+# def call_model_preparing(job: ModelingJob):
+#     job.job_status = ModelingJob.JobStatus.PROCESSING
+#     job.save()
+#     try:
+#         model_path = f"{job.id}_{job.name}"
+#         labeling_job_id = job.jobRef.id
+#         api_path = f'{API_PATH}/tasks/'
+#         api_headers = API_HEADERS
+#
+#         if job.model_name.upper()
+#         api_request_body = {"QUEUE":"queue2",
+#                             "DATASET_DB":"audience-toolkit-django",
+#                             "DATASET_NO":labeling_job_id,
+#                             "MODEL_JOB_ID":0,
+#                             "PREDICT_TYPE":job.feature.upper(),
+#                             "MODEL_TYPE":job.model_name.upper(),
+#                             "MODEL_INFO":{"model_path": "model_path",
+#                                           "feature_model": "SGD",
+#                                           "patterns": None,
+#                                           }
+#                             }
+#
+#
+#         job.job_status = ModelingJob.JobStatus.DONE
+#         job.save()
+#         logger.debug('training done')
+#
+#     except Exception as e:
+#         logger.debug(e)
+#         job.error_message = e
+#         job.job_status = ModelingJob.JobStatus.ERROR
+#         job.save()
+#         raise ValueError("Task Failed")

@@ -179,8 +179,6 @@ def get_queued_tasks_dict():
     return {t.task_id(): t for t in OrmQ.objects.all()}
 
 
-
-
 # =========================
 #       Audience API
 # =========================
@@ -193,8 +191,6 @@ from audience_toolkits.settings import API_HEADERS, API_PATH
 # create_task
 def call_create_task(job: PredictingJob, predicting_target, output_db):
     applying_models = job.applyingmodel_set.order_by("priority", "created_at")
-    pattern: List[Dict] = get_temp_rule(applying_models)
-
 
     job.job_status = JobStatus.PROCESSING
     job.save()
@@ -211,15 +207,11 @@ def call_create_task(job: PredictingJob, predicting_target, output_db):
     api_headers = API_HEADERS
 
     # check if the model information is set in the backends, remove this method later
-    check_model_record(model_id_list=[i.modeling_job.id for i in applying_models],
-                       model_types=[i.modeling_job.model_name for i in applying_models],
-                       features=[i.modeling_job.feature.upper() for i in applying_models])
-
+    check_model_record(applying_models=applying_models)
 
     api_request_body = {
         "START_TIME": f"{predicting_target.begin_post_time}",
         "END_TIME": f"{predicting_target.end_post_time}",
-        "PATTERN": pattern,
         "INPUT_SCHEMA": source.schema,
         "INPUT_TABLE": source.tablename,
         "OUTPUT_SCHEMA": output_db,
@@ -258,6 +250,7 @@ def call_create_task(job: PredictingJob, predicting_target, output_db):
     finally:
         job.save()
 
+
 # result_samples
 def call_result_samples(task_id):
     sample_path = f'{API_PATH}/tasks/{task_id}/sample/'
@@ -270,6 +263,7 @@ def call_result_samples(task_id):
     sample_data: Optional[Dict] = r.json()
 
     return sample_data
+
 
 # check_status
 def call_check_status(task_id):
@@ -287,9 +281,9 @@ def call_check_status(task_id):
 
     return check_status_result
 
+
 # abort_task
 def call_abort_task(job: PredictingJob, predicting_target: PredictingTarget):
-
     task_id = predicting_target.task_id
 
     if not task_id:
@@ -315,7 +309,6 @@ def call_abort_task(job: PredictingJob, predicting_target: PredictingTarget):
             predicting_target.job_status = JobStatus.BREAK
             predicting_target.save()
 
-
         response_dict = r.json()
         return response_dict
 
@@ -326,9 +319,9 @@ def call_abort_task(job: PredictingJob, predicting_target: PredictingTarget):
         job.job_status = JobStatus.ERROR
         job.save()
 
+
 # delete_task
 def call_delete_task(job: PredictingJob, predicting_target: PredictingTarget):
-
     task_id = predicting_target.task_id
 
     if not task_id:
@@ -387,7 +380,6 @@ def get_temp_rule(applying_models: List[ApplyingModel]) -> List[Dict]:
 
 
 def check_job_status(job: PredictingJob):
-
     check_targets_status(job)
     targets = job.predictingtarget_set.all()
 
@@ -416,6 +408,7 @@ def check_jobs_status(jobs: List[PredictingJob]):
     for job in jobs:
         check_job_status(job)
 
+
 def check_targets_status(job: PredictingJob):
     targets = job.predictingtarget_set.all()
     for target in targets:
@@ -431,6 +424,7 @@ def check_targets_status(job: PredictingJob):
                     target.save()
             else:
                 pass
+
 
 def check_target_status(target: PredictingTarget):
     _result_dict = call_check_status(target.task_id)
@@ -452,31 +446,38 @@ def check_target_status(target: PredictingTarget):
 
     return _result_dict
 
-def check_model_record(model_id_list: List[int], model_types: List[str], features: List[str]):
-    for idx, model_type, feature in zip(model_id_list, model_types, features):
-        r = requests.get(url=f"{API_PATH}/models/{idx}")
+
+def check_model_record(applying_models):
+    for applying_model in applying_models:
+        r = requests.get(url=f"{API_PATH}/models/{applying_model.modeling_job.id}")
         if isinstance(r.json(), str):
-            result=call_model_preparing(model_job_id=idx, model_type=model_type, feature=feature)
+            result = call_model_preparing(
+                model_job_id=applying_model.modeling_job.id,
+                labeling_job_id=applying_model.modeling_job.jobRef.id,
+                model_type=applying_model.modeling_job.model_name,
+                feature=applying_model.modeling_job.feature.upper()
+            )
             if result.status_code != 200:
-                raise ValueError(f'Cannot prepare the model {idx} at the backend tasks')
+                raise ValueError(f'Cannot prepare the model {applying_model.modeling_job.id} at the backend tasks')
             if not isinstance(result.json(), dict):
-                raise ValueError(f'Cannot prepare the model {idx} at the backend tasks')
+                raise ValueError(f'Cannot prepare the model {applying_model.modeling_job.id} at the backend tasks')
         else:
             continue
 
-def call_model_preparing(model_job_id: int, model_type: str, feature: str):
-    api_path=f'{API_PATH}/models/prepare/'
-    api_headers=API_HEADERS
+
+def call_model_preparing(model_job_id: int, labeling_job_id: int, model_type: str, feature: str):
+    api_path = f'{API_PATH}/models/prepare/'
+    api_headers = API_HEADERS
     body = {
-      "QUEUE": "queue2",
-      "DATASET_DB": "audience-toolkit-django",
-      "DATASET_NO": 1,
-      "MODEL_JOB_ID": model_job_id,
-      "PREDICT_TYPE": feature,
-      "MODEL_TYPE": model_type,
-      "MODEL_INFO": {
-        "model_path": f"{model_job_id}_{model_type}"
-      }
+        "QUEUE": "queue2",
+        "DATASET_DB": "audience-toolkit-django",
+        "DATASET_NO": labeling_job_id,
+        "MODEL_JOB_ID": model_job_id,
+        "PREDICT_TYPE": feature,
+        "MODEL_TYPE": model_type,
+        "MODEL_INFO": {
+            "model_path": f"{model_job_id}_{model_type}"
+        }
     }
     r = requests.post(api_path, headers=api_headers, data=json.dumps(body))
     return r
