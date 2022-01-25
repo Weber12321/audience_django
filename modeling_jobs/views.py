@@ -19,7 +19,8 @@ from .forms import ModelingJobForm, TermWeightForm, UploadModelJobForm
 from .helpers import insert_csv_to_db, parse_report
 from .models import ModelingJob, Report, TermWeight, UploadModelJob
 from .serializers import JobSerializer, TermWeightSerializer
-from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task
+from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task, call_model_preparing, \
+    call_model_testing, call_model_status
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -191,8 +192,9 @@ def insert_csv(request):
 def training_model(request, pk):
     job = ModelingJob.objects.get(pk=pk)
     logger.debug(job.is_multi_label)
-    a = AsyncTask(train_model_task, job=job, group='training_model')
-    a.run()
+    # a = AsyncTask(train_model_task, job=job, group='training_model')
+    # a.run()
+    call_model_preparing(job=job)
     return HttpResponseRedirect(reverse('modeling_jobs:index'))
 
 
@@ -205,8 +207,9 @@ def testing_model_via_ext_data(request, pk):
         return HttpResponse('請先訓練模型')
     else:
         job = ModelingJob.objects.get(pk=pk)
-        a = AsyncTask(testing_model_via_ext_data_task, uploaded_file=uploaded_file, job=job, group='ext_test_model')
-        a.run()
+        # a = AsyncTask(testing_model_via_ext_data_task, uploaded_file=uploaded_file, job=job, group='ext_test_model')
+        # a.run()
+        call_model_testing(uploaded_file, job=job, remove_old_data=True)
         return HttpResponseRedirect(reverse('modeling_jobs:job-detail', kwargs={"pk": pk}))
 
 

@@ -1,9 +1,10 @@
 import json
 import logging
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from typing import List, Union, Dict, Tuple
 
 import numpy as np
+import requests
 from django.db.models import QuerySet
 from sklearn import preprocessing
 
@@ -260,39 +261,161 @@ def eval_dataset(model, job: ModelingJob, dataset, dataset_type: Document.TypeCh
             raise ValueError(f"Unknown prediction data format {type(pred)}")
         pr.save()
 
+
 # ===================================
 #           Modeling API
 # ===================================
-# def call_model_preparing(job: ModelingJob):
-#     job.job_status = ModelingJob.JobStatus.PROCESSING
-#     job.save()
-#     try:
-#         model_path = f"{job.id}_{job.name}"
-#         labeling_job_id = job.jobRef.id
-#         api_path = f'{API_PATH}/tasks/'
-#         api_headers = API_HEADERS
-#
-#         if job.model_name.upper()
-#         api_request_body = {"QUEUE":"queue2",
-#                             "DATASET_DB":"audience-toolkit-django",
-#                             "DATASET_NO":labeling_job_id,
-#                             "MODEL_JOB_ID":0,
-#                             "PREDICT_TYPE":job.feature.upper(),
-#                             "MODEL_TYPE":job.model_name.upper(),
-#                             "MODEL_INFO":{"model_path": "model_path",
-#                                           "feature_model": "SGD",
-#                                           "patterns": None,
-#                                           }
-#                             }
-#
-#
-#         job.job_status = ModelingJob.JobStatus.DONE
-#         job.save()
-#         logger.debug('training done')
-#
-#     except Exception as e:
-#         logger.debug(e)
-#         job.error_message = e
-#         job.job_status = ModelingJob.JobStatus.ERROR
-#         job.save()
-#         raise ValueError("Task Failed")
+def call_model_preparing(job: ModelingJob):
+    job.job_status = ModelingJob.JobStatus.PROCESSING
+    job.save()
+    try:
+        model_path = f"{job.id}_{job.model_name}"
+        api_path = f'{API_PATH}/models/prepare/'
+        api_headers = API_HEADERS
+        api_request_body = {"QUEUE": "queue2",
+                            "DATASET_DB": "audience-toolkit-django",
+                            "DATASET_NO": job.jobRef.id,
+                            "MODEL_JOB_ID": job.id,
+                            "PREDICT_TYPE": job.feature.upper(),
+                            "MODEL_TYPE": job.model_name.upper(),
+                            "MODEL_INFO": {"model_path": model_path,
+                                           "feature_model": "SGD"
+                                           }
+                            }
+
+        result = requests.post(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+
+        if result.status_code != 200:
+            logger.debug(result.json())
+            job.error_message = result.json()
+            job.job_status = ModelingJob.JobStatus.ERROR
+            job.save()
+
+    except Exception as e:
+        logger.debug(e)
+        job.error_message = e
+        job.job_status = ModelingJob.JobStatus.ERROR
+        job.save()
+        raise ValueError("Task Failed")
+
+
+def call_model_testing(uploaded_file, job: ModelingJob, remove_old_data=True):
+    job.job_test_status = ModelingJob.JobStatus.PROCESSING
+    job.save()
+    try:
+        create_ext_data(uploaded_file=uploaded_file, job=job.jobRef, remove_old_data=remove_old_data)
+        logger.debug(job.model_name, job.model_path, job.is_multi_label)
+
+        model_path = f"{job.id}_{job.model_name}"
+        api_path = f'{API_PATH}/models/test/'
+        api_headers = API_HEADERS
+        api_request_body = {"QUEUE": "queue2",
+                            "DATASET_DB": "audience-toolkit-django",
+                            "DATASET_NO": job.jobRef.id,
+                            "MODEL_JOB_ID": job.id,
+                            "PREDICT_TYPE": job.feature.upper(),
+                            "MODEL_TYPE": job.model_name.upper(),
+                            "MODEL_INFO": {"model_path": model_path,
+                                           "feature_model": "SGD"
+                                           }
+                            }
+        result = requests.post(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+
+        if isinstance(result.json(), str):
+            logger.debug(f'Task is failed, since {result.json()}')
+            job.error_message = result.json()
+            job.ext_test_status = ModelingJob.JobStatus.ERROR
+            job.save()
+
+    except Exception as e:
+        logger.debug(e)
+        job.error_message = e
+        job.ext_test_status = ModelingJob.JobStatus.ERROR
+        job.save()
+        raise ValueError("Task Failed")
+
+
+def call_model_status(job_id: int):
+    api_path = f"{API_PATH}/models/{job_id}"
+    api_headers = API_HEADERS
+    result = requests.get(url=api_path, headers=api_headers)
+    return result.status_code, result.json()
+
+
+def call_model_report(job_id: int):
+    api_path = f"{API_PATH}/models/{job_id}/report/"
+    api_headers = API_HEADERS
+    report = requests.get(url=api_path, headers=api_headers)
+    return report.status_code, report.json()
+
+
+def parse_report(job_id: int):
+    status_code, report = call_model_report(job_id=job_id)
+    reports: dict = _parse_report(report)
+    accuracy = reports.pop('accuracy')
+    macro_avg = reports.pop('macro avg')
+    macro_avg['f1_score'] = macro_avg['f1-score']
+    weighted_avg = reports.pop('weighted avg')
+    weighted_avg['f1_score'] = weighted_avg['f1-score']
+    label_info = namedtuple('label_info', ['label', 'precision', 'recall', 'f1_score', 'support'])
+    labels = []
+    for key in reports.keys():
+        label = reports.get(key)
+        s = label_info(key, label.get('precision'), label.get('recall'), label.get('f1-score'), label.get('support'))
+        labels.append(s)
+    return {"accuracy": accuracy,
+            "macro_avg": macro_avg,
+            "weighted_avg": weighted_avg,
+            "labels": labels}
+
+
+def _parse_report(report: dict):
+    for key in report.keys():
+        if key != 'accuracy':
+            for i in report[key]:
+                report[key][i] = round(report[key][i], 3)
+
+    return report
+
+
+def get_progress_api(request, pk):
+    job = ModelingJob.objects.get(pk=pk)
+    status_code, status_result = call_model_status(job=job)
+
+    if status_code == 200:
+        if status_result['training_status'] in ('finished', 'untrainable'):
+            job.job_status = ModelingJob.JobStatus.DONE
+            job.save()
+        elif status_result['training_status'] in ('pending', 'started'):
+            job.job_status = ModelingJob.JobStatus.PROCESSING
+            job.save()
+        elif status_result['training_status'] == 'failed':
+            job.job_status = ModelingJob.JobStatus.ERROR
+            job.save()
+        elif status_result['training_status'] == 'break':
+            job.job_status = ModelingJob.JobStatus.BREAK
+            job.save()
+        else:
+            job.job_status = ModelingJob.JobStatus.WAIT
+            job.save()
+
+        if status_result['ext_status'] == 'finished':
+            job.job_status = ModelingJob.JobStatus.DONE
+            job.save()
+        elif status_result['ext_status'] in ('pending', 'started'):
+            job.job_status = ModelingJob.JobStatus.PROCESSING
+            job.save()
+        elif status_result['ext_status'] == 'failed':
+            job.job_status = ModelingJob.JobStatus.ERROR
+            job.save()
+        elif status_result['ext_status'] == 'break':
+            job.job_status = ModelingJob.JobStatus.BREAK
+            job.save()
+        else:
+            job.job_status = ModelingJob.JobStatus.WAIT
+            job.save()
+
+    else:
+        job.error_message = status_result
+        job.job_status = ModelingJob.JobStatus.ERROR
+        job.save()
