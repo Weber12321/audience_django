@@ -20,7 +20,7 @@ from .helpers import insert_csv_to_db, parse_report
 from .models import ModelingJob, Report, TermWeight, UploadModelJob
 from .serializers import JobSerializer, TermWeightSerializer
 from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task, call_model_preparing, \
-    call_model_testing, call_model_status
+    call_model_testing, call_model_status, process_report
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -215,23 +215,22 @@ def testing_model_via_ext_data(request, pk):
 
 @csrf_exempt
 def result_page(request, modeling_job_id):
-    report = ModelingJob.objects.get(pk=modeling_job_id).report_set.last()
-    reports: dict = parse_report(report.report)
-    accuracy = reports.pop('accuracy')
-    macro_avg = reports.pop('macro avg')
-    macro_avg['f1_score'] = macro_avg['f1-score']
-    weighted_avg = reports.pop('weighted avg')
-    weighted_avg['f1_score'] = weighted_avg['f1-score']
-    label_info = namedtuple('label_info', ['label', 'precision', 'recall', 'f1_score', 'support'])
-    labels = []
-    for key in reports.keys():
-        label = reports.get(key)
-        s = label_info(key, label.get('precision'), label.get('recall'), label.get('f1-score'), label.get('support'))
-        labels.append(s)
-    return render(request, 'modeling_jobs/result.html', {"accuracy": accuracy,
-                                                         "macro_avg": macro_avg,
-                                                         "weighted_avg": weighted_avg,
-                                                         "labels": labels})
+    # report = ModelingJob.objects.get(pk=modeling_job_id).report_set.last()
+    # reports: dict = parse_report(report.report)
+    # accuracy = reports.pop('accuracy')
+    # macro_avg = reports.pop('macro avg')
+    # macro_avg['f1_score'] = macro_avg['f1-score']
+    # weighted_avg = reports.pop('weighted avg')
+    # weighted_avg['f1_score'] = weighted_avg['f1-score']
+    # label_info = namedtuple('label_info', ['label', 'precision', 'recall', 'f1_score', 'support'])
+    # labels = []
+    # for key in reports.keys():
+    #     label = reports.get(key)
+    #     s = label_info(key, label.get('precision'), label.get('recall'), label.get('f1-score'), label.get('support'))
+    #     labels.append(s)
+    report_dict = process_report(job_id=modeling_job_id)
+
+    return render(request, 'modeling_jobs/result.html', report_dict)
 
 
 def get_progress(request, pk):

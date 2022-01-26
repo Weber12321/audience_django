@@ -18,9 +18,9 @@ urlpatterns = [
     path('insert_csv', views.insert_csv, name='api-doc-insert_csv'),
     # refactor
     path('<int:pk>/training', views.training_model, name='training-model'),
-    # refactor: ok
-    path('<int:job_id>/import', views.UploadModelJobCreate.as_view(), name='import-model'),
     # refactor
+    path('<int:job_id>/import', views.UploadModelJobCreate.as_view(), name='import-model'),
+    # refactor: ok
     path('<int:pk>/ext_test', views.testing_model_via_ext_data, name='api-ext-testing-model'),
     # refactor: ok
     path('<int:modeling_job_id>/result_page', views.result_page, name='api-doc-result-page'),

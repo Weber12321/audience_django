@@ -349,9 +349,9 @@ def call_model_report(job_id: int):
     return report.status_code, report.json()
 
 
-def parse_report(job_id: int):
+def process_report(job_id: int):
     status_code, report = call_model_report(job_id=job_id)
-    reports: dict = _parse_report(report)
+    reports: dict = _process_report(report)
     accuracy = reports.pop('accuracy')
     macro_avg = reports.pop('macro avg')
     macro_avg['f1_score'] = macro_avg['f1-score']
@@ -369,7 +369,7 @@ def parse_report(job_id: int):
             "labels": labels}
 
 
-def _parse_report(report: dict):
+def _process_report(report: dict):
     for key in report.keys():
         if key != 'accuracy':
             for i in report[key]:
