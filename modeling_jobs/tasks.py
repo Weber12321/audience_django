@@ -275,7 +275,7 @@ def call_model_preparing(job: ModelingJob):
         api_request_body = {"QUEUE": "queue2",
                             "DATASET_DB": "audience-toolkit-django",
                             "DATASET_NO": job.jobRef.id,
-                            "MODEL_JOB_ID": job.id,
+                            "TASK_ID": job.task_id.hex,
                             "PREDICT_TYPE": job.feature.upper(),
                             "MODEL_TYPE": job.model_name.upper(),
                             "MODEL_INFO": {"model_path": model_path,
@@ -335,22 +335,22 @@ def call_model_testing(uploaded_file, job: ModelingJob, remove_old_data=True):
         raise ValueError("Task Failed")
 
 
-def call_model_status(job_id: int):
-    api_path = f"{API_PATH}/models/{job_id}"
+def call_model_status(task_id: str):
+    api_path = f"{API_PATH}/models/{task_id}"
     api_headers = API_HEADERS
     result = requests.get(url=api_path, headers=api_headers)
     return result.status_code, result.json()
 
 
-def call_model_report(job_id: int):
-    api_path = f"{API_PATH}/models/{job_id}/report/"
+def call_model_report(task_id: str):
+    api_path = f"{API_PATH}/models/{task_id}/report/"
     api_headers = API_HEADERS
     report = requests.get(url=api_path, headers=api_headers)
     return report.status_code, report.json()
 
 
-def process_report(job_id: int):
-    status_code, report = call_model_report(job_id=job_id)
+def process_report(task_id: str):
+    status_code, report = call_model_report(task_id=task_id)
     reports: dict = _process_report(report)
     accuracy = reports.pop('accuracy')
     macro_avg = reports.pop('macro avg')
@@ -378,9 +378,9 @@ def _process_report(report: dict):
     return report
 
 
-def get_progress_api(request, pk):
+def get_progress_api(pk):
     job = ModelingJob.objects.get(pk=pk)
-    status_code, status_result = call_model_status(job=job)
+    status_code, status_result = call_model_status(task_id=job.task_id.hex)
 
     if status_code == 200:
         if status_result['training_status'] in ('finished', 'untrainable'):
@@ -398,24 +398,26 @@ def get_progress_api(request, pk):
         else:
             job.job_status = ModelingJob.JobStatus.WAIT
             job.save()
-
-        if status_result['ext_status'] == 'finished':
-            job.job_status = ModelingJob.JobStatus.DONE
-            job.save()
-        elif status_result['ext_status'] in ('pending', 'started'):
-            job.job_status = ModelingJob.JobStatus.PROCESSING
-            job.save()
-        elif status_result['ext_status'] == 'failed':
-            job.job_status = ModelingJob.JobStatus.ERROR
-            job.save()
-        elif status_result['ext_status'] == 'break':
-            job.job_status = ModelingJob.JobStatus.BREAK
-            job.save()
-        else:
-            job.job_status = ModelingJob.JobStatus.WAIT
-            job.save()
+        if status_result['ext_status']:
+            if status_result['ext_status'] == 'finished':
+                job.job_status = ModelingJob.JobStatus.DONE
+                job.save()
+            elif status_result['ext_status'] in ('pending', 'started'):
+                job.job_status = ModelingJob.JobStatus.PROCESSING
+                job.save()
+            elif status_result['ext_status'] == 'failed':
+                job.job_status = ModelingJob.JobStatus.ERROR
+                job.save()
+            elif status_result['ext_status'] == 'break':
+                job.job_status = ModelingJob.JobStatus.BREAK
+                job.save()
+            else:
+                job.job_status = ModelingJob.JobStatus.WAIT
+                job.save()
 
     else:
         job.error_message = status_result
         job.job_status = ModelingJob.JobStatus.ERROR
         job.save()
+
+    return job

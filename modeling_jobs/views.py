@@ -20,7 +20,7 @@ from .helpers import insert_csv_to_db, parse_report
 from .models import ModelingJob, Report, TermWeight, UploadModelJob
 from .serializers import JobSerializer, TermWeightSerializer
 from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task, call_model_preparing, \
-    call_model_testing, call_model_status, process_report
+    call_model_testing, call_model_status, process_report, get_progress_api
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -228,59 +228,61 @@ def result_page(request, modeling_job_id):
     #     label = reports.get(key)
     #     s = label_info(key, label.get('precision'), label.get('recall'), label.get('f1-score'), label.get('support'))
     #     labels.append(s)
-    report_dict = process_report(job_id=modeling_job_id)
+    report_dict = process_report(task_id=modeling_job_id)
 
     return render(request, 'modeling_jobs/result.html', report_dict)
 
 
 def get_progress(request, pk):
-    job = ModelingJob.objects.get(pk=pk)
-    # 處理規則模型，因為不用訓練，所以只需要確認資料類型
-    if job.get_model_type() == RuleBaseModel.__name__:
-        if job.jobRef:
-            # 如果是一般的RuleBase
-            if job.model_name == LabelingJob.DataTypes.RULE_BASE_MODEL.name \
-                    and job.jobRef.job_data_type != LabelingJob.DataTypes.RULE_BASE_MODEL:
-                job.error_message = f"Data type error, RuleBaseModel need rules in labeling job, not labeled data ({job.jobRef.job_data_type})."
-                job.job_status = ModelingJob.JobStatus.ERROR
-                job.save()
-            # Regex
-            elif job.model_name == "REGEX_MODEL" \
-                    and job.jobRef.job_data_type != LabelingJob.DataTypes.REGEX_MODEL:
-                job.error_message = f"Data type error, RegexModel need regex in labeling job, not labeled data ({job.jobRef.job_data_type})."
-                job.job_status = ModelingJob.JobStatus.ERROR
-                job.save()
-            else:
-                job.job_status = ModelingJob.JobStatus.DONE
-                job.save()
-        else:
-            job.error_message = "No labeling job reference error."
-            job.job_status = ModelingJob.JobStatus.ERROR
-            job.save()
+    # job = ModelingJob.objects.get(pk=pk)
+    # # 處理規則模型，因為不用訓練，所以只需要確認資料類型
+    # if job.get_model_type() == RuleBaseModel.__name__:
+    #     if job.jobRef:
+    #         # 如果是一般的RuleBase
+    #         if job.model_name == LabelingJob.DataTypes.RULE_BASE_MODEL.name \
+    #                 and job.jobRef.job_data_type != LabelingJob.DataTypes.RULE_BASE_MODEL:
+    #             job.error_message = f"Data type error, RuleBaseModel need rules in labeling job, not labeled data ({job.jobRef.job_data_type})."
+    #             job.job_status = ModelingJob.JobStatus.ERROR
+    #             job.save()
+    #         # Regex
+    #         elif job.model_name == "REGEX_MODEL" \
+    #                 and job.jobRef.job_data_type != LabelingJob.DataTypes.REGEX_MODEL:
+    #             job.error_message = f"Data type error, RegexModel need regex in labeling job, not labeled data ({job.jobRef.job_data_type})."
+    #             job.job_status = ModelingJob.JobStatus.ERROR
+    #             job.save()
+    #         else:
+    #             job.job_status = ModelingJob.JobStatus.DONE
+    #             job.save()
+    #     else:
+    #         job.error_message = "No labeling job reference error."
+    #         job.job_status = ModelingJob.JobStatus.ERROR
+    #         job.save()
+    #
+    # elif job.get_model_type() == SuperviseModel.__name__:
+    #     if job.jobRef:
+    #         if job.model_name == "TERM_WEIGHT_MODEL":
+    #             if job.jobRef.job_data_type not in {LabelingJob.DataTypes.TERM_WEIGHT_MODEL,
+    #                                                 LabelingJob.DataTypes.SUPERVISE_MODEL}:
+    #                 job.error_message = f"Data type error, TermWeightModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
+    #                 job.job_status = ModelingJob.JobStatus.ERROR
+    #                 job.save()
+    #             else:
+    #                 job.job_status = ModelingJob.JobStatus.DONE
+    #                 job.save()
+    #         else:
+    #             if job.jobRef.job_data_type != LabelingJob.DataTypes.SUPERVISE_MODEL:
+    #                 job.error_message = f"Data type error, SuperviseModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
+    #                 job.job_status = ModelingJob.JobStatus.ERROR
+    #                 job.save()
+    #             else:
+    #                 job.job_status = ModelingJob.JobStatus.DONE
+    #                 job.save()
+    #     else:
+    #         job.error_message = "No labeling job reference error."
+    #         job.job_status = ModelingJob.JobStatus.ERROR
+    #         job.save()
+    job = get_progress_api(pk=pk)
 
-    elif job.get_model_type() == SuperviseModel.__name__:
-        if job.jobRef:
-            if job.model_name == "TERM_WEIGHT_MODEL":
-                if job.jobRef.job_data_type not in {LabelingJob.DataTypes.TERM_WEIGHT_MODEL,
-                                                    LabelingJob.DataTypes.SUPERVISE_MODEL}:
-                    job.error_message = f"Data type error, TermWeightModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
-                    job.job_status = ModelingJob.JobStatus.ERROR
-                    job.save()
-                else:
-                    job.job_status = ModelingJob.JobStatus.DONE
-                    job.save()
-            else:
-                if job.jobRef.job_data_type != LabelingJob.DataTypes.SUPERVISE_MODEL:
-                    job.error_message = f"Data type error, SuperviseModel need labeled data in labeling job, not rules ({job.jobRef.job_data_type})."
-                    job.job_status = ModelingJob.JobStatus.ERROR
-                    job.save()
-                else:
-                    job.job_status = ModelingJob.JobStatus.DONE
-                    job.save()
-        else:
-            job.error_message = "No labeling job reference error."
-            job.job_status = ModelingJob.JobStatus.ERROR
-            job.save()
     response_data = {
         'state': job.job_status,
         'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,
