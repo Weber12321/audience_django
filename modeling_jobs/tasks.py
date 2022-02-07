@@ -342,6 +342,13 @@ def call_model_status(task_id: str):
     return result.status_code, result.json()
 
 
+def call_import_model_status(task_id: str, upload_job_id: int):
+    api_path = f"{API_PATH}/models/{task_id}/import_model/{upload_job_id}"
+    api_headers = API_HEADERS
+    result = requests.get(url=api_path, headers=api_headers)
+    return result.status_code, result.json()
+
+
 def call_model_report(task_id: str):
     api_path = f"{API_PATH}/models/{task_id}/report/"
     api_headers = API_HEADERS
@@ -381,7 +388,6 @@ def _process_report(report: dict):
 def get_progress_api(pk):
     job = ModelingJob.objects.get(pk=pk)
     status_code, status_result = call_model_status(task_id=job.task_id.hex)
-
     if status_code == 200:
         if status_result['training_status'] in ('finished', 'untrainable'):
             job.job_status = ModelingJob.JobStatus.DONE
@@ -414,10 +420,56 @@ def get_progress_api(pk):
             else:
                 job.job_status = ModelingJob.JobStatus.WAIT
                 job.save()
-
     else:
         job.error_message = status_result
         job.job_status = ModelingJob.JobStatus.ERROR
         job.save()
 
+    upload_set = ModelingJob.objects.filter(uploadmodeljob__modeling_job_id__exact=pk).values_list('uploadmodeljob__id','task_id')
+
+    for upload_job_id, task_id in upload_set:
+        _status_code, _status_result = call_import_model_status(task_id=task_id,
+                                                                upload_job_id=upload_job_id)
+
+        upload_job = UploadModelJob.objects.get(pk=upload_job_id)
+
+        if _status_code == 200:
+            if _status_result['status'] == 'finished':
+                upload_job.job_status = UploadModelJob.JobStatus.DONE
+                upload_job.save()
+            if _status_result['status'] == 'failed':
+                upload_job.job_status = UploadModelJob.JobStatus.ERROR
+                upload_job.save()
+        else:
+            upload_job.job_status = UploadModelJob.JobStatus.ERROR
+            upload_job.save()
+
     return job
+
+
+def call_model_import(upload_job: UploadModelJob):
+    upload_job.job_status = UploadModelJob.JobStatus.PROCESSING
+    upload_job.save()
+    try:
+        file = upload_job.file
+        api_path = f'{API_PATH}/models/import_model/'
+        api_headers = API_HEADERS.update({'Content-Type': 'multipart/form-data'})
+        api_request_body = {"QUEUE": "queue2",
+                            "TASK_ID": upload_job.modeling_job.task_id,
+                            "UPLOAD_JOB_ID": upload_job.id}
+        if upload_job.modeling_job.model_name in {"TERM_WEIGHT_MODEL"}:
+            logger.debug(upload_job.modeling_job.model_name)
+            r = requests.put(url=api_path,
+                             headers=api_headers,
+                             files={'file': open(file.path, 'rb')},
+                             data=json.dumps(api_request_body))
+            if r.status_code != 200:
+                logger.debug(r.json())
+                upload_job.job_status = UploadModelJob.JobStatus.ERROR
+        else:
+            raise ValueError(f'Unknown or unsupported model {upload_job.modeling_job.model_name}.')
+    except Exception as e:
+        logger.debug(e)
+        upload_job.job_status = UploadModelJob.JobStatus.ERROR
+    finally:
+        upload_job.save()

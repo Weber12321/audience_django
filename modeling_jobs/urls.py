@@ -16,7 +16,7 @@ urlpatterns = [
     path('updateTask', views.update_task, name='api-doc-update'),
     path('deleteTask', views.delete_task, name='api-doc-delete'),
     path('insert_csv', views.insert_csv, name='api-doc-insert_csv'),
-    # refactor
+    # refactor: ok
     path('<int:pk>/training', views.training_model, name='training-model'),
     # refactor
     path('<int:job_id>/import', views.UploadModelJobCreate.as_view(), name='import-model'),

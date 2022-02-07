@@ -20,7 +20,7 @@ from .helpers import insert_csv_to_db, parse_report
 from .models import ModelingJob, Report, TermWeight, UploadModelJob
 from .serializers import JobSerializer, TermWeightSerializer
 from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task, call_model_preparing, \
-    call_model_testing, call_model_status, process_report, get_progress_api
+    call_model_testing, call_model_status, process_report, get_progress_api, call_model_import
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -338,8 +338,9 @@ class UploadModelJobCreate(LoginRequiredMixin, generic.CreateView):
 
     def get_success_url(self):
         # 利用django-q實作非同步上傳
-        a = AsyncTask(import_model_data_task, upload_job=self.object, group='upload_model')
-        a.run()
+        # a = AsyncTask(import_model_data_task, upload_job=self.object, group='upload_model')
+        # a.run()
+        call_model_import(upload_job=self.object)
         job_id = self.kwargs['job_id']
         return reverse_lazy('modeling_jobs:job-detail', kwargs={'pk': job_id})
 
