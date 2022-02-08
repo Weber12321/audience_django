@@ -425,7 +425,8 @@ def get_progress_api(pk):
         job.job_status = ModelingJob.JobStatus.ERROR
         job.save()
 
-    upload_set = ModelingJob.objects.filter(uploadmodeljob__modeling_job_id__exact=pk).values_list('uploadmodeljob__id','task_id')
+    upload_set = ModelingJob.objects.filter(uploadmodeljob__modeling_job_id__exact=pk).values_list('uploadmodeljob__id',
+                                                                                                   'task_id')
 
     for upload_job_id, task_id in upload_set:
         _status_code, _status_result = call_import_model_status(task_id=task_id,
@@ -473,3 +474,16 @@ def call_model_import(upload_job: UploadModelJob):
         upload_job.job_status = UploadModelJob.JobStatus.ERROR
     finally:
         upload_job.save()
+
+
+def get_report_details(task_id):
+    report_code, report_set = call_model_report(task_id)
+
+    if report_code != 200:
+        return None
+
+    return [convert_dict_to_namedtuple(report['dataset_type'], report) for report in report_set]
+
+
+def convert_dict_to_namedtuple(name: str, dictionary: dict):
+    return namedtuple(name, dictionary.keys())(**dictionary)
