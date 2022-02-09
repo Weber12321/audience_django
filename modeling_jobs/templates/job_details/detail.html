@@ -100,9 +100,8 @@
         <div class="col-md-6 mb-4">
             <div class="h5">模型效果</div>
             <hr>
-            {% if job.get_latest_train_report %}
-                {% with train_report=job.get_latest_train_report %}
-                    <div class="card shadow mb-4">
+            {% if train_report %}
+                <div class="card shadow mb-4">
                         <div class="card-header">訓練集</div>
                         <div class="card-body">
                             <div>準確率：{{ train_report.accuracy|floatformat:2 }}</div>
@@ -117,7 +116,7 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for label, cm_row in train_report.get_report.items %}
+                                {% for label, cm_row in train_report.report.items %}
                                     <tr>
                                         <td>
                                             {{ label }}
@@ -143,12 +142,10 @@
                             <a href="{% url 'modeling_jobs:report-detail' job.id train_report.id %}">檢視預測細節</a>
                         </div>
                     </div>
-                {% endwith %}
             {% endif %}
 
-            {% if job.get_latest_dev_report %}
-                {% with dev_report=job.get_latest_dev_report %}
-                    <div class="card shadow mb-4">
+            {% if dev_report %}
+                <div class="card shadow mb-4">
                         <div class="card-header">驗證集</div>
                         <div class="card-body">
                             <div>準確率：{{ dev_report.accuracy|floatformat:2 }}</div>
@@ -163,7 +160,7 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for label, cm_row in dev_report.get_report.items %}
+                                {% for label, cm_row in dev_report.report.items %}
                                     <tr>
                                         <td>
                                             {{ label }}
@@ -189,11 +186,10 @@
                             <a href="{% url 'modeling_jobs:report-detail' job.id dev_report.id %}">檢視預測細節</a>
                         </div>
                     </div>
-                {% endwith %}
             {% endif %}
-            {% if job.get_latest_test_report %}
-                {% with test_report=job.get_latest_test_report %}
-                    <div class="card shadow mb-4">
+
+            {% if test_report%}
+                <div class="card shadow mb-4">
                         <div class="card-header">測試集</div>
                         <div class="card-body">
                             <div>準確率：{{ test_report.accuracy|floatformat:2 }}</div>
@@ -208,7 +204,7 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for label, cm_row in test_report.get_report.items %}
+                                {% for label, cm_row in test_report.report.items %}
                                     <tr>
                                         <td>
                                             {{ label }}
@@ -234,12 +230,10 @@
                             <a href="{% url 'modeling_jobs:report-detail' job.id test_report.id %}">檢視預測細節</a>
                         </div>
                     </div>
-                {% endwith %}
             {% endif %}
 
-            {% if job.get_latest_ext_test_report %}
-                {% with ext_test_report=job.get_latest_ext_test_report %}
-                    <div class="card shadow mb-4">
+            {% if ext_test_report%}
+                <div class="card shadow mb-4">
                         <div class="card-header">額外測試集</div>
                         <div class="card-body">
                             <div>準確率：{{ ext_test_report.accuracy|floatformat:2 }}</div>
@@ -254,7 +248,7 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for label, cm_row in ext_test_report.get_report.items %}
+                                {% for label, cm_row in ext_test_report.report.items %}
                                     <tr>
                                         <td>
                                             {{ label }}
@@ -280,8 +274,189 @@
                             <a href="{% url 'modeling_jobs:report-detail' job.id ext_test_report.id %}">檢視預測細節</a>
                         </div>
                     </div>
-                {% endwith %}
             {% endif %}
+
+{#            {% if job.get_latest_train_report %}#}
+{#                {% with train_report=job.get_latest_train_report %}#}
+{#                    <div class="card shadow mb-4">#}
+{#                        <div class="card-header">訓練集</div>#}
+{#                        <div class="card-body">#}
+{#                            <div>準確率：{{ train_report.accuracy|floatformat:2 }}</div>#}
+{#                            <table class="table">#}
+{#                                <thead>#}
+{#                                <tr>#}
+{#                                    <th></th>#}
+{#                                    <th>precision</th>#}
+{#                                    <th>recall</th>#}
+{#                                    <th>f1-score</th>#}
+{#                                    <th>support</th>#}
+{#                                </tr>#}
+{#                                </thead>#}
+{#                                <tbody>#}
+{#                                {% for label, cm_row in train_report.get_report.items %}#}
+{#                                    <tr>#}
+{#                                        <td>#}
+{#                                            {{ label }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"precision"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"recall"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"support"|floatformat:0 }}#}
+{#                                        </td>#}
+{#                                    </tr>#}
+{#                                {% endfor %}#}
+{#                                </tbody>#}
+{#                            </table>#}
+{#                        </div>#}
+{#                        <div class="card-footer">#}
+{#                            <a href="{% url 'modeling_jobs:report-detail' job.id train_report.id %}">檢視預測細節</a>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                {% endwith %}#}
+{#            {% endif %}#}
+{#            {% if job.get_latest_dev_report %}#}
+{#                {% with dev_report=job.get_latest_dev_report %}#}
+{#                    <div class="card shadow mb-4">#}
+{#                        <div class="card-header">驗證集</div>#}
+{#                        <div class="card-body">#}
+{#                            <div>準確率：{{ dev_report.accuracy|floatformat:2 }}</div>#}
+{#                            <table class="table">#}
+{#                                <thead>#}
+{#                                <tr>#}
+{#                                    <th></th>#}
+{#                                    <th>precision</th>#}
+{#                                    <th>recall</th>#}
+{#                                    <th>f1-score</th>#}
+{#                                    <th>support</th>#}
+{#                                </tr>#}
+{#                                </thead>#}
+{#                                <tbody>#}
+{#                                {% for label, cm_row in dev_report.get_report.items %}#}
+{#                                    <tr>#}
+{#                                        <td>#}
+{#                                            {{ label }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"precision"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"recall"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"support"|floatformat:0 }}#}
+{#                                        </td>#}
+{#                                    </tr>#}
+{#                                {% endfor %}#}
+{#                                </tbody>#}
+{#                            </table>#}
+{#                        </div>#}
+{#                        <div class="card-footer">#}
+{#                            <a href="{% url 'modeling_jobs:report-detail' job.id dev_report.id %}">檢視預測細節</a>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                {% endwith %}#}
+{#            {% endif %}#}
+{#            {% if job.get_latest_test_report %}#}
+{#                {% with test_report=job.get_latest_test_report %}#}
+{#                    <div class="card shadow mb-4">#}
+{#                        <div class="card-header">測試集</div>#}
+{#                        <div class="card-body">#}
+{#                            <div>準確率：{{ test_report.accuracy|floatformat:2 }}</div>#}
+{#                            <table class="table">#}
+{#                                <thead>#}
+{#                                <tr>#}
+{#                                    <th></th>#}
+{#                                    <th>precision</th>#}
+{#                                    <th>recall</th>#}
+{#                                    <th>f1-score</th>#}
+{#                                    <th>support</th>#}
+{#                                </tr>#}
+{#                                </thead>#}
+{#                                <tbody>#}
+{#                                {% for label, cm_row in test_report.get_report.items %}#}
+{#                                    <tr>#}
+{#                                        <td>#}
+{#                                            {{ label }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"precision"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"recall"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"support"|floatformat:0 }}#}
+{#                                        </td>#}
+{#                                    </tr>#}
+{#                                {% endfor %}#}
+{#                                </tbody>#}
+{#                            </table>#}
+{#                        </div>#}
+{#                        <div class="card-footer">#}
+{#                            <a href="{% url 'modeling_jobs:report-detail' job.id test_report.id %}">檢視預測細節</a>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                {% endwith %}#}
+{#            {% endif %}#}
+{##}
+{#            {% if job.get_latest_ext_test_report %}#}
+{#                {% with ext_test_report=job.get_latest_ext_test_report %}#}
+{#                    <div class="card shadow mb-4">#}
+{#                        <div class="card-header">額外測試集</div>#}
+{#                        <div class="card-body">#}
+{#                            <div>準確率：{{ ext_test_report.accuracy|floatformat:2 }}</div>#}
+{#                            <table class="table">#}
+{#                                <thead>#}
+{#                                <tr>#}
+{#                                    <th></th>#}
+{#                                    <th>precision</th>#}
+{#                                    <th>recall</th>#}
+{#                                    <th>f1-score</th>#}
+{#                                    <th>support</th>#}
+{#                                </tr>#}
+{#                                </thead>#}
+{#                                <tbody>#}
+{#                                {% for label, cm_row in ext_test_report.get_report.items %}#}
+{#                                    <tr>#}
+{#                                        <td>#}
+{#                                            {{ label }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"precision"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"recall"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"support"|floatformat:0 }}#}
+{#                                        </td>#}
+{#                                    </tr>#}
+{#                                {% endfor %}#}
+{#                                </tbody>#}
+{#                            </table>#}
+{#                        </div>#}
+{#                        <div class="card-footer">#}
+{#                            <a href="{% url 'modeling_jobs:report-detail' job.id ext_test_report.id %}">檢視預測細節</a>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                {% endwith %}#}
+{#            {% endif %}#}
         </div>
     </div>
     <!-- Modal -->

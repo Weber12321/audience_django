@@ -358,7 +358,8 @@ def call_model_report(task_id: str):
 
 def process_report(task_id: str):
     status_code, report = call_model_report(task_id=task_id)
-    reports: dict = _process_report(report)
+    last_report = report[-1]['report'] if isinstance(report[-1]['report'], dict) else json.loads(report[-1]['report'])
+    reports: dict = _process_report(last_report)
     accuracy = reports.pop('accuracy')
     macro_avg = reports.pop('macro avg')
     macro_avg['f1_score'] = macro_avg['f1-score']
@@ -482,8 +483,32 @@ def get_report_details(task_id):
     if report_code != 200:
         return None
 
-    return [convert_dict_to_namedtuple(report['dataset_type'], report) for report in report_set]
+    # return [convert_dict_to_namedtuple(report['dataset_type'], report) for report in report_set]
+    return {report['dataset_type']: convert_report_info_to_dict(report) for report in report_set}
 
 
-def convert_dict_to_namedtuple(name: str, dictionary: dict):
-    return namedtuple(name, dictionary.keys())(**dictionary)
+# def convert_dict_to_namedtuple(name: str, dictionary: dict):
+#     return namedtuple(name, dictionary.keys())(**dictionary)
+
+
+def get_report_ids(task_id):
+    report_dict = get_report_details(task_id)
+    return {k: v['id'] for k, v in report_dict.items()}
+
+
+def convert_report_info_to_dict(report: dict):
+    report_dict = {}
+    for key, value in report.items():
+        if key == 'report':
+            report_dict.update({key: json.loads(value)})
+        else:
+            report_dict.update({key: value})
+
+    report_dict['report'].pop('accuracy')
+    return report_dict
+
+# def call_false_predict_eval_details(task_id):
+#     api_path = f"{API_PATH}/models/{task_id}/report/"
+#     api_headers = API_HEADERS
+#     report = requests.get(url=api_path, headers=api_headers)
+#     return report.status_code, report.json()

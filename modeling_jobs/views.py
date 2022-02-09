@@ -20,7 +20,7 @@ from .helpers import insert_csv_to_db, parse_report
 from .models import ModelingJob, Report, TermWeight, UploadModelJob
 from .serializers import JobSerializer, TermWeightSerializer
 from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task, call_model_preparing, \
-    call_model_testing, call_model_status, process_report, get_progress_api, call_model_import
+    call_model_testing, call_model_status, process_report, get_progress_api, call_model_import, get_report_details
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -51,6 +51,10 @@ class JobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["job"] = self.object
+        context["train_report"] = get_report_details(self.object.task_id.hex).get('train')
+        context["dev_report"] = get_report_details(self.object.task_id.hex).get('dev')
+        context["test_report"] = get_report_details(self.object.task_id.hex).get('test')
+        context["ext_test_report"] = get_report_details(self.object.task_id.hex).get('ext_test')
         if self.object.model_name == "TERM_WEIGHT_MODEL":
             import_model_form = UploadModelJobForm({'modeling_job': self.object.id, })
             context["import_model_form"] = import_model_form
@@ -228,7 +232,9 @@ def result_page(request, modeling_job_id):
     #     label = reports.get(key)
     #     s = label_info(key, label.get('precision'), label.get('recall'), label.get('f1-score'), label.get('support'))
     #     labels.append(s)
-    report_dict = process_report(task_id=modeling_job_id)
+    job = ModelingJob.objects.get(pk=modeling_job_id)
+
+    report_dict = process_report(task_id=job.task_id.hex)
 
     return render(request, 'modeling_jobs/result.html', report_dict)
 
