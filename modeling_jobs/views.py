@@ -20,7 +20,8 @@ from .helpers import insert_csv_to_db, parse_report
 from .models import ModelingJob, Report, TermWeight, UploadModelJob
 from .serializers import JobSerializer, TermWeightSerializer
 from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task, call_model_preparing, \
-    call_model_testing, call_model_status, process_report, get_progress_api, call_model_import, get_report_details
+    call_model_testing, call_model_status, process_report, get_progress_api, call_model_import, get_report_details, \
+    get_detail_file_link
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -51,10 +52,23 @@ class JobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["job"] = self.object
+
+        # reports
         context["train_report"] = get_report_details(self.object.task_id.hex).get('train')
         context["dev_report"] = get_report_details(self.object.task_id.hex).get('dev')
         context["test_report"] = get_report_details(self.object.task_id.hex).get('test')
         context["ext_test_report"] = get_report_details(self.object.task_id.hex).get('ext_test')
+
+        # files
+        if context["train_report"]:
+            context["train_detail_file_link"] = get_detail_file_link(context["train_report"]["id"])
+        if context["dev_report"]:
+            context["dev_detail_file_link"] = get_detail_file_link(context["dev_report"]["id"])
+        if context["test_report"]:
+            context["test_detail_file_link"] = get_detail_file_link(context["test_report"]["id"])
+        if context["ext_test_report"]:
+            context["ext_test_detail_file_link"] = get_detail_file_link(context["ext_test_report"]["id"])
+
         if self.object.model_name == "TERM_WEIGHT_MODEL":
             import_model_form = UploadModelJobForm({'modeling_job': self.object.id, })
             context["import_model_form"] = import_model_form
@@ -406,3 +420,5 @@ class TermWrightViewSet(viewsets.ModelViewSet):
             return TermWeight.objects.filter(modeling_job_id=job_id).order_by('-weight')
         else:
             return TermWeight.objects.all().order_by('-weight')
+
+# def download_eval_details():

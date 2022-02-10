@@ -139,7 +139,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a href="{% url 'modeling_jobs:report-detail' job.id train_report.id %}">檢視預測細節</a>
+                            <a href={{ train_detail_file_link }}>訓練細節下載(csv)</a>
                         </div>
                     </div>
             {% endif %}
@@ -183,7 +183,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a href="{% url 'modeling_jobs:report-detail' job.id dev_report.id %}">檢視預測細節</a>
+                            <a id='dev_download' href={{ dev_detail_file_link }}>驗證細節下載(csv)</a>
                         </div>
                     </div>
             {% endif %}
@@ -227,7 +227,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a href="{% url 'modeling_jobs:report-detail' job.id test_report.id %}">檢視預測細節</a>
+                            <a id='test_download' href={{ test_detail_file_link }}>預測細節下載(csv)</a>
                         </div>
                     </div>
             {% endif %}
@@ -271,7 +271,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a href="{% url 'modeling_jobs:report-detail' job.id ext_test_report.id %}">檢視預測細節</a>
+                            <a href={{ ext_test_detail_file_link }}>預測細節下載(csv)</a>
                         </div>
                     </div>
             {% endif %}
@@ -519,6 +519,16 @@
 {% block custom_script %}
     <script>
 
+        function refresh_details_link(report_info) {
+            {#var train_report_id = report_info['train']#}
+            report_info = JSON.parse(report_info)
+            var dev_report_id = report_info['dev']
+            var test_report_id = report_info['test']
+
+
+            $("#test_download").attr("href", new_test_link)
+        }
+
         function train_model(job_id, train_url) {
             set_row_processing_display(job_id)
             $.post(train_url)
@@ -615,11 +625,15 @@
             });
         }
 
+
+
+
         update_progress(
             {{ job.id }},
             "{% url 'modeling_jobs:api-job-progress' job.id %}",
             Boolean('{{ job.is_trainable }}') == 'True'
         )
+
 
     </script>
 {% endblock %}

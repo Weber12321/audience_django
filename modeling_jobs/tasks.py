@@ -389,6 +389,7 @@ def _process_report(report: dict):
 def get_progress_api(pk):
     job = ModelingJob.objects.get(pk=pk)
     status_code, status_result = call_model_status(task_id=job.task_id.hex)
+
     if status_code == 200:
         if status_result['training_status'] in ('finished', 'untrainable'):
             job.job_status = ModelingJob.JobStatus.DONE
@@ -507,8 +508,16 @@ def convert_report_info_to_dict(report: dict):
     report_dict['report'].pop('accuracy')
     return report_dict
 
-# def call_false_predict_eval_details(task_id):
-#     api_path = f"{API_PATH}/models/{task_id}/report/"
-#     api_headers = API_HEADERS
-#     report = requests.get(url=api_path, headers=api_headers)
-#     return report.status_code, report.json()
+
+def call_train_predict_details(task_id):
+    report_id_dict = get_report_ids(task_id)['train']
+
+    api_path = f"{API_PATH}/models/{task_id}/report/"
+    api_headers = API_HEADERS
+    report = requests.get(url=api_path, headers=api_headers)
+    return report.status_code, report.json()
+
+
+def get_detail_file_link(report_id: int):
+    return f"{API_PATH}/models/{report_id}/download_details/"
+
