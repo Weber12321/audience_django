@@ -518,6 +518,6 @@ def call_train_predict_details(task_id):
     return report.status_code, report.json()
 
 
-def get_detail_file_link(report_id: int):
-    return f"{API_PATH}/models/{report_id}/download_details/"
+def get_detail_file_link():
+    return f"{API_PATH}/models/download_details/"
 

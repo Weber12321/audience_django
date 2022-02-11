@@ -5,114 +5,146 @@
     模型訓練任務
 {% endblock %}
 {% block page_title %}{{ report.name }}{% endblock %}
-{% block page_functions %}
-    {% if user.is_staff %}
-        <div class="dropdown mb-4">
-            <a class="btn btn-primary" href="{% url 'modeling_jobs:job-detail' report.modeling_job.id %}">回模型任務</a>
-        </div>
-    {% endif %}
-{% endblock %}
+{#{% block page_functions %}#}
+{#    {% if user.is_staff %}#}
+{#        <div class="dropdown mb-4">#}
+{#            <a class="btn btn-primary" href="{% url 'modeling_jobs:job-detail' report.modeling_job.id %}">回模型任務</a>#}
+{#        </div>#}
+{#    {% endif %}#}
+{#{% endblock %}#}
 {% block page_info %}
 {% endblock %}
 {% block page_description %}
 {% endblock %}
 {% block content %}
-    <div class="row">
-        <div class="col-lg-7 mb-4">
-            {% for prediction in page_obj %}
+
+<table id="records_table">
+    <tr>
+        <th>Rank</th>
+        <th>Content</th>
+        <th>UID</th>
+    </tr>
+</table>
+
+{% block custom_script %}
+    <script>
+        function show_detail() {
+            $.ajax({
+                url: '/echo/json/',
+                type: 'POST',
+                data: {
+                    json: '[{"rank":"9","content":"Alon","UID":"5"},{"rank":"6","content":"Tala","UID":"6"}]';
+                },
+                success: function (response) {
+                    var trHTML = '';
+                    $.each(response, function (i, item) {
+                        trHTML += '<tr><td>' + item.rank + '</td><td>' + item.content + '</td><td>' + item.UID + '</td></tr>';
+                    });
+                    $('#records_table').append(trHTML);
+                }
+            });
+        }
+
+        show_detail()
+
+    </script>
+{% endblock %}
+
+
+{#            {% for prediction in page_obj %}#}
 {#                <p>{{ prediction }}</p>#}
-                <div class="card shadow mb-4 {% if prediction.is_right_answer %}border-left-primary{% else %}border-left-danger{% endif %}">
-                    <div class="card-body">
-                        <div class="h5">
-                            <a href="{% url 'labeling_jobs:doc-detail'  prediction.document.id %}">{{ prediction.document.id }}</a>
-                            {{ prediction.document.title }}
-                        </div>
-                        <p>{{ prediction.document.content }}</p>
-                    </div>
-                    <div class="card-footer">
-                        <div><span class="mr-1">答案標籤:</span>
-                            {% for label in prediction.document.labeling_job.label_set.all %}
-                                <span class="mt-2 badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
-                                      data-toggle="tooltip" data-placement="top"
-                                      {% if label not in prediction.get_ground_truth.all %}hidden{% endif %}
-                                      title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>
-                            {% endfor %}
-                            {% resetcycle %}
-                        </div>
-                        <div><span class="mr-1">預測標籤:</span>
-                            {% for label in prediction.document.labeling_job.label_set.all %}
-                                <span class="mt-2 badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"
-                                      data-toggle="tooltip" data-placement="top"
-                                      {% if label not in prediction.get_prediction.all %}hidden{% endif %}
-                                      title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>
-                            {% endfor %}
-                            {% resetcycle %}
-                        </div>
-                    </div>
-                </div>
+{#                <div class="card shadow mb-4 {% if prediction.is_right_answer %}border-left-primary{% else %}border-left-danger{% endif %}">#}
+{#                    <div class="card-body">#}
+{#                        <div class="h5">#}
+{#                            <a href="{% url 'labeling_jobs:doc-detail'  prediction.document.id %}">{{ prediction.document.id }}</a>#}
+{#                            {{ prediction.document.title }}#}
+{#                        </div>#}
+{#                        <p>{{ prediction.document.content }}</p>#}
+{#                    </div>#}
+{#                    <div class="card-footer">#}
+{#                        <div><span class="mr-1">答案標籤:</span>#}
+{#                            {% for label in prediction.document.labeling_job.label_set.all %}#}
+{#                                <span class="mt-2 badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"#}
+{#                                      data-toggle="tooltip" data-placement="top"#}
+{#                                      {% if label not in prediction.get_ground_truth.all %}hidden{% endif %}#}
+{#                                      title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>#}
+{#                            {% endfor %}#}
+{#                            {% resetcycle %}#}
+{#                        </div>#}
+{#                        <div><span class="mr-1">預測標籤:</span>#}
+{#                            {% for label in prediction.document.labeling_job.label_set.all %}#}
+{#                                <span class="mt-2 badge badge-pill badge-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' %}"#}
+{#                                      data-toggle="tooltip" data-placement="top"#}
+{#                                      {% if label not in prediction.get_prediction.all %}hidden{% endif %}#}
+{#                                      title="{{ label.description }}"><i class="fas fa-tag"></i> {{ label }}</span>#}
+{#                            {% endfor %}#}
+{#                            {% resetcycle %}#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#            {% empty %}#}
+{#                <p>沒有文件</p>#}
+{#            {% endfor %}#}
+{##}
+{#        </div>#}
 
-            {% empty %}
-                <p>沒有文件</p>
-            {% endfor %}
-
-        </div>
-
-        <div class="col-lg-5 mb-4">
-
-
-            <div class="card mb-4">
-                <div class="card-header">訓練集</div>
-                <div class="card-body">
-                    <div>準確率：{{ report.accuracy|floatformat:2 }}</div>
-                    <table class="table">
-                        <thead>
-                        <tr>
-                            <th></th>
-                            <th>precision</th>
-                            <th>recall</th>
-                            <th>f1-score</th>
-                            <th>support</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for label, cm_row in report.get_report.items %}
-                            <tr>
-                                <td>
-                                    {{ label }}
-                                </td>
-                                <td>
-                                    {{ cm_row|get_item:"precision"|floatformat:2 }}
-                                </td>
-                                <td>
-                                    {{ cm_row|get_item:"recall"|floatformat:2 }}
-                                </td>
-                                <td>
-                                    {{ cm_row|get_item:"f1-score"|floatformat:2 }}
-                                </td>
-                                <td>
-                                    {{ cm_row|get_item:"support"|floatformat:0 }}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 pagination text-center">
-            <span class="step-links">
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}">上一頁</a>
-                {% endif %}
-
-                <span class="current">
-                     {{ page_obj.number }} / {{ paginator.num_pages }}.
-                </span>
-
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}">下一頁</a>
-                {% endif %}
-            </span>
-    </div>
+{#        <div class="col-lg-5 mb-4">#}
+{##}
+{##}
+{#            <div class="card mb-4">#}
+{#                <div class="card-header">訓練集</div>#}
+{#                <div class="card-body">#}
+{#                    <div>準確率：{{ report.accuracy|floatformat:2 }}</div>#}
+{#                    <table class="table">#}
+{#                        <thead>#}
+{#                        <tr>#}
+{#                            <th></th>#}
+{#                            <th>precision</th>#}
+{#                            <th>recall</th>#}
+{#                            <th>f1-score</th>#}
+{#                            <th>support</th>#}
+{#                        </tr>#}
+{#                        </thead>#}
+{#                        <tbody>#}
+{#                        {% for label, cm_row in report.get_report.items %}#}
+{#                            <tr>#}
+{#                                <td>#}
+{#                                    {{ label }}#}
+{#                                </td>#}
+{#                                <td>#}
+{#                                    {{ cm_row|get_item:"precision"|floatformat:2 }}#}
+{#                                </td>#}
+{#                                <td>#}
+{#                                    {{ cm_row|get_item:"recall"|floatformat:2 }}#}
+{#                                </td>#}
+{#                                <td>#}
+{#                                    {{ cm_row|get_item:"f1-score"|floatformat:2 }}#}
+{#                                </td>#}
+{#                                <td>#}
+{#                                    {{ cm_row|get_item:"support"|floatformat:0 }}#}
+{#                                </td>#}
+{#                            </tr>#}
+{#                        {% endfor %}#}
+{#                        </tbody>#}
+{#                    </table>#}
+{#                </div>#}
+{#            </div>#}
+{#    </div>#}
+{#</div>#}
+{#    <div class="col-12 pagination text-center">#}
+{#            <span class="step-links">#}
+{#                {% if page_obj.has_previous %}#}
+{#                    <a href="?page={{ page_obj.previous_page_number }}">上一頁</a>#}
+{#                {% endif %}#}
+{##}
+{#                <span class="current">#}
+{#                     {{ page_obj.number }} / {{ paginator.num_pages }}.#}
+{#                </span>#}
+{##}
+{#                {% if page_obj.has_next %}#}
+{#                    <a href="?page={{ page_obj.next_page_number }}">下一頁</a>#}
+{#                {% endif %}#}
+{#            </span>#}
+{#    </div>#}
 {% endblock %}
