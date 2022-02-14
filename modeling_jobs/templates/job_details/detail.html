@@ -100,51 +100,6 @@
         <div class="col-md-6 mb-4">
             <div class="h5">模型效果</div>
             <hr>
-            {% if train_report %}
-                <div class="card shadow mb-4">
-                        <div class="card-header">訓練集報告 {{ train_report.id }}</div>
-                        <div class="card-body">
-                            <div>準確率：{{ train_report.accuracy|floatformat:2 }}</div>
-                            <table class="table">
-                                <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>precision</th>
-                                    <th>recall</th>
-                                    <th>f1-score</th>
-                                    <th>support</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for label, cm_row in train_report.report.items %}
-                                    <tr>
-                                        <td>
-                                            {{ label }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"precision"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"recall"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"support"|floatformat:0 }}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="card-footer">
-                            <a href="{{ download_link }}/{{ train_report.id }}">訓練細節下載(csv)</a>
-                        </div>
-                    </div>
-            {% endif %}
-
-{#            {% if dev_report %}#}
                 <div id='dt' class="card shadow mb-4">
                     <div id='dev_report_id' class="card-header"></div>
                         <div class="card-body">
@@ -153,7 +108,6 @@
                                 <thead>
                                 <tr>
                                     <th></th>
-                                    <th>label</th>
                                     <th>precision</th>
                                     <th>recall</th>
                                     <th>f1-score</th>
@@ -184,17 +138,15 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id='dev_download' href="{{ download_link }}/{{ dev_report.id }}">驗證細節下載(csv)</a>
+                            <a id='dev_download' href="">驗證細節下載(csv)</a>
                         </div>
                     </div>
-{#            {% endif %}#}
 
-            {% if test_report%}
-                <div class="card shadow mb-4">
-                        <div class="card-header">測試集報告 {{ test_report.id }}</div>
+                <div id="tt" class="card shadow mb-4">
+                    <div id="test_report_id" class="card-header"></div>
                         <div class="card-body">
-                            <div>準確率：{{ test_report.accuracy|floatformat:2 }}</div>
-                            <table class="table">
+                            <div id="test_acc"></div>
+                            <table id="test_table" class="table">
                                 <thead>
                                 <tr>
                                     <th></th>
@@ -205,40 +157,37 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for label, cm_row in test_report.report.items %}
-                                    <tr>
-                                        <td>
-                                            {{ label }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"precision"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"recall"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"support"|floatformat:0 }}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
+{#                                {% for label, cm_row in test_report.report.items %}#}
+{#                                    <tr>#}
+{#                                        <td>#}
+{#                                            {{ label }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"precision"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"recall"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"support"|floatformat:0 }}#}
+{#                                        </td>#}
+{#                                    </tr>#}
+{#                                {% endfor %}#}
                                 </tbody>
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id='test_download' href="{{ download_link }}/{{ test_report.id }}">預測細節下載(csv)</a>
+                            <a id='test_download' href="">預測細節下載(csv)</a>
                         </div>
                     </div>
-            {% endif %}
-
-            {% if ext_test_report%}
-                <div class="card shadow mb-4">
-                        <div class="card-header">額外測試集報告 {{ ext_test_report.id }}</div>
+                <div id="ett" class="card shadow mb-4">
+                    <div id="ext_test_report_id" class="card-header"></div>
                         <div class="card-body">
-                            <div>準確率：{{ ext_test_report.accuracy|floatformat:2 }}</div>
-                            <table class="table">
+                            <div id="ext_test_acc"></div>
+                            <table id="ext_test_table" class="table">
                                 <thead>
                                 <tr>
                                     <th></th>
@@ -249,33 +198,32 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for label, cm_row in ext_test_report.report.items %}
-                                    <tr>
-                                        <td>
-                                            {{ label }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"precision"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"recall"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"support"|floatformat:0 }}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
+{#                                {% for label, cm_row in ext_test_report.report.items %}#}
+{#                                    <tr>#}
+{#                                        <td>#}
+{#                                            {{ label }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"precision"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"recall"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}#}
+{#                                        </td>#}
+{#                                        <td>#}
+{#                                            {{ cm_row|get_item:"support"|floatformat:0 }}#}
+{#                                        </td>#}
+{#                                    </tr>#}
+{#                                {% endfor %}#}
                                 </tbody>
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a href="{{ download_link }}/{{ ext_test_report.id }}">預測細節下載(csv)</a>
+                            <a id="ext_test_download" href="">預測細節下載(csv)</a>
                         </div>
-                    </div>
-            {% endif %}
+                </div>
         </div>
     </div>
     <!-- Modal -->
@@ -427,6 +375,60 @@
                         console.log(state)
                         set_row_error_display(job_id, details, is_trainable)
                 }
+                if (check_response_exist(result.report.dev) == true) {
+                    $('#dt').show()
+                    let report_id = result.report.dev.id
+                    let report_acc = result.report.dev.accuracy.toFixed(2)
+                    let report_details = result.report.dev.report
+                    $('#dev_report_id').text(`驗證集報告_${report_id}`)
+                    $('#dev_acc').text(`準確度: ${report_acc}`)
+                    let output = display_table(report_details)
+                    $('#dev_table tbody').empty()
+                    $('#dev_table tbody').append(output)
+                    let download_link = result.download_links.dev
+                    $('#dev_download').attr("href", download_link)
+                } else {
+                    $('#dt').hide()
+                }
+                if (check_response_exist(result.report.test) == true) {
+                   $('#tt').show()
+                   let report_id = result.report.test.id
+                   let report_acc = result.report.test.accuracy.toFixed(2)
+                   let report_details = result.report.test.report
+                   $('#test_report_id').text(`測試集報告_${report_id}`)
+                   $('#test_acc').text(`準確度: ${report_acc}`)
+
+                   let output = display_table(report_details)
+
+                   $('#test_table tbody').empty()
+                   $('#test_table tbody').append(output)
+
+                   let download_link = result.download_links.test
+
+                   $('#test_download').attr("href", download_link)
+
+               } else {
+                   $('#tt').hide()
+               }
+               if (check_response_exist(result.report.ext_test) == true) {
+                   $('#ett').show()
+                   let report_id = result.report.ext_test.id
+                   let report_acc = result.report.ext_test.accuracy.toFixed(2)
+                   let report_details = result.report.ext_test.report
+                   $('#ext_test_report_id').text(`額外測試集報告_${report_id}`)
+                   $('#ext_test_acc').text(`準確度: ${report_acc}`)
+
+                   let output = display_table(report_details)
+
+                   $('#ext_test_table tbody').empty()
+                   $('#ext_test_table tbody').append(output)
+
+                   let download_link = result.download_links.ext_test
+
+                   $('#ext_test_download').attr("href", download_link)
+               } else {
+                   $('#ett').hide()
+               }
 
                 setTimeout(function () {
                     {#console.log(url)#}
@@ -434,44 +436,35 @@
                 }, timeout);
             });
         }
+        function check_response_exist(report_details_set){
+            return report_details_set != null;
+        }
 
-        function update_table_display(job_id, url) {
-            get_progress(url).done(function (result) {
-                let timeout = 10000
-                let report_id = result.report.dev.id
-                let report_acc = result.report.dev.accuracy
-                let report_details = result.report.dev.report
-                $('#dev_report_id').text(`驗證集報告_${report_id}`)
-                $('#dev_acc').text(`準確度: ${report_acc}`)
+        function display_table(report_details) {
+           let output = '';
 
-                $(report_details).each(function(label, label_detail) {
-                    $('#dev_table tbody').append('<tr><td>' + label)
-                    $(label_detail).each(function(detail_index, value) {
-                        $('#dev_table tbody').append('</td><td>' + value)
-                    })
-                    $('#dev_table tbody').append('</td></tr>')
-                })
-
-
-                setTimeout(function () {
-                    {#console.log(url)#}
-                    update_table_display(job_id, url)
-                }, timeout);
-
+            for (let key in report_details) {
+                output += '<tr><td>'
+                output += key
+                for (let k in report_details[key]) {
+                    if (Number.isInteger(report_details[key][k])) {
+                        var temp_score = report_details[key][k]
+                    }
+                    else {
+                        var temp_score = report_details[key][k].toFixed(2)
+                    }
+                    output += '</td><td>'
+                    output += temp_score
                 }
-            )
+                output += '</td></tr>'
+            }
+            return output;
         }
 
         update_progress(
             {{ job.id }},
             "{% url 'modeling_jobs:api-job-progress' job.id %}",
             Boolean('{{ job.is_trainable }}') == 'True'
-        )
-
-
-        update_table_display(
-            {{ job.id }},
-            "{% url 'modeling_jobs:api-job-progress' job.id %}"
         )
 
     </script>

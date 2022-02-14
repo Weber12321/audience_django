@@ -492,8 +492,7 @@ def get_report_details(task_id):
 #     return namedtuple(name, dictionary.keys())(**dictionary)
 
 
-def get_report_ids(task_id):
-    report_dict = get_report_details(task_id)
+def get_report_ids(report_dict: dict):
     return {k: v['id'] for k, v in report_dict.items()}
 
 
@@ -509,15 +508,12 @@ def convert_report_info_to_dict(report: dict):
     return report_dict
 
 
-def call_train_predict_details(task_id):
-    report_id_dict = get_report_ids(task_id)['train']
+def get_detail_file_link(report_dict: dict):
+    report_id_dict = get_report_ids(report_dict)
+    prefix = f"{API_PATH}/models/download_details/"
+    _output_dict = defaultdict(str)
+    for k, v in report_id_dict.items():
+        _output_dict[k] = prefix + str(v)
 
-    api_path = f"{API_PATH}/models/{task_id}/report/"
-    api_headers = API_HEADERS
-    report = requests.get(url=api_path, headers=api_headers)
-    return report.status_code, report.json()
-
-
-def get_detail_file_link():
-    return f"{API_PATH}/models/download_details/"
+    return _output_dict
 

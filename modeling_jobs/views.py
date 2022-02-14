@@ -54,24 +54,6 @@ class JobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
         context = super().get_context_data(**kwargs)
         context["job"] = self.object
 
-        # reports
-        context["train_report"] = get_report_details(self.object.task_id.hex).get('train')
-        context["dev_report"] = get_report_details(self.object.task_id.hex).get('dev')
-        context["test_report"] = get_report_details(self.object.task_id.hex).get('test')
-        context["ext_test_report"] = get_report_details(self.object.task_id.hex).get('ext_test')
-
-        # files
-        # if context["train_report"]:
-        #     context["train_detail_file_link"] = get_detail_file_link(context["train_report"]["id"])
-        # if context["dev_report"]:
-        #     context["dev_detail_file_link"] = get_detail_file_link(context["dev_report"]["id"])
-        # if context["test_report"]:
-        #     context["test_detail_file_link"] = get_detail_file_link(context["test_report"]["id"])
-        # if context["ext_test_report"]:
-        #     context["ext_test_detail_file_link"] = get_detail_file_link(context["ext_test_report"]["id"])
-
-        context["download_link"] = get_detail_file_link()
-
         if self.object.model_name == "TERM_WEIGHT_MODEL":
             import_model_form = UploadModelJobForm({'modeling_job': self.object.id, })
             context["import_model_form"] = import_model_form
@@ -259,11 +241,13 @@ def result_page(request, modeling_job_id):
 def get_progress(request, pk):
     job = get_progress_api(pk=pk)
     report_dict = get_report_details(task_id=job.task_id.hex)
+    detail_download_links = get_detail_file_link(report_dict)
 
     response_data = {
         'state': job.job_status,
         'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,
-        'report': report_dict
+        'report': report_dict,
+        'download_links': detail_download_links
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 

@@ -26,8 +26,8 @@ urlpatterns = [
     path('<int:modeling_job_id>/result_page', views.result_page, name='api-doc-result-page'),
     # refactor: ok
     path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),
-    # report curd
-    path('<int:pk>/report', views.render_reports, name="report-detail"),
+    # report curd: out of service
+    # path('<int:pk>/report', views.render_reports, name="report-detail"),
 
     # term weight curd
     path('<int:job_id>/term_weight/add', views.TermWeightCreate.as_view(), name="term-weight-add"),
