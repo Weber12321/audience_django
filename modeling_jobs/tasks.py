@@ -356,6 +356,41 @@ def call_model_report(task_id: str):
     return report.status_code, report.json()
 
 
+def call_get_term_weight_set(task_id: str):
+    api_path = f"{API_PATH}/models/{task_id}/term_weight"
+    api_headers = API_HEADERS
+    result = requests.get(url=api_path, headers=api_headers)
+    return result.status_code, result.json()
+
+
+def call_model_import(upload_job: UploadModelJob):
+    upload_job.job_status = UploadModelJob.JobStatus.PROCESSING
+    upload_job.save()
+    try:
+        file = upload_job.file
+        api_path = f'{API_PATH}/models/import_model/'
+        api_headers = API_HEADERS.update({'Content-Type': 'multipart/form-data'})
+        api_request_body = {"QUEUE": "queue2",
+                            "TASK_ID": upload_job.modeling_job.task_id,
+                            "UPLOAD_JOB_ID": upload_job.id}
+        if upload_job.modeling_job.model_name in {"TERM_WEIGHT_MODEL"}:
+            logger.debug(upload_job.modeling_job.model_name)
+            r = requests.put(url=api_path,
+                             headers=api_headers,
+                             files={'file': open(file.path, 'rb')},
+                             data=json.dumps(api_request_body))
+            if r.status_code != 200:
+                logger.debug(r.json())
+                upload_job.job_status = UploadModelJob.JobStatus.ERROR
+        else:
+            raise ValueError(f'Unknown or unsupported model {upload_job.modeling_job.model_name}.')
+    except Exception as e:
+        logger.debug(e)
+        upload_job.job_status = UploadModelJob.JobStatus.ERROR
+    finally:
+        upload_job.save()
+
+
 def process_report(task_id: str):
     status_code, report = call_model_report(task_id=task_id)
     last_report = report[-1]['report'] if isinstance(report[-1]['report'], dict) else json.loads(report[-1]['report'])
@@ -450,34 +485,6 @@ def get_progress_api(pk):
     return job
 
 
-def call_model_import(upload_job: UploadModelJob):
-    upload_job.job_status = UploadModelJob.JobStatus.PROCESSING
-    upload_job.save()
-    try:
-        file = upload_job.file
-        api_path = f'{API_PATH}/models/import_model/'
-        api_headers = API_HEADERS.update({'Content-Type': 'multipart/form-data'})
-        api_request_body = {"QUEUE": "queue2",
-                            "TASK_ID": upload_job.modeling_job.task_id,
-                            "UPLOAD_JOB_ID": upload_job.id}
-        if upload_job.modeling_job.model_name in {"TERM_WEIGHT_MODEL"}:
-            logger.debug(upload_job.modeling_job.model_name)
-            r = requests.put(url=api_path,
-                             headers=api_headers,
-                             files={'file': open(file.path, 'rb')},
-                             data=json.dumps(api_request_body))
-            if r.status_code != 200:
-                logger.debug(r.json())
-                upload_job.job_status = UploadModelJob.JobStatus.ERROR
-        else:
-            raise ValueError(f'Unknown or unsupported model {upload_job.modeling_job.model_name}.')
-    except Exception as e:
-        logger.debug(e)
-        upload_job.job_status = UploadModelJob.JobStatus.ERROR
-    finally:
-        upload_job.save()
-
-
 def get_report_details(task_id):
     report_code, report_set = call_model_report(task_id)
 
@@ -516,4 +523,13 @@ def get_detail_file_link(report_dict: dict):
         _output_dict[k] = prefix + str(v)
 
     return _output_dict
+
+
+def term_weight_api_link(task_id: str):
+    return f"{API_PATH}/models/{task_id}/term_weight"
+
+
+def get_term_weights_datatables(task_id):
+    _, term_weight_set = call_get_term_weight_set(task_id=task_id)
+    return {"data": term_weight_set}
 

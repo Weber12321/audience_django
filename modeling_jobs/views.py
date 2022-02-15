@@ -22,7 +22,7 @@ from .models import ModelingJob, Report, TermWeight, UploadModelJob
 from .serializers import JobSerializer, TermWeightSerializer
 from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task, call_model_preparing, \
     call_model_testing, call_model_status, process_report, get_progress_api, call_model_import, get_report_details, \
-    get_detail_file_link
+    get_detail_file_link, call_get_term_weight_set, term_weight_api_link, get_term_weights_datatables
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -243,13 +243,24 @@ def get_progress(request, pk):
     report_dict = get_report_details(task_id=job.task_id.hex)
     detail_download_links = get_detail_file_link(report_dict)
 
-    response_data = {
-        'state': job.job_status,
-        'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,
-        'report': report_dict,
-        'download_links': detail_download_links
-    }
-    return HttpResponse(json.dumps(response_data), content_type='application/json')
+    if job.model_name in {"TERM_WEIGHT_MODEL"}:
+        response_data = {
+            'state': job.job_status,
+            'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,
+            'report': report_dict,
+            'download_links': detail_download_links,
+            # 'term_weight_set': call_get_term_weight_set(task_id=job.task_id)
+            'term_weight_set': get_term_weights_datatables(task_id=job.task_id.hex)
+        }
+        return HttpResponse(json.dumps(response_data), content_type='application/json')
+    else:
+        response_data = {
+            'state': job.job_status,
+            'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,
+            'report': report_dict,
+            'download_links': detail_download_links
+        }
+        return HttpResponse(json.dumps(response_data), content_type='application/json')
 
 
 def render_reports(request, pk):
@@ -362,10 +373,7 @@ class TermWrightViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """
-        This view should return a list of all the purchases for
-        the user as determined by the username portion of the URL.
-        """
+
         logger.debug(self.basename)
         job_id = self.request.query_params.get('job')
         if job_id is not None:
