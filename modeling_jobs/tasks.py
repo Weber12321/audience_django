@@ -457,7 +457,7 @@ def get_progress_api(pk):
             else:
                 job.job_status = ModelingJob.JobStatus.WAIT
                 job.save()
-    elif status_code is None:
+    elif status_code == 400:
         job.job_status = ModelingJob.JobStatus.WAIT
         job.save()
     else:
