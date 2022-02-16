@@ -558,20 +558,18 @@
                }
 
                $("#term-table").DataTable({
-                   destroy: true,
-                   data: result.term_weight_set.data,
-                   columnDefs: [
-                       {visible: false, target: [0, -1]},
-                       {visible: true, target: '_all'}
-                   ],
-                   columns:[
-                       {data: "term"},
-                       {data: "label"},
-                       {data: "weight"}
-                   ]
+                    destroy: true,
+                    data: result.term_weight_set.data,
+                    columnDefs: [
+                        {visible: false, target: [0, -1]},
+                        {visible: true, target: '_all'}
+                    ],
+                    columns:[
+                        {data: "term"},
+                        {data: "label"},
+                        {data: "weight"}
+                    ]
                 });
-
-
 
                 setTimeout(function () {
                     {#console.log(url)#}
@@ -579,6 +577,8 @@
                 }, timeout);
             });
         }
+
+
         function check_response_exist(report_details_set){
             return report_details_set != null;
         }
@@ -609,6 +609,8 @@
             "{% url 'modeling_jobs:api-job-progress' job.id %}",
             Boolean('{{ job.is_trainable }}') == 'True'
         )
+
+
 
     </script>
 {% endblock %}

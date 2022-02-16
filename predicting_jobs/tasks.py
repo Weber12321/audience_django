@@ -217,7 +217,7 @@ def call_create_task(job: PredictingJob, predicting_target, output_db):
         "OUTPUT_SCHEMA": output_db,
         "COUNTDOWN": 5,
         "QUEUE": "queue1",
-        "MODEL_JOB_LIST": [apply_model.modeling_job.id for apply_model in applying_models],
+        "MODEL_ID_LIST": [apply_model.modeling_job.task_id.hex for apply_model in applying_models],
         "SITE_CONFIG": {"host": source.host,
                         "port": source.port,
                         "user": source.username,
@@ -449,23 +449,21 @@ def check_target_status(target: PredictingTarget):
 
 def check_model_record(applying_models):
     for applying_model in applying_models:
-        r = requests.get(url=f"{API_PATH}/models/{applying_model.modeling_job.id}")
-        if isinstance(r.json(), str):
+        r = requests.get(url=f"{API_PATH}/models/{applying_model.modeling_job.task_id.hex}")
+        if r.status_code != 200:
             result = call_model_preparing(
-                model_job_id=applying_model.modeling_job.id,
+                model_job_id=applying_model.modeling_job.task_id.hex,
                 labeling_job_id=applying_model.modeling_job.jobRef.id,
                 model_type=applying_model.modeling_job.model_name,
                 feature=applying_model.modeling_job.feature.upper()
             )
             if result.status_code != 200:
-                raise ValueError(f'Cannot prepare the model {applying_model.modeling_job.id} at the backend tasks')
-            if not isinstance(result.json(), dict):
-                raise ValueError(f'Cannot prepare the model {applying_model.modeling_job.id} at the backend tasks')
+                raise ValueError(f"cannot create a number due to {result.json()}")
         else:
             continue
 
 
-def call_model_preparing(model_job_id: int, labeling_job_id: int, model_type: str, feature: str):
+def call_model_preparing(model_job_id: str, labeling_job_id: int, model_type: str, feature: str):
     api_path = f'{API_PATH}/models/prepare/'
     api_headers = API_HEADERS
     body = {

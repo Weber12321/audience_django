@@ -14,6 +14,7 @@ from django.views.generic.detail import SingleObjectMixin
 from django_q.tasks import AsyncTask
 from rest_framework import viewsets, permissions
 
+from audience_toolkits.settings import API_PATH
 from core.audience.models.base_model import RuleBaseModel, SuperviseModel
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm, TermWeightForm, UploadModelJobForm
@@ -249,6 +250,7 @@ def get_progress(request, pk):
             'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,
             'report': report_dict,
             'download_links': detail_download_links,
+            'base_api': f'{API_PATH}/models',
             # 'term_weight_set': call_get_term_weight_set(task_id=job.task_id)
             'term_weight_set': get_term_weights_datatables(task_id=job.task_id.hex)
         }
@@ -258,7 +260,8 @@ def get_progress(request, pk):
             'state': job.job_status,
             'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,
             'report': report_dict,
-            'download_links': detail_download_links
+            'download_links': detail_download_links,
+            'base_api': f'{API_PATH}/models'
         }
         return HttpResponse(json.dumps(response_data), content_type='application/json')
 
