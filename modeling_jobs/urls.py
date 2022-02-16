@@ -16,13 +16,18 @@ urlpatterns = [
     path('updateTask', views.update_task, name='api-doc-update'),
     path('deleteTask', views.delete_task, name='api-doc-delete'),
     path('insert_csv', views.insert_csv, name='api-doc-insert_csv'),
+    # refactor: ok
     path('<int:pk>/training', views.training_model, name='training-model'),
+    # refactor: ok
     path('<int:job_id>/import', views.UploadModelJobCreate.as_view(), name='import-model'),
+    # refactor: ok
     path('<int:pk>/ext_test', views.testing_model_via_ext_data, name='api-ext-testing-model'),
+    # refactor: ok
     path('<int:modeling_job_id>/result_page', views.result_page, name='api-doc-result-page'),
+    # refactor: ok
     path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),
-    # report curd
-    path('<int:job_id>/report/<int:pk>', views.ReportDetail.as_view(), name="report-detail"),
+    # report curd: out of service
+    # path('<int:pk>/report', views.render_reports, name="report-detail"),
 
     # term weight curd
     path('<int:job_id>/term_weight/add', views.TermWeightCreate.as_view(), name="term-weight-add"),

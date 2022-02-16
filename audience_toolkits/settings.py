@@ -240,7 +240,7 @@ ML_MODELS = {
         'verbose_name': 'SVM',
         'module': 'core.audience.models.classic.svm_model.SvmModel',
     },
-    "RANDOM_FOREST": {
+    "RANDOM_FOREST_MODEL": {
         'verbose_name': '隨機森林',
         'module': 'core.audience.models.classic.random_forest_model.RandomForestModel',
     },

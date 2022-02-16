@@ -1,4 +1,5 @@
 import json
+import uuid
 from collections import namedtuple
 from typing import Union, List, NamedTuple
 
@@ -37,6 +38,7 @@ class ModelingJob(models.Model):
     model_path = models.CharField(max_length=100, verbose_name="模型存放位置", blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="建立者")
+    task_id = models.UUIDField(default=uuid.uuid1, unique=True, editable=False, verbose_name="audience api 任務 ID")
 
     def __str__(self):
         return self.name

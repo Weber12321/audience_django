@@ -52,9 +52,7 @@ class PredictingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     template_name = 'predicting_jobs/detail.html'
     form_class = PredictingJobForm
 
-
     def get_context_data(self, **kwargs):
-
         context = super().get_context_data(**kwargs)
         context["predicting_job"] = self.object
         apply_model_form = ApplyingModelForm({'predicting_job': self.object, 'priority': 0})
@@ -67,7 +65,6 @@ class PredictingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_success_url(self):
         _pk = self.kwargs['pk']
         return reverse_lazy('predicting_jobs:job-detail', kwargs={'pk': _pk})
-
 
 
 class PredictingJobCreate(LoginRequiredMixin, generic.CreateView):
@@ -226,7 +223,6 @@ def start_job(request, pk):
                 response_dict = call_delete_task(job=job, predicting_target=target)
                 logger.info(f'{response_dict}')
 
-
             api_response: Dict = call_create_task(job, target, output_db=OUTPUT_DB)
             if not api_response:
                 continue
@@ -239,8 +235,6 @@ def start_job(request, pk):
                 logger.warning(f"{task_name} with task_id {target.task_id} failed")
                 logger.warning(f"task error_code {api_response['error_code']} "
                                f"with error_msg {api_response['error_message']}")
-
-
 
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
@@ -276,6 +270,7 @@ def cancel_job(request, pk):
         return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:index"))
     return HttpResponseRedirect(redirect_to=reverse_lazy("predicting_jobs:job-detail", kwargs={'pk': pk}))
 
+
 def get_progress(request, pk):
     job = PredictingJob.objects.get(pk=pk)
 
@@ -300,12 +295,12 @@ def get_progress(request, pk):
     for target in targets:
         if target.task_id:
             check_dict.update({
-                target.task_id : check_target_status(target)
+                target.task_id: check_target_status(target)
             })
 
     success_count = 0
     # if job.job_status == "processing":
-    for t_id,t_response in check_dict.items():
+    for t_id, t_response in check_dict.items():
         prod = t_response['error_message']['prod_stat']
         stat = t_response['error_message']['stat']
         if prod == 'no_data':
@@ -320,7 +315,6 @@ def get_progress(request, pk):
                 continue
         if prod == 'finish':
             success_count += 1
-
 
     if success_count == len(targets):
         job.job_status = JobStatus.DONE
@@ -425,6 +419,8 @@ class ResultViewSet(viewsets.ModelViewSet):
 #       Audience API
 # =========================
 import csv
+
+
 def sample_download(request, pk):
     # Create the HttpResponse object with the appropriate CSV header.
     target = PredictingTarget.objects.get(pk=pk)
@@ -445,6 +441,7 @@ def sample_download(request, pk):
 
     return response
 
+
 def render_sample_results(request, job_id, pk):
     target = PredictingTarget.objects.get(pk=pk)
     sample_data: Dict = call_result_samples(target.task_id)
@@ -457,14 +454,14 @@ def render_sample_results(request, job_id, pk):
         return HttpResponse(template.render(context, request))
     else:
         context = {
-            'sample_data' : sample_data['error_message']
+            'sample_data': sample_data['error_message']
         }
         return HttpResponse(template.render(context, request))
+
 
 def render_status(request, job_id, pk):
     target = PredictingTarget.objects.get(pk=pk)
     template = loader.get_template('predicting_target/task_list.html')
-
 
     status_data = call_check_status(target.task_id)
     if status_data['error_code'] != 200:
@@ -473,9 +470,8 @@ def render_status(request, job_id, pk):
         }
         return HttpResponse(template.render(context, request))
 
-
     context = {
-        'status' : status_data['error_message'],
+        'status': status_data['error_message'],
     }
     return HttpResponse(template.render(context, request))
 
@@ -495,11 +491,4 @@ def render_all_status(request, pk):
 
         status.append(status_data['error_message'])
 
-    return render(request, 'predicting_target/job_task_list.html', {'status':status})
-
-
-
-
-
-
-
+    return render(request, 'predicting_target/job_task_list.html', {'status': status})

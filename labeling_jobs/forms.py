@@ -81,12 +81,13 @@ class RuleForm(forms.ModelForm):
     class Meta:
         model = Rule
         fields = "__all__"
-        exclude = ['created_at', 'created_by', 'rule_type']
+        exclude = ['created_at', 'created_by']
         widgets = {
             'labeling_job': forms.Select(attrs={'class': 'form-control'}),
             'content': forms.TextInput(attrs={'class': 'form-control', 'rows': 3}),
             'label': forms.Select(attrs={'class': 'form-control'}),
             'match_type': forms.Select(attrs={'class': 'form-control'}),
+            'rule_type': forms.Select(attrs={'class': 'form-control'}),
             'score': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
