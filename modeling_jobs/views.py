@@ -1,6 +1,5 @@
 import json
 import logging
-from collections import namedtuple
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, HttpResponseRedirect
@@ -10,20 +9,18 @@ from django.urls import reverse_lazy, reverse
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView
-from django.views.generic.detail import SingleObjectMixin
-from django_q.tasks import AsyncTask
+
 from rest_framework import viewsets, permissions
 
 from audience_toolkits.settings import API_PATH
-from core.audience.models.base_model import RuleBaseModel, SuperviseModel
 from labeling_jobs.models import LabelingJob, Document
 from .forms import ModelingJobForm, TermWeightForm, UploadModelJobForm
-from .helpers import insert_csv_to_db, parse_report
-from .models import ModelingJob, Report, TermWeight, UploadModelJob
+from .helpers import insert_csv_to_db
+from .models import ModelingJob, TermWeight, UploadModelJob
 from .serializers import JobSerializer, TermWeightSerializer
-from .tasks import train_model_task, testing_model_via_ext_data_task, import_model_data_task, call_model_preparing, \
-    call_model_testing, call_model_status, process_report, get_progress_api, call_model_import, get_report_details, \
-    get_detail_file_link, call_get_term_weight_set, term_weight_api_link, get_term_weights_datatables
+from .tasks import call_model_preparing, \
+    call_model_testing, process_report, get_progress_api, call_model_import, get_report_details, \
+    get_detail_file_link
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -60,6 +57,8 @@ class JobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
             context["import_model_form"] = import_model_form
             term_form = TermWeightForm(modeling_job=self.object.id)
             context['term_form'] = term_form
+            context['api_link'] = f'{API_PATH}/models'
+            context['task_id'] = self.object.task_id.hex
         return context
 
     def get_template_names(self):
@@ -242,7 +241,7 @@ def result_page(request, modeling_job_id):
 def get_progress(request, pk):
     job = get_progress_api(pk=pk)
     report_dict = get_report_details(task_id=job.task_id.hex)
-    detail_download_links = get_detail_file_link(report_dict)
+    detail_download_links = get_detail_file_link(task_id=job.task_id.hex)
 
     if job.model_name in {"TERM_WEIGHT_MODEL"}:
         response_data = {
@@ -251,8 +250,9 @@ def get_progress(request, pk):
             'report': report_dict,
             'download_links': detail_download_links,
             'base_api': f'{API_PATH}/models',
+            'task_id': job.task_id.hex,
             # 'term_weight_set': call_get_term_weight_set(task_id=job.task_id)
-            'term_weight_set': get_term_weights_datatables(task_id=job.task_id.hex)
+            # 'term_weight_set': get_term_weights_datatables(task_id=job.task_id.hex)
         }
         return HttpResponse(json.dumps(response_data), content_type='application/json')
     else:
@@ -384,4 +384,10 @@ class TermWrightViewSet(viewsets.ModelViewSet):
         else:
             return TermWeight.objects.all().order_by('-weight')
 
-# def download_eval_details():
+
+def render_term_add(request, job_id):
+    job = ModelingJob.objects.get(pk=job_id)
+    template = loader.get_template('term_weights/add_form.html')
+    context = {"job": job, "task_id": job.task_id.hex, "api_link": f'{API_PATH}/models'}
+    return HttpResponse(template.render(context, request))
+

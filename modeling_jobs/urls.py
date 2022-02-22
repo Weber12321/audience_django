@@ -29,10 +29,10 @@ urlpatterns = [
     # report curd: out of service
     # path('<int:pk>/report', views.render_reports, name="report-detail"),
 
-    # term weight curd
-    path('<int:job_id>/term_weight/add', views.TermWeightCreate.as_view(), name="term-weight-add"),
-    path('<int:job_id>/term_weight/<int:pk>/update', views.TermWeightUpdate.as_view(), name="term-weight-update"),
-    path('<int:job_id>/term_weight/<int:pk>/delete', views.TermWeightDelete.as_view(), name="term-weight-delete"),
+    # term weight curd : all term weight crud methods move to ajax
+    # path('<int:job_id>/term_weight/add', views.render_term_add, name="term-weight-add"),
+    # path('<int:job_id>/term_weight/<int:pk>/update', views.TermWeightUpdate.as_view(), name="term-weight-update"),
+    # path('<int:job_id>/term_weight/<int:pk>/delete', views.TermWeightDelete.as_view(), name="term-weight-delete"),
 
 ]
 
