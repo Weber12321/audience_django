@@ -1,9 +1,66 @@
 {% extends "base.html" %}
 {% block content %}
+{#    {% csrf_token %}#}
+{#    {{ form.as_p }}#}
     <form method="post">
         <legend>新增規則</legend>
-        {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="送出" class="submit"/>
+        <p>
+            <label for="id_term">詞彙：</label>
+            <input type="text" name="term" maxlength="20" required="" id="id_term">
+        </p>
+        <p>
+            <label for="id_weight">權重：</label>
+            <input type="number" name="weight" step="any" required="" id="id_weight">
+        </p>
+        <p>
+            <label for="id_label">標籤：</label>
+            <input type="text" name="label" maxlength="20" required="" id="id_label">
+        </p>
+            <input id="submit-term-weight" type="submit" value="送出" class="submit">
     </form>
+{% endblock %}
+
+{% block custom_script %}
+    <script>
+    {#$(document).ready(function () {#}
+    {#    $("form").submit(function (event) {#}
+    {#        var formData = {}#}
+    {#        formData.TASK_ID = {{ task_id }}#}
+    {#        formData.TERM = $('#id_term').val()#}
+    {#        formData.WEIGHT = parseFloat($('#id_weight').val())#}
+    {#        formData.LABEL = $('#id_label').val()#}
+    {#        $.ajax({#}
+    {#            url: "{{ api_link }}/term_weight/add",#}
+    {#            type: "put",#}
+    {#            dataType: 'json',#}
+    {#            data: JSON.stringify(formData),#}
+    {#            headers: {'content-type': 'application/json;charset=UTF-8', 'accept': 'application/json'},#}
+    {#            success: function (data) {#}
+    {#                console.log(data);#}
+                    {#window.location = "{% url 'modeling_jobs:job-detail' job.id %}";#}
+    {#            }#}
+    {#        });#}
+    {#        event.preventDefault();#}
+    {#    });#}
+
+        $('#submit-term-weight').click(function (e) {
+            var formData = {}
+            formData.TASK_ID = {{ task_id }}
+            formData.TERM = $('#id_term').val()
+            formData.WEIGHT = parseFloat($('#id_weight').val())
+            formData.LABEL = $('#id_label').val()
+            $.ajax({
+                url: "{{ api_link }}/term_weight/add",
+                type: "put",
+                data: JSON.stringify(formData),
+                dataType: 'json',
+                headers: {'content-type': 'application/json;charset=UTF-8', 'accept': 'application/json'},
+                success: function (data) {
+                    console.log(data);
+                    alert(data);
+                    window.location = "{% url 'modeling_jobs:job-detail' job.id %}";
+                }
+            })
+        });
+    </script>
 {% endblock %}

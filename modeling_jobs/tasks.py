@@ -371,8 +371,9 @@ def call_model_import(upload_job: UploadModelJob):
         api_path = f'{API_PATH}/models/import_model/'
         api_headers = API_HEADERS.update({'Content-Type': 'multipart/form-data'})
         api_request_body = {"QUEUE": "queue2",
-                            "TASK_ID": upload_job.modeling_job.task_id,
-                            "UPLOAD_JOB_ID": upload_job.id}
+                            "TASK_ID": upload_job.modeling_job.task_id.hex,
+                            "PREDICT_TYPE": upload_job.modeling_job.feature.upper(),
+                            "MODEL_PATH": f'{upload_job.modeling_job.id}_{upload_job.modeling_job.model_name}'}
         if upload_job.modeling_job.model_name in {"TERM_WEIGHT_MODEL"}:
             logger.debug(upload_job.modeling_job.model_name)
             r = requests.put(url=api_path,
@@ -465,25 +466,25 @@ def get_progress_api(pk):
         job.job_status = ModelingJob.JobStatus.ERROR
         job.save()
 
-    upload_set = ModelingJob.objects.filter(uploadmodeljob__modeling_job_id__exact=pk).values_list('uploadmodeljob__id',
-                                                                                                   'task_id')
-
-    for upload_job_id, task_id in upload_set:
-        _status_code, _status_result = call_import_model_status(task_id=task_id,
-                                                                upload_job_id=upload_job_id)
-
-        upload_job = UploadModelJob.objects.get(pk=upload_job_id)
-
-        if _status_code == 200:
-            if _status_result['status'] == 'finished':
-                upload_job.job_status = UploadModelJob.JobStatus.DONE
-                upload_job.save()
-            if _status_result['status'] == 'failed':
-                upload_job.job_status = UploadModelJob.JobStatus.ERROR
-                upload_job.save()
-        else:
-            upload_job.job_status = UploadModelJob.JobStatus.ERROR
-            upload_job.save()
+    # upload_set = ModelingJob.objects.filter(uploadmodeljob__modeling_job_id__exact=pk).values_list('uploadmodeljob__id',
+    #                                                                                                'task_id')
+    #
+    # for upload_job_id, task_id in upload_set:
+    #     _status_code, _status_result = call_import_model_status(task_id=task_id,
+    #                                                             upload_job_id=upload_job_id)
+    #
+    #     upload_job = UploadModelJob.objects.get(pk=upload_job_id)
+    #
+    #     if _status_code == 200:
+    #         if _status_result['status'] == 'finished':
+    #             upload_job.job_status = UploadModelJob.JobStatus.DONE
+    #             upload_job.save()
+    #         if _status_result['status'] == 'failed':
+    #             upload_job.job_status = UploadModelJob.JobStatus.ERROR
+    #             upload_job.save()
+    #     else:
+    #         upload_job.job_status = UploadModelJob.JobStatus.ERROR
+    #         upload_job.save()
 
     return job
 
@@ -497,13 +498,9 @@ def get_report_details(task_id):
     # return [convert_dict_to_namedtuple(report['dataset_type'], report) for report in report_set]
     return {report['dataset_type']: convert_report_info_to_dict(report) for report in report_set}
 
-
-# def convert_dict_to_namedtuple(name: str, dictionary: dict):
-#     return namedtuple(name, dictionary.keys())(**dictionary)
-
-
-def get_report_ids(report_dict: dict):
-    return {k: v['id'] for k, v in report_dict.items()}
+#
+# def get_report_ids(report_dict: dict):
+#     return {k: v['id'] for k, v in report_dict.items()}
 
 
 def convert_report_info_to_dict(report: dict):
@@ -518,21 +515,24 @@ def convert_report_info_to_dict(report: dict):
     return report_dict
 
 
-def get_detail_file_link(report_dict: dict):
-    report_id_dict = get_report_ids(report_dict)
-    prefix = f"{API_PATH}/models/download_details/"
+# def get_detail_file_link(report_dict: dict):
+#     report_id_dict = get_report_ids(report_dict)
+#     prefix = f"{API_PATH}/models/download_details/"
+#     _output_dict = defaultdict(str)
+#     for k, v in report_id_dict.items():
+#         _output_dict[k] = prefix + str(v)
+#
+#     return _output_dict
+def get_detail_file_link(task_id: str):
     _output_dict = defaultdict(str)
-    for k, v in report_id_dict.items():
-        _output_dict[k] = prefix + str(v)
+    prefix = f"{API_PATH}/models/download_details/{task_id}/"
+    set_name = {'train', 'dev', 'test', 'ext_test'}
+    for s in set_name:
+        _output_dict[s] = prefix + s
 
     return _output_dict
 
 
-def term_weight_api_link(task_id: str):
-    return f"{API_PATH}/models/{task_id}/term_weight"
 
 
-def get_term_weights_datatables(task_id):
-    _, term_weight_set = call_get_term_weight_set(task_id=task_id)
-    return {"data": term_weight_set}
 
