@@ -73,8 +73,7 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
 
 ##### LabelingJob
 
-<details>
-<summary>LabelingJob(GET)</summary>
+LabelingJob(GET)
 
 - 獲得所有任務列表
 
@@ -116,11 +115,7 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
     "updated_at": "2021-07-14T15:56:35.164504"
 }
 ```
-
-</details>
-
-<details>
-<summary>LabelingJob(POST)</summary>
+LabelingJob(POST)
 
 - 獲得所有任務列表
 
@@ -178,11 +173,7 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
     "updated_at": "2021-07-16T14:13:37.852387"
 }
 ```
-
-</details>
-
-<details>
-<summary>LabelingJob(PUT)</summary>
+LabelingJob(PUT)
 
 - 獲得所有任務列表
 
@@ -240,12 +231,7 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
     "updated_at": "2021-07-16T14:26:49.023896"
 }
 ```
-
-</details>
-
-<details>
-<summary>LabelingJob(DEL)</summary>
-
+LabelingJob(DEL)
 - 獲得所有任務列表
 
     | 項目 | 說明 |
@@ -265,8 +251,7 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
 
 ##### Label
 
-<details>
-<summary>Label(GET)</summary>
+Label(GET)
 
 - 獲得所有任務列表
 
@@ -372,10 +357,7 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
 }
 ```
 
-</details>
-
-<details>
-<summary>Label(PUT)</summary>
+Label(PUT)
 
 - 獲得所有任務列表
 
@@ -434,10 +416,7 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
 }
 ```
 
-</details>
-
-<details>
-<summary>Label(DEL)</summary>
+Label(DEL)
 
 - 獲得所有任務列表
 
@@ -454,12 +433,10 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
 
 - Response Example: 無
 
-</details>
 
 ##### Rule
 
-<details>
-<summary>Rule(GET)</summary>
+Rule(GET)
 
 - 獲得所有任務列表
 
@@ -508,10 +485,7 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
 }
 ```
 
-</details>
-
-<details>
-<summary>Rule(POST)</summary>
+Rule(POST)
 
 - 獲得所有任務列表
 
@@ -580,10 +554,7 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
 }
 ```
 
-</details>
-
-<details>
-<summary>Rule(PUT)</summary>
+Rule(PUT)
 
 - 獲得所有任務列表
 
@@ -645,10 +616,7 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
 }
 ```
 
-</details>
-
-<details>
-<summary>rule(DEL)</summary>
+rule(DEL)
 
 - 獲得所有任務列表
 
@@ -665,10 +633,6 @@ We use [SB Admin 2](https://startbootstrap.com/previews/sb-admin-2) bootstrap 4.
 
 - Response Example: 無
 
-</details>
-
-### icons
-We use [font-awesome](https://fontawesome.com/icons?d=gallery&p=1&m=free) icons.
 
 ## FAQ
 ### 若`makemigrations`時出現找不到資料表錯誤該怎麼辦？
