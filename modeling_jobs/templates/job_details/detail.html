@@ -138,7 +138,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id='dev_download' href="">驗證細節下載(csv)</a>
+                            <a id='dev_download' href="{% url 'modeling_jobs:api-doc-download-details' job.id 'dev' %}">驗證細節下載(csv)</a>
                         </div>
                     </div>
 
@@ -180,7 +180,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id='test_download' href="">預測細節下載(csv)</a>
+                            <a id='test_download' href="{% url 'modeling_jobs:api-doc-download-details' job.id 'test' %}">預測細節下載(csv)</a>
                         </div>
                     </div>
                 <div id="ett" class="card shadow mb-4">
@@ -221,7 +221,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id="ext_test_download" href="">預測細節下載(csv)</a>
+                            <a id="ext_test_download" href="{% url 'modeling_jobs:api-doc-download-details' job.id 'ext_test' %}">預測細節下載(csv)</a>
                         </div>
                 </div>
         </div>
@@ -386,7 +386,7 @@
                     $('#dev_table tbody').empty()
                     $('#dev_table tbody').append(output)
                     let download_link = result.download_links.dev
-                    $('#dev_download').attr("href", download_link)
+                    {#$('#dev_download').attr("href", download_link)#}
                 } else {
                     $('#dt').hide()
                 }
@@ -405,7 +405,7 @@
 
                    let download_link = result.download_links.test
 
-                   $('#test_download').attr("href", download_link)
+                   {#$('#test_download').attr("href", download_link)#}
 
                } else {
                    $('#tt').hide()
@@ -425,7 +425,7 @@
 
                    let download_link = result.download_links.ext_test
 
-                   $('#ext_test_download').attr("href", download_link)
+                   {#$('#ext_test_download').attr("href", download_link)#}
                } else {
                    $('#ett').hide()
                }

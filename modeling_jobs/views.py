@@ -2,7 +2,8 @@ import json
 import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseRedirect
+from django.core import serializers
+from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonResponse
 from django.shortcuts import render
 from django.template import loader
 from django.urls import reverse_lazy, reverse
@@ -20,7 +21,7 @@ from .models import ModelingJob, TermWeight, UploadModelJob
 from .serializers import JobSerializer, TermWeightSerializer
 from .tasks import call_model_preparing, \
     call_model_testing, process_report, get_progress_api, call_model_import, get_report_details, \
-    get_detail_file_link
+    get_detail_file_link, call_download_details, call_get_term_weights, call_term_weight_download, call_term_weight_add
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -56,6 +57,7 @@ class JobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
             import_model_form = UploadModelJobForm({'modeling_job': self.object.id, })
             context["import_model_form"] = import_model_form
             term_form = TermWeightForm(modeling_job=self.object.id)
+            context['term_weight'] = call_get_term_weights(task_id=self.object.task_id.hex)
             context['term_form'] = term_form
             context['api_link'] = f'{API_PATH}/models'
             context['task_id'] = self.object.task_id.hex
@@ -248,7 +250,7 @@ def get_progress(request, pk):
             'state': job.job_status,
             'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,
             'report': report_dict,
-            'download_links': detail_download_links,
+            # 'download_links': detail_download_links,
             'base_api': f'{API_PATH}/models',
             'task_id': job.task_id.hex,
             # 'term_weight_set': call_get_term_weight_set(task_id=job.task_id)
@@ -260,7 +262,7 @@ def get_progress(request, pk):
             'state': job.job_status,
             'details': job.error_message if job.job_status == ModelingJob.JobStatus.ERROR else job.job_status,
             'report': report_dict,
-            'download_links': detail_download_links,
+            # 'download_links': detail_download_links,
             'base_api': f'{API_PATH}/models'
         }
         return HttpResponse(json.dumps(response_data), content_type='application/json')
@@ -276,45 +278,90 @@ def render_reports(request, pk):
     return HttpResponse(template.render(context, request))
 
 
-class TermWeightUpdate(LoginRequiredMixin, generic.UpdateView):
-    model = TermWeight
-    form_class = TermWeightForm
-    template_name = 'term_weights/update_form.html'
+@csrf_exempt
+def download_model_details(request, pk, data_type):
+    job = ModelingJob.objects.get(pk=pk)
+    file_path = call_download_details(task_id=job.task_id.hex, data_type=data_type)
+    response = FileResponse(open(file_path, 'rb'))
+    response['Content-Type'] = "application/vnd.ms-excel"
+    response['Content-Disposition'] = f'attachment;filename="{job.task_id.hex}_{data_type}.csv"'
+    return response
 
 
-class TermWeightCreate(LoginRequiredMixin, generic.CreateView):
-    form_class = TermWeightForm
-    template_name = 'term_weights/add_form.html'
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['modeling_job'] = self.kwargs.get('job_id')
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.modeling_job_id = self.kwargs.get('job_id')
-        return super(TermWeightCreate, self).form_valid(form)
-
-    def get_success_url(self):
-        job_id = self.kwargs.get('job_id')
-        return reverse_lazy('modeling_jobs:job-detail', kwargs={"pk": job_id})
+@csrf_exempt
+def download_term_weights(request, pk):
+    job = ModelingJob.objects.get(pk=pk)
+    file_path = call_term_weight_download(task_id=job.task_id.hex)
+    response = FileResponse(open(file_path, 'rb'))
+    response['Content-Type'] = "application/vnd.ms-excel"
+    response['Content-Disposition'] = f'attachment;filename="{job.task_id.hex}_term_weight.csv"'
+    return response
 
 
-class TermWeightDelete(LoginRequiredMixin, generic.DeleteView):
-    model = TermWeight
-    # success_url = reverse_lazy('predicting_jobs:index')
-    template_name = 'term_weights/confirm_delete_form.html'
+def add_term_weight(request, pk):
+    job = ModelingJob.objects.get(pk=pk)
+    if request.method == "POST":
+        response = call_term_weight_add(task_id=job.task_id.hex,
+                                        label=request.POST.get('add_label'),
+                                        term=request.POST.get('add_term'),
+                                        weight=request.POST.get('add_weight'))
+        if response.status_code == 200:
+            return reverse_lazy('modeling_jobs:job-detail', kwargs={"pk": job.id})
 
-    def post(self, request, *args, **kwargs):
-        if "cancel" in request.POST:
-            logger.debug(request.POST)
-            return HttpResponseRedirect(self.get_success_url())
-        else:
-            return super(TermWeightDelete, self).post(request, *args, **kwargs)
 
-    def get_success_url(self):
-        job_id = self.kwargs.get('pk')
-        return reverse_lazy('modeling_job_id:job-detail', kwargs={"pk": job_id})
+def update_term_weight(request):
+    pass
+
+
+def delete_term_weight(request):
+    pass
+
+
+def render_term_weight(request, pk):
+    job = ModelingJob.objects.get(pk=pk)
+    response = call_get_term_weights(task_id=job.task_id.hex)
+    return HttpResponse(json.dumps(response.json()), content_type='application/json')
+
+
+# class TermWeightUpdate(LoginRequiredMixin, generic.UpdateView):
+#     model = TermWeight
+#     form_class = TermWeightForm
+#     template_name = 'term_weights/update_form.html'
+
+#
+# class TermWeightCreate(LoginRequiredMixin, generic.CreateView):
+#     form_class = TermWeightForm
+#     template_name = 'term_weights/add_form.html'
+#
+#     def get_form_kwargs(self):
+#         kwargs = super().get_form_kwargs()
+#         kwargs['modeling_job'] = self.kwargs.get('job_id')
+#         return kwargs
+#
+#     def form_valid(self, form):
+#         form.instance.modeling_job_id = self.kwargs.get('job_id')
+#         return super(TermWeightCreate, self).form_valid(form)
+#
+#     def get_success_url(self):
+#         job_id = self.kwargs.get('job_id')
+#         return reverse_lazy('modeling_jobs:job-detail', kwargs={"pk": job_id})
+#
+#
+# class TermWeightDelete(LoginRequiredMixin, generic.DeleteView):
+#     model = TermWeight
+#     # success_url = reverse_lazy('predicting_jobs:index')
+#     template_name = 'term_weights/confirm_delete_form.html'
+#
+#     def post(self, request, *args, **kwargs):
+#         if "cancel" in request.POST:
+#             logger.debug(request.POST)
+#             return HttpResponseRedirect(self.get_success_url())
+#         else:
+#             return super(TermWeightDelete, self).post(request, *args, **kwargs)
+#
+#     def get_success_url(self):
+#         job_id = self.kwargs.get('pk')
+#         return reverse_lazy('modeling_job_id:job-detail', kwargs={"pk": job_id})
 
 
 class UploadModelJobCreate(LoginRequiredMixin, generic.CreateView):
@@ -390,4 +437,3 @@ def render_term_add(request, job_id):
     template = loader.get_template('term_weights/add_form.html')
     context = {"job": job, "task_id": job.task_id.hex, "api_link": f'{API_PATH}/models'}
     return HttpResponse(template.render(context, request))
-

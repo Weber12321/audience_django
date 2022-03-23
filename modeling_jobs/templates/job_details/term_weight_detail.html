@@ -126,7 +126,7 @@
                         </table>
                     </div>
                     <div class="card-footer">
-                       <a id='term_weight_download' href="{{ api_link }}/{{ task_id }}/term_weight/download">權重資料下載(csv)</a>
+                       <a id='term_weight_download' href="{% url 'modeling_jobs:api-term-weight-download' job.id %}">權重資料下載(csv)</a>
                     </div>
                 </div>
             </div>
@@ -154,7 +154,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id='dev_download' href="">驗證細節下載(csv)</a>
+                            <a id='dev_download' href="{% url 'modeling_jobs:api-doc-download-details' job.id 'dev' %}">驗證細節下載(csv)</a>
                         </div>
                     </div>
 
@@ -177,7 +177,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id='test_download' href="">預測細節下載(csv)</a>
+                            <a id='test_download' href="{% url 'modeling_jobs:api-doc-download-details' job.id 'test' %}">預測細節下載(csv)</a>
                         </div>
                     </div>
                 <div id="ett" class="card shadow mb-4">
@@ -199,7 +199,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id="ext_test_download" href="">預測細節下載(csv)</a>
+                            <a id="ext_test_download" href="{% url 'modeling_jobs:api-doc-download-details' job.id 'ext_test' %}">預測細節下載(csv)</a>
                         </div>
                 </div>
         </div>
@@ -315,7 +315,8 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form id="term-form">{% csrf_token %}
+                <form id="add-term-form" method="post" action="{% url 'modeling_jobs:api-term-weight-add' job.id %}">
+                    {% csrf_token %}
                     <div id="term_add_form" class="modal-body">
                         <p>
                             <label for="add_term">詞彙：</label>
@@ -414,16 +415,20 @@
     <script>
 
         $.fn.dataTableExt.sErrMode = 'throw'
-
+        {#var data = {{ term_weight|safe }}#}
         var table = $("#term-table").DataTable({
             {#serverSide: true,#}
             {#destroy: true,#}
             ajax: {
-                url: "{{ api_link }}/{{ task_id }}/term_weight",
+                {#url: "{{ api_link }}/{{ task_id }}/term_weight",#}
+                url: "{% url 'modeling_jobs:api-term-weight' job.id %}",
                 type: 'GET',
                 dataType: 'json',
-                contentType: "application/json"
+                contentType: "application/json",
+                {#dataSrc: ""#}
             },
+
+            {#data: data.data,#}
             columnDefs: [
                 {visible: false, target: [-1]},
                 {visible: true, target: '_all'}
@@ -632,8 +637,7 @@
                     let output = display_table(report_details)
                     $('#dev_table tbody').empty()
                     $('#dev_table tbody').append(output)
-                    let download_link = result.download_links.dev
-                    $('#dev_download').attr("href", download_link)
+
                 } else {
                     $('#dt').hide()
                 }
@@ -650,9 +654,6 @@
                    $('#test_table tbody').empty()
                    $('#test_table tbody').append(output)
 
-                   let download_link = result.download_links.test
-
-                   $('#test_download').attr("href", download_link)
 
                } else {
                    $('#tt').hide()
@@ -670,9 +671,6 @@
                    $('#ext_test_table tbody').empty()
                    $('#ext_test_table tbody').append(output)
 
-                   let download_link = result.download_links.ext_test
-
-                   $('#ext_test_download').attr("href", download_link)
                } else {
                    $('#ett').hide()
                }

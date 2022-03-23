@@ -1,6 +1,7 @@
 import json
 import logging
 from collections import defaultdict, namedtuple
+from pathlib import PurePath, Path
 from typing import List, Union, Dict, Tuple
 
 import numpy as np
@@ -533,6 +534,77 @@ def get_detail_file_link(task_id: str):
     return _output_dict
 
 
+def call_download_details(task_id: str, data_type: str):
+    api_path = f"{API_PATH}/models/download_details/{task_id}/{data_type}"
+    api_headers = API_HEADERS
+    response = requests.get(url=api_path, headers=api_headers)
+    detail_folder_path = create_details_dir()
+    file_path = Path(detail_folder_path / f'{task_id}_{data_type}.csv')
+    with open(file_path, 'wb') as f:
+        f.write(response.content)
+    return file_path
 
+
+def create_details_dir(term_weight: bool = False):
+    root_dir = PurePath(__file__).parent
+    folder = "term_weight_details" if term_weight else "model_details"
+    save_detail_folder = Path(root_dir / folder)
+    Path(save_detail_folder).mkdir(exist_ok=True)
+    return save_detail_folder
+
+
+def call_get_term_weights(task_id: str):
+    api_path = f"{API_PATH}/models/{task_id}/term_weight"
+    api_headers = API_HEADERS
+    response = requests.get(url=api_path, headers=api_headers)
+    return response
+
+
+def call_term_weight_add(task_id: str, label: str, term: str, weight: float):
+    api_path = f"{API_PATH}/models/term_weight/add"
+    api_headers = API_HEADERS
+    api_request_body = {
+          "TASK_ID": task_id,
+          "LABEL": label,
+          "TERM": term,
+          "WEIGHT": weight
+        }
+
+    response = requests.post(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+    return response
+
+def call_term_weight_update(term_weight_id: int, label: str, term: str, weight: float):
+    api_path = f"{API_PATH}/models/term_weight/update"
+    api_headers = API_HEADERS
+    api_request_body = {
+          "TERM_WEIGHT_ID": term_weight_id,
+          "LABEL": label,
+          "TERM": term,
+          "WEIGHT": weight
+        }
+
+    response = requests.post(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+    return response.status_code
+
+
+def call_term_weight_delete(term_weight_id: int):
+    api_path = f"{API_PATH}/models/term_weight/update"
+    api_headers = API_HEADERS
+    api_request_body = {
+        "TERM_WEIGHT_ID": term_weight_id,
+    }
+    response = requests.post(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+    return response.status_code
+
+
+def call_term_weight_download(task_id: str):
+    api_path = f"{API_PATH}/models/{task_id}/term_weight/download"
+    api_headers = API_HEADERS
+    response = requests.get(url=api_path, headers=api_headers)
+    detail_folder_path = create_details_dir(term_weight=True)
+    file_path = Path(detail_folder_path / f'{task_id}_term_weight.csv')
+    with open(file_path, 'wb') as f:
+        f.write(response.content)
+    return file_path
 
 
