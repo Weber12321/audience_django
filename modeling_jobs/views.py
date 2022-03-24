@@ -1,9 +1,12 @@
+import codecs
+import csv
 import json
 import logging
+from io import StringIO, BytesIO
 
+import cchardet
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core import serializers
-from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.shortcuts import render
 from django.template import loader
 from django.urls import reverse_lazy, reverse
@@ -21,7 +24,8 @@ from .models import ModelingJob, TermWeight, UploadModelJob
 from .serializers import JobSerializer, TermWeightSerializer
 from .tasks import call_model_preparing, \
     call_model_testing, process_report, get_progress_api, call_model_import, get_report_details, \
-    get_detail_file_link, call_download_details, call_get_term_weights, call_term_weight_download, call_term_weight_add
+    get_detail_file_link, call_download_details, call_get_term_weights, call_term_weight_download, call_term_weight_add, \
+    call_term_weight_update, call_term_weight_delete
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -291,36 +295,105 @@ def download_model_details(request, pk, data_type):
 @csrf_exempt
 def download_term_weights(request, pk):
     job = ModelingJob.objects.get(pk=pk)
-    file_path = call_term_weight_download(task_id=job.task_id.hex)
-    response = FileResponse(open(file_path, 'rb'))
-    response['Content-Type'] = "application/vnd.ms-excel"
-    response['Content-Disposition'] = f'attachment;filename="{job.task_id.hex}_term_weight.csv"'
-    return response
+    template = loader.get_template('job_details/error_page.html')
+    response = call_term_weight_download(task_id=job.task_id.hex)
+    if hasattr(response, 'status_code'):
+        """`response` should be filepath if download API response 200 
+        otherwise it return response data structure"""
+
+        context = {
+            'error_code': response.status_code,
+            'error_message': "錯誤訊息: " + f"{response.json()}"
+        }
+        return HttpResponse(template.render(context, request))
+
+    file_response = FileResponse(open(response, 'rb'))
+    file_response['Content-Type'] = "application/vnd.ms-excel"
+    file_response['Content-Disposition'] = f'attachment;filename="{job.task_id.hex}_term_weight.csv"'
+    return file_response
 
 
+@csrf_exempt
 def add_term_weight(request, pk):
     job = ModelingJob.objects.get(pk=pk)
+    template = loader.get_template('job_details/error_page.html')
     if request.method == "POST":
         response = call_term_weight_add(task_id=job.task_id.hex,
-                                        label=request.POST.get('add_label'),
-                                        term=request.POST.get('add_term'),
-                                        weight=request.POST.get('add_weight'))
+                                        label=request.POST.get('label'),
+                                        term=request.POST.get('term'),
+                                        weight=request.POST.get('weight'))
         if response.status_code == 200:
-            return reverse_lazy('modeling_jobs:job-detail', kwargs={"pk": job.id})
+            return HttpResponseRedirect(reverse('modeling_jobs:job-detail', kwargs={"pk": pk}))
+        else:
+            context = {
+                'error_code': response.status_code,
+                'error_message': "錯誤訊息: " + f"{response.json()}"
+            }
+            return HttpResponse(template.render(context, request))
 
 
-def update_term_weight(request):
-    pass
+@csrf_exempt
+def update_term_weight(request, pk):
+    template = loader.get_template('job_details/error_page.html')
+    if request.method == 'POST':
+        response = call_term_weight_update(term_weight_id=request.POST.get('update_id'),
+                                           label=request.POST.get('update_label'),
+                                           term=request.POST.get('update_term'),
+                                           weight=request.POST.get('update_weight'))
+        if response.status_code == 200:
+            return HttpResponseRedirect(reverse('modeling_jobs:job-detail', kwargs={"pk": pk}))
+        else:
+            context = {
+                'error_code': response.status_code,
+                'error_message': "錯誤訊息: " + f"{response.json()}"
+            }
+            return HttpResponse(template.render(context, request))
 
 
-def delete_term_weight(request):
-    pass
+@csrf_exempt
+def delete_term_weight(request, pk):
+    template = loader.get_template('job_details/error_page.html')
+    if request.method == 'POST':
+        response = call_term_weight_delete(term_weight_id=request.POST.get('delete_id'))
+
+        if response.status_code == 200:
+            return HttpResponseRedirect(reverse('modeling_jobs:job-detail', kwargs={"pk": pk}))
+        else:
+            context = {
+                'error_code': response.status_code,
+                'error_message': "錯誤訊息: " + f"{response.json()}"
+            }
+            return HttpResponse(template.render(context, request))
+
+
+@csrf_exempt
+def upload_term_weight(request, pk):
+    job = ModelingJob.objects.get(pk=pk)
+    template = loader.get_template('job_details/error_page.html')
+    if request.method == 'POST':
+        file = request.FILES.get('term_file')
+        # file.seek(0)
+        # file_handle = BytesIO(file.read())
+        # encoding = cchardet.detect(file.read())['encoding']
+        # file.seek(0)
+        # csv_file = csv.DictReader(codecs.iterdecode(file, encoding))
+        response = call_model_import(task_id=job.task_id.hex, file=file)
+        # response = 200 if file else 500
+        if response.status_code == 200:
+            return HttpResponseRedirect(reverse('modeling_jobs:job-detail', kwargs={"pk": pk}))
+        else:
+            context = {
+                'error_code': response.status_code,
+                'error_message': "錯誤訊息: " + f"{response.json()}"
+            }
+            return HttpResponse(template.render(context, request))
 
 
 def render_term_weight(request, pk):
     job = ModelingJob.objects.get(pk=pk)
     response = call_get_term_weights(task_id=job.task_id.hex)
     return HttpResponse(json.dumps(response.json()), content_type='application/json')
+
 
 
 # class TermWeightUpdate(LoginRequiredMixin, generic.UpdateView):
@@ -364,25 +437,25 @@ def render_term_weight(request, pk):
 #         return reverse_lazy('modeling_job_id:job-detail', kwargs={"pk": job_id})
 
 
-class UploadModelJobCreate(LoginRequiredMixin, generic.CreateView):
-    model = UploadModelJob
-    form_class = UploadModelJobForm
-    template_name = 'model_upload/file_upload_form.html'
-
-    def get_success_url(self):
-        # 利用django-q實作非同步上傳
-        # a = AsyncTask(import_model_data_task, upload_job=self.object, group='upload_model')
-        # a.run()
-        call_model_import(upload_job=self.object)
-        job_id = self.kwargs['job_id']
-        return reverse_lazy('modeling_jobs:job-detail', kwargs={'pk': job_id})
-
-    def form_valid(self, form):
-        logger.debug(self.kwargs)
-        form.instance.modeling_job_id = self.kwargs.get('job_id')
-        form.instance.created_by = self.request.user
-        logger.debug(form.instance)
-        return super(UploadModelJobCreate, self).form_valid(form)
+# class UploadModelJobCreate(LoginRequiredMixin, generic.CreateView):
+#     model = UploadModelJob
+#     form_class = UploadModelJobForm
+#     template_name = 'model_upload/file_upload_form.html'
+#
+#     def get_success_url(self):
+#         # 利用django-q實作非同步上傳
+#           a = AsyncTask(import_model_data_task, upload_job=self.object, group='upload_model')
+#         # a.run()
+#         call_model_import(upload_job=self.object)
+#         job_id = self.kwargs['job_id']
+#         return reverse_lazy('modeling_jobs:job-detail', kwargs={'pk': job_id})
+#
+#     def form_valid(self, form):
+#         logger.debug(self.kwargs)
+#         form.instance.modeling_job_id = self.kwargs.get('job_id')
+#         form.instance.created_by = self.request.user
+#         logger.debug(form.instance)
+#         return super(UploadModelJobCreate, self).form_valid(form)
 
 
 class UploadModelJobDelete(LoginRequiredMixin, generic.DeleteView):

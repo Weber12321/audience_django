@@ -18,8 +18,8 @@ urlpatterns = [
     path('insert_csv', views.insert_csv, name='api-doc-insert_csv'),
     # refactor: ok
     path('<int:pk>/training', views.training_model, name='training-model'),
-    # refactor: ok
-    path('<int:job_id>/import', views.UploadModelJobCreate.as_view(), name='import-model'),
+    # refactor: delete
+    # path('<int:job_id>/import', views.UploadModelJobCreate.as_view(), name='import-model'),
     # refactor: ok
     path('<int:pk>/ext_test', views.testing_model_via_ext_data, name='api-ext-testing-model'),
     # refactor: ok
@@ -37,6 +37,7 @@ urlpatterns = [
     path('<int:pk>/term_weight/update', views.update_term_weight, name='api-term-weight-update'),
     path('<int:pk>/term_weight/delete', views.delete_term_weight, name='api-term-weight-delete'),
     path('<int:pk>/term_weight/', views.render_term_weight, name="api-term-weight"),
+    path('<int:pk>/upload', views.upload_term_weight, name='api-term-weight-upload'),
     # path('<int:job_id>/term_weight/add', views.render_term_add, name="term-weight-add"),
     # path('<int:job_id>/term_weight/<int:pk>/update', views.TermWeightUpdate.as_view(), name="term-weight-update"),
     # path('<int:job_id>/term_weight/<int:pk>/delete', views.TermWeightDelete.as_view(), name="term-weight-delete"),

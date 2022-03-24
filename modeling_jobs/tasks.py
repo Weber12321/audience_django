@@ -364,33 +364,33 @@ def call_get_term_weight_set(task_id: str):
     return result.status_code, result.json()
 
 
-def call_model_import(upload_job: UploadModelJob):
-    upload_job.job_status = UploadModelJob.JobStatus.PROCESSING
-    upload_job.save()
-    try:
-        file = upload_job.file
-        api_path = f'{API_PATH}/models/import_model/'
-        api_headers = API_HEADERS.update({'Content-Type': 'multipart/form-data'})
-        api_request_body = {"QUEUE": "queue2",
-                            "TASK_ID": upload_job.modeling_job.task_id.hex,
-                            "PREDICT_TYPE": upload_job.modeling_job.feature.upper(),
-                            "MODEL_PATH": f'{upload_job.modeling_job.id}_{upload_job.modeling_job.model_name}'}
-        if upload_job.modeling_job.model_name in {"TERM_WEIGHT_MODEL"}:
-            logger.debug(upload_job.modeling_job.model_name)
-            r = requests.put(url=api_path,
-                             headers=api_headers,
-                             files={'file': open(file.path, 'rb')},
-                             data=json.dumps(api_request_body))
-            if r.status_code != 200:
-                logger.debug(r.json())
-                upload_job.job_status = UploadModelJob.JobStatus.ERROR
-        else:
-            raise ValueError(f'Unknown or unsupported model {upload_job.modeling_job.model_name}.')
-    except Exception as e:
-        logger.debug(e)
-        upload_job.job_status = UploadModelJob.JobStatus.ERROR
-    finally:
-        upload_job.save()
+# def call_model_import(upload_job: UploadModelJob):
+#     upload_job.job_status = UploadModelJob.JobStatus.PROCESSING
+#     upload_job.save()
+#     try:
+#         file = upload_job.file
+#         api_path = f'{API_PATH}/models/import_model/'
+#         api_headers = API_HEADERS.update({'Content-Type': 'multipart/form-data'})
+#         api_request_body = {"QUEUE": "queue2",
+#                             "TASK_ID": upload_job.modeling_job.task_id.hex,
+#                             "PREDICT_TYPE": upload_job.modeling_job.feature.upper(),
+#                             "MODEL_PATH": f'{upload_job.modeling_job.id}_{upload_job.modeling_job.model_name}'}
+#         if upload_job.modeling_job.model_name in {"TERM_WEIGHT_MODEL"}:
+#             logger.debug(upload_job.modeling_job.model_name)
+#             r = requests.put(url=api_path,
+#                              headers=api_headers,
+#                              files={'file': open(file.path, 'rb')},
+#                              data=json.dumps(api_request_body))
+#             if r.status_code != 200:
+#                 logger.debug(r.json())
+#                 upload_job.job_status = UploadModelJob.JobStatus.ERROR
+#         else:
+#             raise ValueError(f'Unknown or unsupported model {upload_job.modeling_job.model_name}.')
+#     except Exception as e:
+#         logger.debug(e)
+#         upload_job.job_status = UploadModelJob.JobStatus.ERROR
+#     finally:
+#         upload_job.save()
 
 
 def process_report(task_id: str):
@@ -499,6 +499,7 @@ def get_report_details(task_id):
     # return [convert_dict_to_namedtuple(report['dataset_type'], report) for report in report_set]
     return {report['dataset_type']: convert_report_info_to_dict(report) for report in report_set}
 
+
 #
 # def get_report_ids(report_dict: dict):
 #     return {k: v['id'] for k, v in report_dict.items()}
@@ -564,43 +565,47 @@ def call_term_weight_add(task_id: str, label: str, term: str, weight: float):
     api_path = f"{API_PATH}/models/term_weight/add"
     api_headers = API_HEADERS
     api_request_body = {
-          "TASK_ID": task_id,
-          "LABEL": label,
-          "TERM": term,
-          "WEIGHT": weight
-        }
+        "TASK_ID": task_id,
+        "LABEL": label,
+        "TERM": term,
+        "WEIGHT": weight
+    }
 
-    response = requests.post(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+    response = requests.put(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
     return response
+
 
 def call_term_weight_update(term_weight_id: int, label: str, term: str, weight: float):
     api_path = f"{API_PATH}/models/term_weight/update"
     api_headers = API_HEADERS
     api_request_body = {
-          "TERM_WEIGHT_ID": term_weight_id,
-          "LABEL": label,
-          "TERM": term,
-          "WEIGHT": weight
-        }
+        "TERM_WEIGHT_ID": term_weight_id,
+        "LABEL": label,
+        "TERM": term,
+        "WEIGHT": weight
+    }
 
     response = requests.post(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
-    return response.status_code
+    return response
 
 
 def call_term_weight_delete(term_weight_id: int):
-    api_path = f"{API_PATH}/models/term_weight/update"
+    api_path = f"{API_PATH}/models/term_weight/delete"
     api_headers = API_HEADERS
     api_request_body = {
-        "TERM_WEIGHT_ID": term_weight_id,
+        "TERM_WEIGHT_ID": term_weight_id
     }
-    response = requests.post(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
-    return response.status_code
+    response = requests.delete(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+    return response
 
 
 def call_term_weight_download(task_id: str):
     api_path = f"{API_PATH}/models/{task_id}/term_weight/download"
     api_headers = API_HEADERS
     response = requests.get(url=api_path, headers=api_headers)
+    if response.status_code != 200:
+        return response
+
     detail_folder_path = create_details_dir(term_weight=True)
     file_path = Path(detail_folder_path / f'{task_id}_term_weight.csv')
     with open(file_path, 'wb') as f:
@@ -608,3 +613,12 @@ def call_term_weight_download(task_id: str):
     return file_path
 
 
+def call_model_import(task_id: str, file):
+    api_path = f'{API_PATH}/models/{task_id}/import_model/'
+    api_headers = API_HEADERS.update({'Content-Type': 'multipart/form-data'})
+    response = requests.post(url=api_path,
+                             headers=api_headers,
+                             # files={'file': open(file, 'rb')}
+                             files={'file': file}
+                             )
+    return response

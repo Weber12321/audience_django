@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework import routers
 from rest_framework.documentation import include_docs_urls
 
@@ -44,7 +44,7 @@ router.register("upload_file_jobs", views.UploadFileJobSet)
 router.register("documents", views.DocumentSet)
 
 urlpatterns += [
-    path('api/jobs', views.LabelingJobsSet.as_view({'get': 'list'}), name='api-job-detail'),
+    re_path(r'^api/jobs', views.LabelingJobsSet.as_view({'get': 'list'}), name='api-job-detail'),
     path('api/labels', views.LabelSet.as_view({'get': 'list'}), name='api-label-detail'),
     path('api/rules', views.RuleSet.as_view({'get': 'list'}), name='api-rule-detail'),
     path('api/documents', views.DocumentSet.as_view({'get': 'list'}), name='api-document-detail'),

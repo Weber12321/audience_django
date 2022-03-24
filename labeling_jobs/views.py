@@ -446,8 +446,8 @@ class LabelingJobsSet(viewsets.ModelViewSet):
     queryset = LabelingJob.objects.all().order_by("-created_at")
     serializer_class = LabelingJobSerializer
 
-    def get_queryset(self):
-        return LabelingJob.objects.all().order_by("-created_at")
+    # def get_queryset(self):
+    #     return LabelingJob.objects.all().order_by("-created_at")
     # permission_classes = [permissions.IsAuthenticated]
 
 
