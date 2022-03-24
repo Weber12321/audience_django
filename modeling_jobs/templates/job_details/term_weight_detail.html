@@ -126,7 +126,7 @@
                         </table>
                     </div>
                     <div class="card-footer">
-                       <a id='term_weight_download' href="{{ api_link }}/{{ task_id }}/term_weight/download">權重資料下載(csv)</a>
+                       <a id='term_weight_download' href="{% url 'modeling_jobs:api-term-weight-download' job.id %}">權重資料下載(csv)</a>
                     </div>
                 </div>
             </div>
@@ -154,7 +154,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id='dev_download' href="">驗證細節下載(csv)</a>
+                            <a id='dev_download' href="{% url 'modeling_jobs:api-doc-download-details' job.id 'dev' %}">驗證細節下載(csv)</a>
                         </div>
                     </div>
 
@@ -177,7 +177,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id='test_download' href="">預測細節下載(csv)</a>
+                            <a id='test_download' href="{% url 'modeling_jobs:api-doc-download-details' job.id 'test' %}">預測細節下載(csv)</a>
                         </div>
                     </div>
                 <div id="ett" class="card shadow mb-4">
@@ -199,7 +199,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id="ext_test_download" href="">預測細節下載(csv)</a>
+                            <a id="ext_test_download" href="{% url 'modeling_jobs:api-doc-download-details' job.id 'ext_test' %}">預測細節下載(csv)</a>
                         </div>
                 </div>
         </div>
@@ -242,6 +242,7 @@
                 <div class="modal-body">
                     <form action="{% url 'modeling_jobs:api-ext-testing-model' job.id %}" method="post"
                           enctype="multipart/form-data">
+                        {% csrf_token %}
                         <div class="form-group">
                             <label class="col-form-label" for="test_csv_file">輸入檔案(.csv) : </label>
                             <input type="file" id="test_csv_file" name="ext_test_file" accept=".csv"
@@ -273,27 +274,20 @@
                     </button>
                 </div>
                 <div class="modal-body">
-{#                    <form action="{% url 'modeling_jobs:import-model' job.id %}" method="post" enctype="multipart/form-data">#}
-                    <form id="upload_file" enctype="multipart/form-data">
-{#                        {% csrf_token %}#}
-{#                        {{ error }}#}
-{#                        {% for field in import_model_form %}#}
-{#                            <div class="form-group">#}
-{#                                {{ field.label_tag }}#}
-{#                                {{ field }}#}
-{#                                {{ field.errors }}#}
-{#                            </div>#}
-{#                        {% endfor %}#}
+                    <form method="post"
+                          action="{% url 'modeling_jobs:api-term-weight-upload' job.id %}"
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
                         <div class="form-group">
-                            <label for="id_file">檔案：</label>
-                            <input type="file" name="file" required="" id="id_file" accept=".csv">
+                            <label for="term_file">檔案：</label>
+                            <input type="file" name="term_file" required="" id="term_file" accept=".csv">
                             <ul class="errorlist">
 	                            <li>此為必需欄位。</li>
                             </ul>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                            <button type="submit" id="submit-upload-term-weight" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary">
                                 上傳
                             </button>
                         </div>
@@ -315,7 +309,9 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form id="term-form">{% csrf_token %}
+                <form id="add-term-form" method="post"
+                      action="{% url 'modeling_jobs:api-term-weight-add' job.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
                     <div id="term_add_form" class="modal-body">
                         <p>
                             <label for="add_term">詞彙：</label>
@@ -333,7 +329,7 @@
                     </div>
                     <div class="modal-footer">
                         <input type="hidden" name="next" value="{{ next }}">
-                        <input type="button" id="add-term-form" class="btn btn-primary" value="送出">
+                        <input type="submit" class="btn btn-primary" value="送出">
                     </div>
                 </form>
             </div>
@@ -350,31 +346,31 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form id="term-form">{% csrf_token %}
+                <form id="update-term-form" method="post"
+                      action="{% url 'modeling_jobs:api-term-weight-update' job.id %}">
+                    {% csrf_token %}
                     <div id="term_edit_form" class="modal-body">
-{#                        {{ error }}#}
-{#                        {{ term_form.as_p }}#}
                         <p>
                             <label for="id_id">編號：</label>
-                            <input type="number" name="id" maxlength="20" required="" id="id_id">
+                            <input type="number" name="update_id" maxlength="20" required="" id="id_id">
                         </p>
                         <p>
                             <label for="id_term">詞彙：</label>
-                            <input type="text" name="term" maxlength="20" required="" id="id_term">
+                            <input type="text" name="update_term" maxlength="20" required="" id="id_term">
                         </p>
                         <p>
                             <label for="id_label">標籤：</label>
-                            <input type="text" name="term" maxlength="20" required="" id="id_label">
+                            <input type="text" name="update_label" maxlength="20" required="" id="id_label">
                         </p>
                         <p>
                             <label for="id_weight">權重：</label>
-                            <input type="number" name="weight" min="0" max="1" step="any" required="" id="id_weight">
+                            <input type="number" name="update_weight" min="0" max="1" step="any" required="" id="id_weight">
                         </p>
 
                     </div>
                     <div class="modal-footer">
                         <input type="hidden" name="next" value="{{ next }}">
-                        <input type="button" id="submit-term-form" class="btn btn-primary" value="送出">
+                        <input type="submit" id="submit-term-form" class="btn btn-primary" value="送出">
                     </div>
                 </form>
             </div>
@@ -391,16 +387,18 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form id="term-form">{% csrf_token %}
+                <form id="delete-term-form" method="post"
+                      action="{% url 'modeling_jobs:api-term-weight-delete' job.id %}">
+                    {% csrf_token %}
                     <div id="term_delete_form" class="modal-body">
                         <p>
                             <label for="delete_id">編號：</label>
-                            <input type="number" name="id" maxlength="20" required="" id="delete_id">
+                            <input type="number" name="delete_id" maxlength="20" required="" id="delete_id">
                         </p>
                     </div>
                     <div class="modal-footer">
                         <input type="hidden" name="next" value="{{ next }}">
-                        <input type="button" id="delete-term-form" class="btn btn-primary" value="送出">
+                        <input type="submit" id="delete-term-form" class="btn btn-primary" value="送出">
                     </div>
                 </form>
             </div>
@@ -414,16 +412,20 @@
     <script>
 
         $.fn.dataTableExt.sErrMode = 'throw'
-
+        {#var data = {{ term_weight|safe }}#}
         var table = $("#term-table").DataTable({
             {#serverSide: true,#}
             {#destroy: true,#}
             ajax: {
-                url: "{{ api_link }}/{{ task_id }}/term_weight",
+                {#url: "{{ api_link }}/{{ task_id }}/term_weight",#}
+                url: "{% url 'modeling_jobs:api-term-weight' job.id %}",
                 type: 'GET',
                 dataType: 'json',
-                contentType: "application/json"
+                contentType: "application/json",
+                {#dataSrc: ""#}
             },
+
+            {#data: data.data,#}
             columnDefs: [
                 {visible: false, target: [-1]},
                 {visible: true, target: '_all'}
@@ -452,86 +454,6 @@
             })
             table.ajax.reload()
         })
-
-        $('#delete-term-form').click(function (e) {
-            var formData = {}
-            formData.TERM_WEIGHT_ID = parseInt($('#delete_id').val())
-            $.ajax({
-                url: "{{ api_link }}/term_weight/delete",
-                type: "delete",
-                data: JSON.stringify(formData),
-                dataType: 'json',
-                headers: {'content-type': 'application/json;charset=UTF-8', 'accept': 'application/json'},
-                success: function (data) {
-                    console.log(data);
-                    $('#termDeleteModal').modal('hide');
-                    table.ajax.reload();
-                }
-            })
-        })
-
-        $('#submit-term-form').click(function (e) {
-            var formData = {}
-            formData.TERM_WEIGHT_ID = parseInt($('#id_id').val())
-            formData.TERM = $('#id_term').val()
-            formData.WEIGHT = parseFloat($('#id_weight').val())
-            formData.LABEL = $('#id_label').val()
-            $.ajax({
-                url: "{{ api_link }}/term_weight/update",
-                type: "post",
-                data: JSON.stringify(formData),
-                dataType: 'json',
-                headers: {'content-type': 'application/json;charset=UTF-8', 'accept': 'application/json'},
-                success: function (data) {
-                    console.log(data);
-                    $('#termUpdateModal').modal('hide');
-                    table.ajax.reload();
-                }
-            })
-        })
-
-        $('#add-term-form').click(function (e) {
-            var formData = {}
-            var task_id = "{{ task_id }}";
-            formData.TASK_ID = task_id
-            formData.TERM = $('#add_term').val()
-            formData.WEIGHT = parseFloat($('#add_weight').val())
-            formData.LABEL = $('#add_label').val()
-            $.ajax({
-                url: "{{ api_link }}/term_weight/add",
-                type: "put",
-                data: JSON.stringify(formData),
-                dataType: 'json',
-                headers: {'content-type': 'application/json;charset=UTF-8', 'accept': 'application/json'},
-                success: function (data) {
-                    console.log(data);
-                    $('#termAddModal').modal('hide');
-                    table.ajax.reload();
-                }
-            })
-        })
-
-        $('#submit-upload-term-weight').click(function (e) {
-            var formData = new FormData();
-            formData.append('file', $('#id_file')[0].files[0]);
-            $.ajax({
-                url: "{{ api_link }}/{{ task_id }}/import_model/",
-                type: "POST",
-                data: formData,
-                processData: false,
-                contentType: false,
-                {#headers: {'content-type': 'multipart/form-data', 'accept': 'application/json'},#}
-                success: function (data) {
-                    console.log(data);
-                },
-                error: function (data) {
-                    console.log(data);
-                    console.log(formData)
-                    console.log($('#id_file')[0].files[0])
-                }
-            })
-        })
-
 
 
         function train_model(job_id, train_url) {
@@ -632,8 +554,7 @@
                     let output = display_table(report_details)
                     $('#dev_table tbody').empty()
                     $('#dev_table tbody').append(output)
-                    let download_link = result.download_links.dev
-                    $('#dev_download').attr("href", download_link)
+
                 } else {
                     $('#dt').hide()
                 }
@@ -650,9 +571,6 @@
                    $('#test_table tbody').empty()
                    $('#test_table tbody').append(output)
 
-                   let download_link = result.download_links.test
-
-                   $('#test_download').attr("href", download_link)
 
                } else {
                    $('#tt').hide()
@@ -670,9 +588,6 @@
                    $('#ext_test_table tbody').empty()
                    $('#ext_test_table tbody').append(output)
 
-                   let download_link = result.download_links.ext_test
-
-                   $('#ext_test_download').attr("href", download_link)
                } else {
                    $('#ett').hide()
                }
@@ -715,9 +630,6 @@
             "{% url 'modeling_jobs:api-job-progress' job.id %}",
             Boolean('{{ job.is_trainable }}') == 'True'
         )
-
-
-
 
     </script>
 {% endblock %}
