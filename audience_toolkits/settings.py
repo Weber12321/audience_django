@@ -341,10 +341,10 @@ OUTPUT_DB = 'audience_result'
 
 # ---- mixed content debug ----
 
-if IS_PRODUCTION:
-    LABELING_JOB_INDEX_URL = "https://rd2demo.eland.com.tw/audience/labeling_jobs/api/jobs"
-else:
-    LABELING_JOB_INDEX_URL = "/audience/labeling_jobs/api/jobs"
+# if IS_PRODUCTION:
+#     LABELING_JOB_INDEX_URL = "https://rd2demo.eland.com.tw/audience/labeling_jobs/api/jobs"
+# else:
+#     LABELING_JOB_INDEX_URL = "/audience/labeling_jobs/api/jobs"
 
 # if IS_PRODUCTION:
     # secure_scheme_headers = {

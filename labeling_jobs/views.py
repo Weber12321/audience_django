@@ -38,7 +38,7 @@ class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["labeling_jobs"] = self.model.objects.order_by('-created_at')
-        context["api_url"] = LABELING_JOB_INDEX_URL
+        # context["api_url"] = LABELING_JOB_INDEX_URL
         return context
 
     def form_valid(self, form):
