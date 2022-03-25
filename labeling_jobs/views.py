@@ -18,6 +18,7 @@ from rest_framework_datatables.django_filters.backends import DatatablesFilterBa
 from rest_framework_datatables.django_filters.filters import GlobalFilter
 from rest_framework_datatables.django_filters.filterset import DatatablesFilterSet
 
+from audience_toolkits.settings import LABELING_JOB_INDEX_URL
 from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm
 from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleData
 
@@ -37,6 +38,7 @@ class IndexAndCreateView(LoginRequiredMixin, generic.CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["labeling_jobs"] = self.model.objects.order_by('-created_at')
+        context["api_url"] = LABELING_JOB_INDEX_URL
         return context
 
     def form_valid(self, form):

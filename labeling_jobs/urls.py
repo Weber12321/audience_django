@@ -44,7 +44,6 @@ router.register("upload_file_jobs", views.UploadFileJobSet)
 router.register("documents", views.DocumentSet)
 
 urlpatterns += [
-    re_path(r'^api/jobs', views.LabelingJobsSet.as_view({'get': 'list'}), name='api-job-detail'),
     path('api/labels', views.LabelSet.as_view({'get': 'list'}), name='api-label-detail'),
     path('api/rules', views.RuleSet.as_view({'get': 'list'}), name='api-rule-detail'),
     path('api/documents', views.DocumentSet.as_view({'get': 'list'}), name='api-document-detail'),
