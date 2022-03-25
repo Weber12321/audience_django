@@ -221,7 +221,7 @@
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a id="ext_test_download" href="{% url 'modeling_jobs:api-doc-download-details' job.id 'ext_test' %}">預測細節下載(csv)</a>
+                            <a id="ext_test_download" href="{% url 'modeling_jobs:api-doc-download-details' job.id 'ext_test' %}">額外預測細節下載(csv)</a>
                         </div>
                 </div>
         </div>
@@ -385,7 +385,7 @@
                     let output = display_table(report_details)
                     $('#dev_table tbody').empty()
                     $('#dev_table tbody').append(output)
-                    let download_link = result.download_links.dev
+                    {#let download_link = result.download_links.dev#}
                     {#$('#dev_download').attr("href", download_link)#}
                 } else {
                     $('#dt').hide()
@@ -403,7 +403,7 @@
                    $('#test_table tbody').empty()
                    $('#test_table tbody').append(output)
 
-                   let download_link = result.download_links.test
+                   {#let download_link = result.download_links.test#}
 
                    {#$('#test_download').attr("href", download_link)#}
 
@@ -423,7 +423,7 @@
                    $('#ext_test_table tbody').empty()
                    $('#ext_test_table tbody').append(output)
 
-                   let download_link = result.download_links.ext_test
+                   {#let download_link = result.download_links.ext_test#}
 
                    {#$('#ext_test_download').attr("href", download_link)#}
                } else {

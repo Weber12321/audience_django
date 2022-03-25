@@ -177,8 +177,9 @@
         const Jobs = {
             data() {
                 return {
+                    job_api_url: "{{ api_url }}",
                     {#job_api_url: '/audience/labeling_jobs/api/jobs',#}
-                    job_api_url: '{% url "labeling_jobs:api-job-detail" %}',
+                    {#job_api_url: '{% url "labeling_jobs:api-job-detail" %}',#}
                     data: '',
                     next_page_url: null,
                     previous_page_url: null,
