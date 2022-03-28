@@ -18,7 +18,6 @@ from rest_framework_datatables.django_filters.backends import DatatablesFilterBa
 from rest_framework_datatables.django_filters.filters import GlobalFilter
 from rest_framework_datatables.django_filters.filterset import DatatablesFilterSet
 
-from audience_toolkits.settings import LABELING_JOB_INDEX_URL
 from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm
 from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleData
 
@@ -451,6 +450,11 @@ class LabelingJobsSet(viewsets.ModelViewSet):
     # def get_queryset(self):
     #     return LabelingJob.objects.all().order_by("-created_at")
     # permission_classes = [permissions.IsAuthenticated]
+
+    # def get(self, request, *args, **kwargs):
+    #     qs = self.get_queryset()
+    #     page = self.paginate_queryset(qs)
+    #     return self.get_paginated_response(page)
 
 
 class LabelSet(viewsets.ModelViewSet):

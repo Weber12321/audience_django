@@ -198,6 +198,7 @@
                     url = url ? url : this.job_api_url
                     const response = await axios.get(url)
                     this.data = await response.data
+                    console.log(response)
                     this.next_page_url = this.data.next
                     this.previous_page_url = this.data.previous
                 },
