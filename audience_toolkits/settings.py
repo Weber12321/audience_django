@@ -346,30 +346,29 @@ OUTPUT_DB = 'audience_result'
 # else:
 #     LABELING_JOB_INDEX_URL = "/audience/labeling_jobs/api/jobs"
 
-# if IS_PRODUCTION:
-    # secure_scheme_headers = {
-    #     'X-FORWARDED-PROTOCOL': 'ssl',
-    #     'X-FORWARDED-PROTO': 'https',
-    #     'X-FORWARDED-SSL': 'on'}
+if IS_PRODUCTION:
+    secure_scheme_headers = {
+        'X-FORWARDED-PROTOCOL': 'ssl',
+        'X-FORWARDED-PROTO': 'https',
+        'X-FORWARDED-SSL': 'on'}
 
-#
-#     USE_X_FORWARDED_HOST = True
-#     # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-#     SESSION_COOKIE_SECURE = True
-#     CSRF_COOKIE_SECURE = True
-#
-#     # Security Headers
-#     SECURE_CONTENT_TYPE_NOSNIFF = True
-#     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-#     SECURE_HSTS_PRELOAD = True
-#     SECURE_SSL_REDIRECT = True
-# else:
-    # USE_X_FORWARDED_HOST = False
-    # SECURE_PROXY_SSL_HEADER = None
-    # SESSION_COOKIE_SECURE = False
-    # CSRF_COOKIE_SECURE = False
-    #
-    # SECURE_CONTENT_TYPE_NOSNIFF = False
-    # SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-    # SECURE_HSTS_PRELOAD = False
-    # SECURE_SSL_REDIRECT = False
+
+    USE_X_FORWARDED_HOST = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = True
+else:
+    USE_X_FORWARDED_HOST = False
+    SECURE_PROXY_SSL_HEADER = None
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
+    SECURE_CONTENT_TYPE_NOSNIFF = False
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+    SECURE_SSL_REDIRECT = False
