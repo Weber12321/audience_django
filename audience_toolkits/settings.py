@@ -338,13 +338,10 @@ PREDICT_TYPE = 'author_name'
 OUTPUT_DB = 'audience_result'
 
 
-
 # ---- mixed content debug ----
-
-# if IS_PRODUCTION:
-#     LABELING_JOB_INDEX_URL = "https://rd2demo.eland.com.tw/audience/labeling_jobs/api/jobs"
-# else:
-#     LABELING_JOB_INDEX_URL = "/audience/labeling_jobs/api/jobs"
+# 因應 labeling_jobs api/jobs 在網頁中翻頁會發生 mixed content error 帶入錯誤的 domain host
+# 加入以下設定强制產品端翻頁域名要與產品端域名一致
+# 產品端部署 base.html head 要加上 <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> 才能轉換標頭
 
 if IS_PRODUCTION:
     secure_scheme_headers = {
@@ -352,23 +349,18 @@ if IS_PRODUCTION:
         'X-FORWARDED-PROTO': 'https',
         'X-FORWARDED-SSL': 'on'}
 
-
     USE_X_FORWARDED_HOST = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_PROXY_SSL_HEADER = ('X-FORWARDED-PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-    SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    SECURE_SSL_REDIRECT = True
 else:
     USE_X_FORWARDED_HOST = False
     SECURE_PROXY_SSL_HEADER = None
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
 
-    SECURE_CONTENT_TYPE_NOSNIFF = False
     SECURE_HSTS_INCLUDE_SUBDOMAINS = False
     SECURE_HSTS_PRELOAD = False
-    SECURE_SSL_REDIRECT = False

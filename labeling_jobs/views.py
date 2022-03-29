@@ -17,6 +17,7 @@ from rest_framework.response import Response
 from rest_framework_datatables.django_filters.backends import DatatablesFilterBackend
 from rest_framework_datatables.django_filters.filters import GlobalFilter
 from rest_framework_datatables.django_filters.filterset import DatatablesFilterSet
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 
 from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm
 from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleData
@@ -446,6 +447,11 @@ class LabelingJobsSet(viewsets.ModelViewSet):
     """
     queryset = LabelingJob.objects.all().order_by("-created_at")
     serializer_class = LabelingJobSerializer
+
+    def get_serializer_context(self):
+        result = super().get_serializer_context()
+        result.update({"request": None})
+        return result
 
     # def get_queryset(self):
     #     return LabelingJob.objects.all().order_by("-created_at")
