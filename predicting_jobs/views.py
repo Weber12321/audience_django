@@ -226,8 +226,8 @@ def start_job(request, pk):
             api_response: Dict = call_create_task(job, target, output_db=OUTPUT_DB)
             if not api_response:
                 continue
-            target.task_id = api_response['error_message']
-            target.save()
+            # target.task_id = api_response['error_message']
+            # target.save()
 
             if api_response['error_code'] != 200:
                 target.job_status = JobStatus.ERROR

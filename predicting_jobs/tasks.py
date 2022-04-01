@@ -1,4 +1,5 @@
 import logging
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from typing import List, Iterable, Dict, Optional
@@ -209,7 +210,10 @@ def call_create_task(job: PredictingJob, predicting_target, output_db):
     # check if the model information is set in the backends, remove this method later
     check_model_record(applying_models=applying_models)
 
+    task_id = predicting_target.task_id if predicting_target.task_id else uuid.uuid1().hex
+
     api_request_body = {
+        "TASK_ID": task_id,
         "START_TIME": f"{predicting_target.begin_post_time}",
         "END_TIME": f"{predicting_target.end_post_time}",
         "INPUT_SCHEMA": source.schema,
