@@ -299,6 +299,8 @@ def get_progress(request, pk):
             })
 
     success_count = 0
+    process_count = 0
+    break_count = 0
     # if job.job_status == "processing":
     for t_id, t_response in check_dict.items():
         prod = t_response['error_message']['prod_stat']
@@ -310,14 +312,23 @@ def get_progress(request, pk):
                 job.job_status = JobStatus.ERROR
                 job.save()
             if stat == 'BREAK':
-                continue
+                # continue
+                break_count += 1
             if stat == 'PENDING':
-                continue
+                process_count += 1
         if prod == 'finish':
             success_count += 1
 
     if success_count == len(targets):
         job.job_status = JobStatus.DONE
+        job.save()
+
+    if process_count == len(targets):
+        job.job_status = JobStatus.PROCESSING
+        job.save()
+
+    if break_count >= 1 and process_count == 0:
+        job.job_status = JobStatus.BREAK
         job.save()
 
     response_data = {
