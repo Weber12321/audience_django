@@ -210,7 +210,12 @@ def call_create_task(job: PredictingJob, predicting_target, output_db):
     # check if the model information is set in the backends, remove this method later
     check_model_record(applying_models=applying_models)
 
-    task_id = predicting_target.task_id if predicting_target.task_id else uuid.uuid1().hex
+    if not predicting_target.task_id:
+        task_id = uuid.uuid1().hex
+        predicting_target.task_id = task_id
+        predicting_target.save()
+    else:
+        task_id = predicting_target.task_id
 
     api_request_body = {
         "TASK_ID": task_id,
