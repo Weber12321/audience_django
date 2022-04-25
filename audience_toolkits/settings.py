@@ -35,6 +35,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 INSTALLED_APPS = [
     'home.apps.HomeConfig',
+    'documenting_jobs.apps.DocumentingJobsConfig',
     'labeling_jobs.apps.LabelingJobsConfig',
     'predicting_jobs.apps.PredictingJobsConfig',
     'modeling_jobs.apps.ModelingJobsConfig',

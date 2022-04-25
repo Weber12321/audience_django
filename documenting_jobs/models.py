@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -16,6 +18,8 @@ class DocumentingJob(models.Model):
                                 verbose_name="任務類型", default=TaskType.RULE)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     update_time = models.DateTimeField(auto_now=True, verbose_name="最後修改時間")
+    task_id = models.UUIDField(default=uuid.uuid1, unique=True, editable=False,
+                               verbose_name="audience api 任務 ID")
     create_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     class Meta:
@@ -26,4 +30,4 @@ class DocumentingJob(models.Model):
         return f"{self.name} ({self.get_job_type_display()})"
 
     def get_absolute_url(self):
-        return reverse('documenting_jobs:documenting-jobs-create', kwargs={'pk': self.pk})
+        return reverse('documenting_jobs:job-detail', kwargs={'pk': self.pk})

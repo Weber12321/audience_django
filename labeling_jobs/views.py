@@ -84,11 +84,11 @@ class LabelingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
 
     def get_template_names(self):
         if self.object.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-            return 'job_detail/keyword_job_detail.html'
+            return 'job_details/keyword_job_detail.html'
         elif self.object.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
-            return 'job_detail/regex_job_detail.html'
+            return 'job_details/regex_job_detail.html'
         else:
-            return 'job_detail/supervise_job_detail.html'
+            return 'job_details/supervise_job_detail.html'
 
     # def get_form(self, form_class=None):
 

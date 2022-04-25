@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}資料整備任務{% endblock %}
+{% block nav_title %}資料整備任務{% endblock %}
+{% block page_title %}
+    新增資料整備任務
+{% endblock %}
+{% block page_description %}
+    <p>請盡量描述任務的定義與細節。</p>
+{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col">
+            <div class="card o-hidden border-0 shadow-lg my-3">
+                <div class="card-body p-0">
+                    <!-- Nested Row within Card Body -->
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="p-5">
+                                <form method="post">{% csrf_token %}
+                                    {{ error }}
+                                    {{ form.as_p }}
+                                    <input type="submit" class="btn btn-primary" value="送出">
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
