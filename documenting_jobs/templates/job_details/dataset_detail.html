@@ -1,10 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% load result_extras %}
+{% block title %}{{ job.name }} | 資料整備任務{% endblock %}
+{% block nav_title %}資料整備任務{% endblock %}
+{% block page_title %}{{ job.name }}{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+        <div class="dropdown mb-4">
+            <button id="upload-btn-{{ job.task_id }}" class="btn btn-outline-primary"
+                    data-toggle="modal" data-target="#upload-{{ job.task_id }}">
+                上傳資料
+            </button>
+            <button id="download-btn-{{ job.task_id }}" class="btn btn-outline-primary"
+                    onclick="{% url 'documenting_jobs:doc-download' job.task_id %}">
+                下載資料
+            </button>
+            <button class="btn btn-primary dropdown-toggle" type="button"
+                    id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false">
+                操作
+            </button>
+            <div class="dropdown-menu animated--fade-in"
+                 aria-labelledby="dropdownMenuButton">
+                <a class="dropdown-item" href="" data-toggle="modal" data-target="#jobUpdateModal">修改</a>
+                <a class="dropdown-item" href="{% url 'documenting_jobs:job-delete' job.id %}">刪除</a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+{% block page_info %}
+    <div class="mb-2">
+        <span id="state-{{ job.id }}" data-toggle="tooltip" data-placement="top" title="無錯誤訊息"></span>
+    </div>
+{% endblock %}
+{% block page_description %}
+    <small class="text-muted">
+        <strong>由 {{ job.created_by.username }}</strong>
+        於 {{ job.created_at }} 建立。
+    </small>
+    <p class="mb-4">{{ job.description }}</p>
+{% endblock %}
 
-</body>
-</html>
+{% block content %}
+    <!-- Modal -->
+    <div class="modal fade" id="jobUpdateModal" tabindex="-1" aria-labelledby="jobUpdateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jobUpdateModalLabel">修改任務資訊</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" class="">{% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {{ form.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
