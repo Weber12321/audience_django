@@ -43,13 +43,9 @@ class DatasetUpdateForm(forms.Form):
     author = forms.CharField(max_length=100, label='文章作者')
     content = forms.CharField(label='文章內文', widget=forms.Textarea())
     dataset_type = forms.ChoiceField(label='資料集類型', choices=dataset_type_choices)
-    task_id = forms.CharField(max_length=32)
-
-    class Meta:
-        exclude = ['task_id']
 
 
-class RuleAddForm(forms.Form):
+class RulesUpdateForm(forms.Form):
     rule_type_choices = (
         ('keyword', '關鍵字規則'),
         ('regex', '正則式規則'),
@@ -66,14 +62,7 @@ class RuleAddForm(forms.Form):
     label = forms.CharField(max_length=100, label='標籤名稱')
     rule_type = forms.ChoiceField(label='規則類型', choices=rule_type_choices)
     match_type = forms.ChoiceField(label='比對方式', choices=match_type_choices)
-    task_id = forms.CharField(max_length=32)
 
-    class Meta:
-        exclude = ['task_id']
-
-
-class RulesUpdateForm(RuleAddForm):
-    id = forms.IntegerField(label='文章編號')
 
 
 

@@ -11,7 +11,7 @@
                 上傳資料
             </button>
             <button id="download-btn-{{ job.task_id }}" class="btn btn-outline-primary"
-                    onclick="{% url 'documenting_jobs:doc-download' job.task_id %}">
+                    onclick="{% url 'documenting_jobs:dataset-download' job.task_id %}">
                 下載資料
             </button>
             <button class="btn btn-primary dropdown-toggle" type="button"
@@ -22,7 +22,7 @@
             <div class="dropdown-menu animated--fade-in"
                  aria-labelledby="dropdownMenuButton">
                 <a class="dropdown-item" href="" data-toggle="modal" data-target="#jobUpdateModal">修改</a>
-                <a class="dropdown-item" href="{% url 'documenting_jobs:job-delete' job.id %}">刪除</a>
+                <a class="dropdown-item" href="{% url 'documenting_jobs:doc-delete' job.task_id %}">刪除</a>
             </div>
         </div>
     {% endif %}
@@ -41,7 +41,91 @@
 {% endblock %}
 
 {% block content %}
-    <!-- Modal -->
+
+    <!-- main -->
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="card shadow">
+                <div class="card-body py-4">
+                <table class="table" id="dataset_table">
+
+                {% if job.task_type == "machine_learning_task" %}
+{#                    <thead class="thead-light">#}
+{#                    <tr>#}
+{#                        <th scope="col">title</th>#}
+{#                        <th scope="col">author</th>#}
+{#                        <th scope="col">content</th>#}
+{#                        <th scope="col">dataset_type</th>#}
+{#                        <th scope="col">label</th>#}
+{#                    </tr>#}
+{#                    </thead>#}
+{#                    <tbody>#}
+{#                    {% for data in dataset %}#}
+{#                        <tr>#}
+{#                            <td>{{ data.title }}</td>#}
+{#                            <td>{{ data.author }}</td>#}
+{#                            <td>{{ data.content }}</td>#}
+{#                            <td>{{ data.dataset_type }}</td>#}
+{#                            <td>{{ data.label }}</td>#}
+{#                            <td>#}
+{#                                <button id="update-btn-{{ data.id }}"#}
+{#                                        class="btn btn-outline-primary"#}
+{#                                        style="border: none;background-color: #698eff;color: white;"#}
+{#                                        onclick="{% url 'documenting_jobs:dataset-update' job.task_id data.id %}">#}
+{#                                    修改#}
+{#                                </button>#}
+{#                                <button id="delete-btn-{{ data.id }}"#}
+{#                                        class="btn btn-outline-primary" data-toggle="modal"#}
+{#                                        style="border: none;background-color: #ff6666;color: white;"#}
+{#                                        data-target="#deleteData-{{ data.id }}">#}
+{#                                    刪除#}
+{#                                </button>#}
+{#                            </td>#}
+{#                        </tr>#}
+{#                    {% endfor %}#}
+{#                    </tbody>#}
+                {% endif %}
+                {% if job.task_type == "rule_task" %}
+                    <thead class="thead-light">
+                    <tr>
+                        <th scope="col">content</th>
+                        <th scope="col">label</th>
+                        <th scope="col">rule_type</th>
+                        <th scope="col">match_type</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for data in dataset %}
+                        <tr>
+                            <td>{{ data.content }}</td>
+                            <td>{{ data.label }}</td>
+                            <td>{{ data.rule_type }}</td>
+                            <td>{{ data.match_type }}</td>
+                            <td>
+                                <a href="{% url 'documenting_jobs:rule-update' job.task_id data.id %}" class="button">
+                                    修改
+                                </a>
+
+{#                                <button id="delete-btn-{{ data.id }}"#}
+{#                                        class="btn btn-outline-primary" data-toggle="modal"#}
+{#                                        style="border: none;background-color: #ff6666;color: white;"#}
+{#                                        data-target="#deleteRule-{{ data.id }}">#}
+{#                                    刪除#}
+{#                                </button>#}
+                            </td>
+                        </tr>
+                        <!-- data updateModal -->
+
+                    {% endfor %}
+                    </tbody>
+                {% endif %}
+
+                </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- task updateModal -->
     <div class="modal fade" id="jobUpdateModal" tabindex="-1" aria-labelledby="jobUpdateModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -51,10 +135,11 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form method="post" class="">{% csrf_token %}
+                <form method="post" class=""
+                      action="{% url 'documenting_jobs:doc-update' job.task_id %}">{% csrf_token %}
                     <div class="modal-body">
-                        {{ error }}
-                        {{ form.as_p }}
+                        {% csrf_token %}
+                        {{ task_form }}
                     </div>
                     <div class="modal-footer">
                         <input type="hidden" name="next" value="{{ next }}">
@@ -64,4 +149,105 @@
             </div>
         </div>
     </div>
+    <!-- dataset uploadModal -->
+    <div class="modal fade" id="upload-{{ job.task_id }}" tabindex="-1" role="dialog"
+         aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">上傳資料</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form method="post"
+                          action="{% url 'documenting_jobs:dataset-upload' job.task_id %}"
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="file">檔案：</label>
+                            <input type="file" name="file" required="" id="file" accept=".csv">
+                            <ul class="errorlist">
+	                            <li>此為必需欄位。</li>
+                            </ul>
+                            <label for="overwrite">是否覆寫資料?</label>
+                            <input type="checkbox" name="overwrite" id="overwrite">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">
+                                上傳
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- data updateModal -->
+{#    <div class="modal fade" id="modal-default" tabindex="-1" aria-labelledby="jobUpdateModalLabel" aria-hidden="true">#}
+{#        <div class="modal-dialog">#}
+{##}
+{#            <div class="modal-content">#}
+{#                <div class="modal-header">#}
+{#                    <h5 class="modal-title" id="jobUpdateModalLabel">修改資料</h5>#}
+{#                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">#}
+{#                        <span aria-hidden="true">&times;</span>#}
+{#                    </button>#}
+{#                </div>#}
+{#                <form method="post" class=""#}
+{#                      action="{% url 'documenting_jobs:dataset-update' job.task_id data.id %}">{% csrf_token %}#}
+{#                    <div class="modal-body">#}
+{#                        <p>#}
+{##}
+{#                            <label for="data_id">編號:</label>#}
+{#                            <input type="number" name="data_id" required="" id="data_id" placeholder="{{ data.id }}" value={{ data.id }}>#}
+{##}
+{#                        </p>#}
+{#                        <p>#}
+{#                            <label for="id_term">詞彙：</label>#}
+{#                            <input type="text" name="update_term" maxlength="20" required="" id="id_term">#}
+{#                        </p>#}
+{#                        <p>#}
+{#                            <label for="id_label">標籤：</label>#}
+{#                            <input type="text" name="update_label" maxlength="20" required="" id="id_label">#}
+{#                        </p>#}
+{#                        <p>#}
+{#                            <label for="id_weight">權重：</label>#}
+{#                            <input type="number" name="update_weight" min="0" max="1" step="any" required="" id="id_weight">#}
+{#                        </p>#}
+{#                    </div>#}
+{#                    <div class="modal-footer">#}
+{#                        <input type="hidden" name="next" value="{{ next }}">#}
+{#                        <input type="submit" class="btn btn-primary" value="送出">#}
+{#                    </div>#}
+{#                </form>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
 {% endblock %}
+{% block custom_script %}
+    <script>
+{#    $(document).on('click','.update-data',function(){#}
+{#    var id = $(this).data('id');#}
+{##}
+{#    $.ajax({#}
+{#        url:'',#}
+{#        type:'POST',#}
+{#        data:{#}
+{#            'id':id,#}
+{#            'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val(),#}
+{#        },#}
+{#        success:function(data){#}
+{#            $('#modal-default .modal-dialog').html($('#modal-default .modal-dialog',data));#}
+{#            $('#modal-default').modal('show');#}
+{#        },#}
+{#        error:function(){#}
+{#            console.log('error')#}
+{#        },#}
+{#    });#}
+{#});#}
+    </script>
+{% endblock %}
+

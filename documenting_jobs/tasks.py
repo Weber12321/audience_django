@@ -104,6 +104,69 @@ def call_get_download(task_id: str):
     return file_path
 
 
+def call_dataset_upload(task_id: str, overwrite: bool, file):
+    try:
+        bool_string = "true" if overwrite else "false"
+        api_path = f"{API_PATH}/documents/{task_id}/upload/{bool_string}"
+        api_headers = API_HEADERS
+        response = requests.post(
+            url=api_path,
+            headers=api_headers,
+            files={'file': file}
+        )
+        return response
+    except Exception as e:
+        raise e
+
+
+def call_data_retrieve(dataset_id: int):
+    try:
+        api_path = f"{API_PATH}/documents/dataset/{dataset_id}"
+        api_headers = API_HEADERS
+        response = requests.get(
+            url=api_path,
+            headers=api_headers
+        )
+        return response
+    except Exception as e:
+        raise e
+
+
+def call_rule_retrieve(rule_id: int):
+    try:
+        api_path = f"{API_PATH}/documents/rules/{rule_id}"
+        api_headers = API_HEADERS
+        response = requests.get(
+            url=api_path,
+            headers=api_headers
+        )
+        return response
+
+    except Exception as e:
+        raise e
+
+
+def call_rule_update(rule_id: int, content: str, label: str, rule_type: str, match_type: str):
+    try:
+        api_path = f"{API_PATH}/documents/rules/{rule_id}/update"
+        api_headers = API_HEADERS
+        request_data = {
+            "CONTENT": content,
+            "LABEL": label,
+            "RULE_TYPE": rule_type,
+            "MATCH_TYPE": match_type
+        }
+        response = requests.patch(
+            url=api_path,
+            headers=api_headers,
+            data=json.dumps(request_data)
+        )
+        return response
+
+    except Exception as e:
+        raise e
+
+
 def create_details_dir():
     root_dir = PurePath(__file__).parent
     folder = "dataset_details"

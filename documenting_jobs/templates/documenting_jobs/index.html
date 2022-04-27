@@ -50,69 +50,72 @@
                 </div>
             </div>
         </div>
-{#        <div class="col-lg-3">#}
-{#            <h4>模型建立流程</h4>#}
-{#            <p>#}
-{#                每種不同的模型都有其各自的建立方式，以下會說明各種類型的建立條件與做法：#}
-{#            </p>#}
-{#            <ul>#}
-{#                {% for ml_model in ml_model_list %}#}
-{#                    <li>{{ ml_model }}</li>#}
-{#                {% endfor %}#}
-{#            </ul>#}
-{#            <div class="card shadow mb-2">#}
-{#                <div class="card-body">#}
-{#                    <div class="card-title font-weight-bold">監督式學習模型</div>#}
-{#                    <p>此類型的模型藉由帶有標籤的文本資料，讓機器自動學習文本中的特徵，可以使用的資料準備任務為 <code>監督式學習模型</code>。</p>#}
-{#                    <p>為了訓練出此類型的模型，需要提供人工標記的資料，每種標籤建議數量為<code>至少200篇文章</code>。</p>#}
-{#                    <p>若您發現訓練效果不佳，建議檢查各標籤的定義是否明確，標記品質是否夠好。</p>#}
-{#                    <p>以下為此類型的模型列表：</p>#}
-{#                    <ul>#}
-{#                        <li>SVM</li>#}
-{#                        <li>隨機森林</li>#}
-{#                    </ul>#}
-{#                    <div class="card-title font-weight-bold">什麼時候可以使用這種模型？</div>#}
-{#                    <p>當你不確定資料有什麼明確的規則或關鍵字時，或是您不希望太多人工介入，讓機器自己學習時，可以使用此類型的模型。</p>#}
-{#                    <small><a href="https://zh.wikipedia.org/wiki/监督学习" target="_blank">什麼是監督式學習？</a></small>#}
-{#                </div>#}
-{#            </div>#}
-{##}
-{#            <div class="card shadow mb-2">#}
-{#                <div class="card-body ">#}
-{#                    <div class="card-title font-weight-bold">關鍵字規則模型</div>#}
-{#                    <p>這種模型藉由關鍵字比對文本內容，設定要比對的方式，如： <code>開頭</code> 、 <code>結尾</code> 、 <code>部分命中</code> 以及#}
-{#                        <code>完全一致</code>#}
-{#                        的方式進行內容比對，只要命中關鍵字規則就會貼上標籤，可以使用的資料準備任務為 <code>關鍵字規則模型</code>。</p>#}
-{#                    <div class="card-title font-weight-bold">什麼時候可以使用這種模型？</div>#}
-{#                    <p>由於這是屬於相對嚴格的規則模型，通常可以拿來比對 <code>來源</code>、 <code>人名</code>或是 <code>非常明確的內文規則</code>。</p>#}
-{#                </div>#}
-{#            </div>#}
-{##}
-{#            <div class="card shadow mb-2">#}
-{#                <div class="card-body">#}
-{#                    <div class="card-title font-weight-bold">正則表達式模型</div>#}
-{#                    <p>藉由正則表達式（regex）比對文本內容，屬於較進階的規則比對方法，只要命中關鍵字規則就會貼上標籤，可以使用的資料準備任務為 <code>正則表達式模型</code>。</p>#}
-{##}
-{#                    <div class="card-title font-weight-bold">什麼時候可以使用這種模型？</div>#}
-{#                    <p>由於這是屬於相對彈性的規則模型，可以拿來比對各種文字類型的資料，如 <code>電話號碼</code>、 <code>電子郵件信箱</code>或是有固定模式出現的文章或短句。</p>#}
-{#                    <small><a href="https://zh.wikipedia.org/wiki/正则表达式" target="_blank">什麼是regex?</a></small>#}
-{#                </div>#}
-{#            </div>#}
-{##}
-{#            <div class="card shadow mb-2">#}
-{#                <div class="card-body">#}
-{#                    <div class="card-title font-weight-bold">詞彙權重模型</div>#}
-{#                    <p>與監督式學習相似，差別在於此類型的模型會產生各類別重要的 <code>詞彙</code> 以及 <code>詞彙權重分數</code>#}
-{#                        ，實際貼標時會將分數做加總，總分超過門檻值就會貼上標籤，可以使用的資料準備任務為 <code>詞彙權重模型</code>。</p>#}
-{#                    <p>為了訓練出此類型的模型，需要提供人工標記的資料，每種標籤建議數量為<code>至少200篇文章</code>。</p>#}
-{#                    <p>若您發現訓練效果不佳，建議檢查各標籤的定義是否明確，標記品質是否夠好。</p>#}
-{#                    <div class="card-title font-weight-bold">什麼時候可以使用這種模型？</div>#}
-{#                    <p>當你不確定資料有什麼明確的規則或關鍵字時，但您希望能夠人工介入時，可以使用此類型的模型。</p>#}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
-{#    <!-- Modal -->#}
+    <!-- Modal -->
+    <div class="col-lg-3">
+        <h4>資料整備流程</h4>
+        <p>
+            資料整備任務類型共分為:
+        </p>
+        <ul>
+            <li>機器學習 (machine_learning_task)</li>
+            <li>規則模型 (rule_task)</li>
+        </ul>
+        <div class="card shadow mb-2">
+            <div class="card-body">
+                <div class="card-title font-weight-bold">機器學習模型資料</div>
+                <p>建立任務請選擇 機器學習模型資料</p>
+                <p>請至少準備以下類型資料集:</p>
+                <ul>
+                    <li>訓練資料(train)</li>
+                    <li>驗證資料(dev)</li>
+                    <li>測試資料(test)</li>
+                </ul>
+                <p>上傳資料欄位(紅字為必要欄位):</p>
+                <ul>
+                    <li>title</li>
+                    <li>author</li>
+                    <li>s_id</li>
+                    <li>s_area_id</li>
+                    <li style="color: red">content</li>
+                    <li>post_time</li>
+                    <li style="color: red">label</li>
+                    <li style="color: red">document_type
+                    <ul>
+                        <li>train</li>
+                        <li>dev</li>
+                        <li>test</li>
+                        <li>ext_test</li>
+                    </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="card shadow mb-2">
+            <div class="card-body">
+                <div class="card-title font-weight-bold">規則模型資料</div>
+                <p>建立任務請選擇 規則模型資料</p>
+                <p>上傳資料欄位(所有欄位均為必要欄位):</p>
+                <ul>
+                    <li>content</li>
+                    <li>label</li>
+                    <li>rule_type
+                    <ul>
+                        <li>keyword</li>
+                        <li>regex</li>
+                    </ul>
+                    </li>
+                    <li>match_type
+                    <ul>
+                        <li>start</li>
+                        <li>end</li>
+                        <li>partially</li>
+                        <li>exactly</li>
+                    </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="jobCreateModal" tabindex="-1" aria-labelledby="jobCreateModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">

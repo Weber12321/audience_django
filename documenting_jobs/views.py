@@ -2,17 +2,15 @@ import json
 import logging
 import uuid
 
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect, HttpResponse, FileResponse
 from django.template import loader
 from django.urls import reverse_lazy, reverse
-from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 
-from documenting_jobs.forms import DocumentingJobForm, RuleAddForm, RulesUpdateForm, DatasetUpdateForm
-from documenting_jobs.models import DocumentingJob
+from documenting_jobs.forms import DocumentingJobForm, RulesUpdateForm, DatasetUpdateForm
 from documenting_jobs.tasks import call_task_create, call_render_tasks, call_get_task, call_dataset_render, \
-    call_post_download, call_get_download, call_task_delete
+    call_post_download, call_get_download, call_task_delete, call_dataset_upload, call_data_retrieve, \
+    call_rule_retrieve, call_rule_update
 
 logger = logging.getLogger(__name__)
 
@@ -132,9 +130,13 @@ def render_detail(request, task_id):
     task = call_get_task(task_id)
     task_type = task.json().get('task_type')
     dataset = call_dataset_render(task_id, task_type)
+    task_form = DocumentingJobForm()
+    dataset_form = RulesUpdateForm() if task_type == 'rule_task' else DatasetUpdateForm()
     context = {
-        'jobs': task.json(),
-        'dataset': dataset.json()
+        'job': task.json(),
+        'dataset': dataset.json(),
+        'task_form': task_form,
+        'dataset_form': dataset_form
     }
     return HttpResponse(template.render(context, request))
 
@@ -163,7 +165,20 @@ def task_render(request, task_id):
 
 @csrf_exempt
 def upload_file(request, task_id):
-    pass
+    template = loader.get_template('job_details/error_page.html')
+    if request.method == 'POST':
+        file = request.FILES.get('file')
+        overwrite = request.POST.getlist('overwrite')
+        response = call_dataset_upload(task_id, overwrite, file)
+        if response.status_code != 200:
+            context = {
+                'error_code': response.status_code,
+                'error_message': "錯誤訊息: " + f"{response.json()}"
+            }
+            return HttpResponse(template.render(context, request))
+        return HttpResponseRedirect(
+            reverse('documenting_jobs:job-detail', kwargs={"task_id": task_id})
+        )
 
 
 @csrf_exempt
@@ -177,7 +192,9 @@ def post_download_file(request, task_id):
                 'error_message': "錯誤訊息: " + f"{response.json()}"
             }
             return HttpResponse(template.render(context, request))
-        return HttpResponseRedirect(reverse('documenting_jobs:job-detail'))
+        return HttpResponseRedirect(
+            reverse('documenting_jobs:job-detail', kwargs={"task_id": task_id})
+        )
 
 
 def get_download_file(request, task_id):
@@ -188,3 +205,57 @@ def get_download_file(request, task_id):
     return response
 
 
+@csrf_exempt
+def update_data(request, task_id, dataset_id):
+    template_name = "documenting_jobs/add_form.html"
+    template = loader.get_template(template_name)
+    # task = call_get_task(task_id)
+    # task_type = task.json().get('task_type')
+
+    if request.method == 'POST':
+        pass
+
+    else:
+        data = call_data_retrieve(dataset_id=dataset_id)
+
+        context = {
+            'form': RulesUpdateForm()
+        }
+        return HttpResponse(template.render(context, request))
+
+
+@csrf_exempt
+def update_rule(request, task_id, rule_id):
+
+    if request.method == 'POST':
+        template = loader.get_template('job_details/error_page.html')
+        logger.info(f"{request.POST}")
+        response = call_rule_update(
+            rule_id=rule_id,
+            content=request.POST.get('content'),
+            label=request.POST.get('label'),
+            rule_type=request.POST.get('rule_type'),
+            match_type=request.POST.get('match_type')
+        )
+        if response.status_code != 200:
+            context = {
+                'error_code': response.status_code,
+                'error_message': "錯誤訊息: " + f"{response.json()}"
+            }
+            return HttpResponse(template.render(context, request))
+        return HttpResponseRedirect(
+            reverse('documenting_jobs:job-detail', kwargs={"task_id": task_id})
+        )
+
+    template = loader.get_template('documenting_jobs/update_rule.html')
+    data = call_rule_retrieve(rule_id=rule_id)
+    context = {
+        'task_id': task_id,
+        'rule': data.json()
+    }
+    return HttpResponse(template.render(context, request))
+
+
+@csrf_exempt
+def delete_dataset(task_id, dataset_id):
+    pass
