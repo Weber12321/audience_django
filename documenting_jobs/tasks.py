@@ -1,6 +1,7 @@
 import json
 import logging
 from pathlib import PurePath, Path
+from typing import Optional
 
 import requests
 
@@ -55,8 +56,25 @@ def call_task_delete(task_id: str):
         raise e
 
 
-def call_document_update(job: DocumentingJob):
-    pass
+def call_document_update(task_id: str, name: str, description: str,
+                         task_type: str, is_multi_label: bool):
+    try:
+        api_path = f"{API_PATH}/documents/{task_id}/update"
+        api_headers = API_HEADERS
+        request_data = {
+            "NAME": name,
+            "DESCRIPTION": description,
+            "TASK_TYPE": task_type,
+            "IS_MULTI_LABEL": "true" if is_multi_label else "false"
+        }
+        response = requests.patch(
+            url=api_path,
+            headers=api_headers,
+            data=json.dumps(request_data)
+        )
+        return response
+    except Exception as e:
+        raise e
 
 
 def call_dataset_render(task_id: str, task_type: str):
@@ -107,7 +125,7 @@ def call_get_download(task_id: str):
 def call_dataset_upload(task_id: str, overwrite: bool, file):
     try:
         bool_string = "true" if overwrite else "false"
-        api_path = f"{API_PATH}/documents/{task_id}/upload/{bool_string}"
+        api_path = f"{API_PATH}/documents/{task_id}/upload?overwrite={bool_string}"
         api_headers = API_HEADERS
         response = requests.post(
             url=api_path,
@@ -146,6 +164,27 @@ def call_rule_retrieve(rule_id: int):
         raise e
 
 
+def call_data_update(dataset_id: int, title: Optional[str], author: Optional[str],
+                     content: str, dataset_type: str):
+    try:
+        api_path = f"{API_PATH}/documents/dataset/{dataset_id}/update"
+        api_headers = API_HEADERS
+        request_data = {
+            "TITLE": title,
+            "AUTHOR": author,
+            "CONTENT": content,
+            "DATASET_TYPE": dataset_type
+        }
+        response = requests.patch(
+            url=api_path,
+            headers=api_headers,
+            data=json.dumps(request_data)
+        )
+        return response
+    except Exception as e:
+        raise e
+
+
 def call_rule_update(rule_id: int, content: str, label: str, rule_type: str, match_type: str):
     try:
         api_path = f"{API_PATH}/documents/rules/{rule_id}/update"
@@ -163,6 +202,32 @@ def call_rule_update(rule_id: int, content: str, label: str, rule_type: str, mat
         )
         return response
 
+    except Exception as e:
+        raise e
+
+
+def call_data_delete(dataset_id: int):
+    try:
+        api_path = f"{API_PATH}/documents/dataset/{dataset_id}/delete"
+        api_headers = API_HEADERS
+        response = requests.delete(
+            url=api_path,
+            headers=api_headers
+        )
+        return response
+    except Exception as e:
+        raise e
+
+
+def call_rule_delete(rule_id: int):
+    try:
+        api_path = f"{API_PATH}/documents/rules/{rule_id}/delete"
+        api_headers = API_HEADERS
+        response = requests.delete(
+            url=api_path,
+            headers=api_headers
+        )
+        return response
     except Exception as e:
         raise e
 

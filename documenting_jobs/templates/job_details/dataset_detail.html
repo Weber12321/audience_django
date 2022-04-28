@@ -11,8 +11,12 @@
                 上傳資料
             </button>
             <button id="download-btn-{{ job.task_id }}" class="btn btn-outline-primary"
-                    onclick="{% url 'documenting_jobs:dataset-download' job.task_id %}">
+                    onclick="post_download_file('{% url 'documenting_jobs:dataset-download' job.task_id %}')">
                 下載資料
+            </button>
+            <button id="jobDescription" class="btn btn-primary"
+                    onclick="window.location.href='{% url 'documenting_jobs:job-description' job.task_id %}'">
+                任務說明
             </button>
             <button class="btn btn-primary dropdown-toggle" type="button"
                     id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
@@ -34,8 +38,7 @@
 {% endblock %}
 {% block page_description %}
     <small class="text-muted">
-        <strong>由 {{ job.created_by.username }}</strong>
-        於 {{ job.created_at }} 建立。
+        <strong>{% if job.is_multi_label %}多標籤{% else %}單標籤{% endif %}</strong> 資料集
     </small>
     <p class="mb-4">{{ job.description }}</p>
 {% endblock %}
@@ -47,43 +50,41 @@
         <div class="col-lg-9">
             <div class="card shadow">
                 <div class="card-body py-4">
-                <table class="table" id="dataset_table">
-
+                <table class="table" id="dataset-table">
                 {% if job.task_type == "machine_learning_task" %}
-{#                    <thead class="thead-light">#}
-{#                    <tr>#}
-{#                        <th scope="col">title</th>#}
-{#                        <th scope="col">author</th>#}
-{#                        <th scope="col">content</th>#}
-{#                        <th scope="col">dataset_type</th>#}
-{#                        <th scope="col">label</th>#}
-{#                    </tr>#}
-{#                    </thead>#}
-{#                    <tbody>#}
-{#                    {% for data in dataset %}#}
-{#                        <tr>#}
-{#                            <td>{{ data.title }}</td>#}
-{#                            <td>{{ data.author }}</td>#}
-{#                            <td>{{ data.content }}</td>#}
-{#                            <td>{{ data.dataset_type }}</td>#}
-{#                            <td>{{ data.label }}</td>#}
-{#                            <td>#}
-{#                                <button id="update-btn-{{ data.id }}"#}
-{#                                        class="btn btn-outline-primary"#}
-{#                                        style="border: none;background-color: #698eff;color: white;"#}
-{#                                        onclick="{% url 'documenting_jobs:dataset-update' job.task_id data.id %}">#}
-{#                                    修改#}
-{#                                </button>#}
-{#                                <button id="delete-btn-{{ data.id }}"#}
-{#                                        class="btn btn-outline-primary" data-toggle="modal"#}
-{#                                        style="border: none;background-color: #ff6666;color: white;"#}
-{#                                        data-target="#deleteData-{{ data.id }}">#}
-{#                                    刪除#}
-{#                                </button>#}
-{#                            </td>#}
-{#                        </tr>#}
-{#                    {% endfor %}#}
-{#                    </tbody>#}
+                    <thead class="thead-light">
+                    <tr>
+                        <th scope="col">title</th>
+                        <th scope="col">author</th>
+                        <th scope="col">content</th>
+                        <th scope="col">dataset_type</th>
+                        <th scope="col">label</th>
+                        <th scope="col"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for data in dataset %}
+                        <tr>
+                            <td>{{ data.title }}</td>
+                            <td>{{ data.author }}</td>
+                            <td>{{ data.content }}</td>
+                            <td>{{ data.dataset_type }}</td>
+                            <td>{{ data.label }}</td>
+                            <td>
+                                <button id="update-btn-rule" class="btn btn-primary" style="border: None;"
+                                        onclick='location.href="{% url 'documenting_jobs:dataset-update' job.task_id data.id %}"'>
+                                    修改
+                                </button>
+                                <button id="delete-btn-rule"
+                                        class="btn btn-primary" data-toggle="modal"
+                                        style="background-color: #ff6666;border: None;"
+                                        onclick='delete_data("{% url 'documenting_jobs:dataset-delete' job.task_id data.id %}")'>
+                                    刪除
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
                 {% endif %}
                 {% if job.task_type == "rule_task" %}
                     <thead class="thead-light">
@@ -92,6 +93,7 @@
                         <th scope="col">label</th>
                         <th scope="col">rule_type</th>
                         <th scope="col">match_type</th>
+                        <th scope="col"></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -102,24 +104,21 @@
                             <td>{{ data.rule_type }}</td>
                             <td>{{ data.match_type }}</td>
                             <td>
-                                <a href="{% url 'documenting_jobs:rule-update' job.task_id data.id %}" class="button">
+                                <button id="update-btn-rule" class="btn btn-primary" style="border: None;"
+                                        onclick='location.href="{% url 'documenting_jobs:rule-update' job.task_id data.id %}"'>
                                     修改
-                                </a>
-
-{#                                <button id="delete-btn-{{ data.id }}"#}
-{#                                        class="btn btn-outline-primary" data-toggle="modal"#}
-{#                                        style="border: none;background-color: #ff6666;color: white;"#}
-{#                                        data-target="#deleteRule-{{ data.id }}">#}
-{#                                    刪除#}
-{#                                </button>#}
+                                </button>
+                                <button id="delete-btn-rule"
+                                        class="btn btn-primary" data-toggle="modal"
+                                        style="background-color: #ff6666;border: None;"
+                                        onclick='delete_data("{% url 'documenting_jobs:rule-delete' job.task_id data.id %}")'>
+                                    刪除
+                                </button>
                             </td>
                         </tr>
-                        <!-- data updateModal -->
-
                     {% endfor %}
                     </tbody>
                 {% endif %}
-
                 </table>
                 </div>
             </div>
@@ -139,7 +138,29 @@
                       action="{% url 'documenting_jobs:doc-update' job.task_id %}">{% csrf_token %}
                     <div class="modal-body">
                         {% csrf_token %}
-                        {{ task_form }}
+{#                        {{ task_form }}#}
+                        <p>
+                            <label for="task_name">任務名稱: </label>
+                            <input type="text" name="task_name" maxlength="100" required=""
+                                   id="task_name" value="{{ job.name }}">
+                        </p>
+                        <p>
+                            <label for="task_description">任務簡述: </label>
+                            <textarea name="task_description" id="task_description"
+                                      rows="5" cols="30">{{ job.description }}</textarea>
+                        </p>
+                        <p>
+                            <label for="task_task_type">任務類型: </label>
+                            <select name="task_task_type" id="task_task_type">
+                                <option value="machine_learning_task">機器學習任務</option>
+                                <option value="rule_task">規則模型資料</option>
+                            </select>
+                        </p>
+                        <p>
+                            <label for="task_is_multi_label">是否為多標籤? </label>
+                            <input type="checkbox" name="task_is_multi_label"
+                                   id="task_is_multi_label">
+                        </p>
                     </div>
                     <div class="modal-footer">
                         <input type="hidden" name="next" value="{{ next }}">
@@ -185,69 +206,36 @@
             </div>
         </div>
     </div>
-    <!-- data updateModal -->
-{#    <div class="modal fade" id="modal-default" tabindex="-1" aria-labelledby="jobUpdateModalLabel" aria-hidden="true">#}
-{#        <div class="modal-dialog">#}
-{##}
-{#            <div class="modal-content">#}
-{#                <div class="modal-header">#}
-{#                    <h5 class="modal-title" id="jobUpdateModalLabel">修改資料</h5>#}
-{#                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">#}
-{#                        <span aria-hidden="true">&times;</span>#}
-{#                    </button>#}
-{#                </div>#}
-{#                <form method="post" class=""#}
-{#                      action="{% url 'documenting_jobs:dataset-update' job.task_id data.id %}">{% csrf_token %}#}
-{#                    <div class="modal-body">#}
-{#                        <p>#}
-{##}
-{#                            <label for="data_id">編號:</label>#}
-{#                            <input type="number" name="data_id" required="" id="data_id" placeholder="{{ data.id }}" value={{ data.id }}>#}
-{##}
-{#                        </p>#}
-{#                        <p>#}
-{#                            <label for="id_term">詞彙：</label>#}
-{#                            <input type="text" name="update_term" maxlength="20" required="" id="id_term">#}
-{#                        </p>#}
-{#                        <p>#}
-{#                            <label for="id_label">標籤：</label>#}
-{#                            <input type="text" name="update_label" maxlength="20" required="" id="id_label">#}
-{#                        </p>#}
-{#                        <p>#}
-{#                            <label for="id_weight">權重：</label>#}
-{#                            <input type="number" name="update_weight" min="0" max="1" step="any" required="" id="id_weight">#}
-{#                        </p>#}
-{#                    </div>#}
-{#                    <div class="modal-footer">#}
-{#                        <input type="hidden" name="next" value="{{ next }}">#}
-{#                        <input type="submit" class="btn btn-primary" value="送出">#}
-{#                    </div>#}
-{#                </form>#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
 {% endblock %}
 {% block custom_script %}
     <script>
-{#    $(document).on('click','.update-data',function(){#}
-{#    var id = $(this).data('id');#}
-{##}
-{#    $.ajax({#}
-{#        url:'',#}
-{#        type:'POST',#}
-{#        data:{#}
-{#            'id':id,#}
-{#            'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val(),#}
-{#        },#}
-{#        success:function(data){#}
-{#            $('#modal-default .modal-dialog').html($('#modal-default .modal-dialog',data));#}
-{#            $('#modal-default').modal('show');#}
-{#        },#}
-{#        error:function(){#}
-{#            console.log('error')#}
-{#        },#}
-{#    });#}
-{#});#}
+        $(document).ready(function () {
+            $('#dataset-table').DataTable()
+        })
+
+
+        function delete_data(url) {
+            $.ajax({
+                type: 'POST',
+                url: url,
+                success: function (data) {
+                    window.location.href = "{% url 'documenting_jobs:job-detail' job.task_id %}"
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    alert("failed to delete");
+                }
+            })
+        }
+
+        function post_download_file(url) {
+            $.ajax({
+                type: 'POST',
+                url: url,
+                success: function (data) {
+                    window.location.href = "{% url 'documenting_jobs:get-download-file' job.task_id %}"
+                }
+            })
+        }
     </script>
 {% endblock %}
 

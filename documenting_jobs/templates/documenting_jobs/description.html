@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load result_extras %}
+{% block nav_title %} 資料整備任務 {% endblock %}
+{% block page_title %}
+    任務列表
+{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+        <div class="d-sm-flex align-items-center justify-content-between mb-3">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#jobCreateModal">
+                建立新任務
+            </button>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <h4>資料整備流程</h4>
+        <p>
+            資料整備任務類型共分為:
+        </p>
+        <ul>
+            <li>機器學習 (machine_learning_task)</li>
+            <li>規則模型 (rule_task)</li>
+        </ul>
+    <div class="row">
+        <div class="card shadow col-sm-3">
+            <div class="card-body">
+                <div class="card-title font-weight-bold">機器學習模型資料</div>
+                <p>建立任務請選擇 機器學習模型資料</p>
+                <p>請至少準備以下類型資料集:</p>
+                <ul>
+                    <li>訓練資料(train)</li>
+                    <li>驗證資料(dev)</li>
+                    <li>測試資料(test)</li>
+                </ul>
+                <p>上傳資料欄位，<span style="color:red">*</span>為必要欄位:</p>
+                <ul>
+                    <li>title</li>
+                    <li>author</li>
+                    <li>s_id</li>
+                    <li>s_area_id</li>
+                    <li><span style="color:red">*</span>content</li>
+                    <li>post_time</li>
+                    <li><span style="color:red">*</span>label</li>
+                    <li><span style="color:red">*</span>document_type
+                    <ul>
+                        <li>train</li>
+                        <li>dev</li>
+                        <li>test</li>
+                        <li>ext_test</li>
+                    </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="card shadow col-sm-3">
+            <div class="card-body">
+                <div class="card-title font-weight-bold">規則模型資料</div>
+                <p>建立任務請選擇 規則模型資料</p>
+                <p>上傳資料欄位，所有欄位均為必要欄位:</p>
+                <ul>
+                    <li>content</li>
+                    <li>label</li>
+                    <li>rule_type
+                    <ul>
+                        <li>keyword</li>
+                        <li>regex</li>
+                    </ul>
+                    </li>
+                    <li>match_type
+                    <ul>
+                        <li>start</li>
+                        <li>end</li>
+                        <li>partially</li>
+                        <li>exactly</li>
+                    </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

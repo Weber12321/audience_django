@@ -399,7 +399,7 @@ def render_term_weight(request, pk):
 # class TermWeightUpdate(LoginRequiredMixin, generic.UpdateView):
 #     model = TermWeight
 #     form_class = TermWeightFor
-#     template_name = 'term_weights/update_form.html'
+#     template_name = 'term_weights/update_data.html'
 
 #
 # class TermWeightCreate(LoginRequiredMixin, generic.CreateView):

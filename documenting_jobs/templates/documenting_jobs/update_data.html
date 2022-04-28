@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}資料整備任務{% endblock %}
+{% block nav_title %}資料整備任務{% endblock %}
+{% block page_title %}
+    更新模型資料
+{% endblock %}
+{% block page_description %}
+    <p>請盡量描述任務的定義與細節。</p>
+{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col">
+            <div class="card o-hidden border-0 shadow-lg my-3">
+                <div class="card-body p-0">
+                    <!-- Nested Row within Card Body -->
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="p-5">
+                                <form id="add-data" method="post"
+                                action="{% url 'documenting_jobs:dataset-update' task_id data.id %}"
+                                enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <p>
+                                        <label for="title">文章標題: </label>
+                                        <input type="text" name="title" id="title" value="{{ data.title }}"
+                                               maxlength="512" size="50">
+                                    </p>
+                                    <p>
+                                        <label for="author">文章作者: </label>
+                                        <input type="text" name="author" id="author" value="{{ data.author }}"
+                                               maxlength="100" size="20">
+                                    </p>
+                                    <p>
+                                        <label for="content">文章內容: </label>
+                                        <textarea name="content" id="content" rows="5" cols="50">{{ data.content }}
+                                        </textarea>
+                                    </p>
+                                    <p>
+                                        <label for="dataset_type">命中類型: </label>
+                                        <select id="dataset_type" name="dataset_type">
+                                            <option value="train">訓練</option>
+                                            <option value="dev">驗證</option>
+                                            <option value="test">測試</option>
+                                            <option value="ext_test">額外測試</option>
+                                        </select>
+                                    </p>
+                                    <p>
+                                        <input type="hidden" name="next" value="{{ next }}">
+                                        <input type="submit" id="submit-term-form" class="btn btn-primary" value="送出">
+                                    </p>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

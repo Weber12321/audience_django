@@ -23,23 +23,16 @@
                     <table class="table" id="job-table">
                         <thead class="thead-light">
                         <tr>
-{#                            <th>id</th>#}
-{#                            <th scope="col">任務編號</th>#}
                             <th scope="col">任務名稱</th>
-{#                            <th scope="col">任務簡述</th>#}
                             <th scope="col">任務類型</th>
-{#                            <th scope="col">標籤類型</th>#}
                             <th scope="col">建立時間</th>
                             <th scope="col">更新時間</th>
-{#                            <th scope="col">建立者</th>#}
                         </tr>
                         </thead>
                         <tbody>
                         {% for job in documenting_jobs %}
                             <tr>
-{#                                <td>{{ job.task_id }}</td>#}
                                 <td><a href="{% url 'documenting_jobs:job-detail' job.task_id %}">{{ job.name }}</a></td>
-{#                                <td>{{ job.name }}</td>#}
                                 <td>{{ job.task_type }}</td>
                                 <td>{{ job.create_time }}</td>
                                 <td>{{ job.update_time|date:"SHORT_DATE_FORMAT" }}</td>
@@ -130,14 +123,6 @@
                     <div class="modal-body">
                         {% csrf_token %}
                         {{ form }}
-{#                        {{ error }}#}
-{#                        {% for field in form %}#}
-{#                            <div class="form-group">#}
-{#                                {{ field.label_tag }}#}
-{#                                {{ field }}#}
-{#                                {{ field.errors }}#}
-{#                            </div>#}
-{#                        {% endfor %}#}
                     </div>
                     <div class="modal-footer">
                         <input type="hidden" name="next" value="{{ next }}">
