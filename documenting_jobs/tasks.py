@@ -238,3 +238,11 @@ def create_details_dir():
     save_detail_folder = Path(root_dir / folder)
     Path(save_detail_folder).mkdir(exist_ok=True)
     return save_detail_folder
+
+
+def create_sample_dir():
+    root_dir = PurePath(__file__).parent
+    folder = "sample_file"
+    save_sample_folder = Path(root_dir / folder)
+    Path(save_sample_folder).mkdir(exist_ok=True)
+    return save_sample_folder

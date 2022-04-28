@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from django.http import HttpResponseRedirect, HttpResponse, FileResponse
@@ -8,7 +9,9 @@ from django.views.decorators.csrf import csrf_exempt
 from documenting_jobs.forms import DocumentingJobForm, RulesUpdateForm, DatasetUpdateForm
 from documenting_jobs.tasks import call_task_create, call_render_tasks, call_get_task, call_dataset_render, \
     call_post_download, call_get_download, call_task_delete, call_dataset_upload, call_data_retrieve, \
-    call_rule_retrieve, call_rule_update, call_data_update, call_data_delete, call_rule_delete, call_document_update
+    call_rule_retrieve, call_rule_update, call_data_update, call_data_delete, call_rule_delete, call_document_update, \
+    create_sample_dir
+
 
 # logger = logging.getLogger(__name__)
 
@@ -241,3 +244,10 @@ def delete_rule(request, task_id, rule_id):
         return HttpResponseRedirect(
             reverse('documenting_jobs:job-detail', kwargs={"task_id": task_id})
         )
+
+
+def download_sample_file(request):
+    parent_dir = create_sample_dir()
+    file_path = os.path.join(parent_dir,'sample.zip')
+    response = FileResponse(open(file_path, 'rb'))
+    return response

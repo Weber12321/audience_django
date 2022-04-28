@@ -14,7 +14,7 @@
                     onclick="post_download_file('{% url 'documenting_jobs:dataset-download' job.task_id %}')">
                 下載資料
             </button>
-            <button id="jobDescription" class="btn btn-primary"
+            <button id="jobDescription" class="btn btn-outline-primary"
                     onclick="window.location.href='{% url 'documenting_jobs:job-description' job.task_id %}'">
                 任務說明
             </button>
@@ -38,7 +38,8 @@
 {% endblock %}
 {% block page_description %}
     <small class="text-muted">
-        <strong>{% if job.is_multi_label %}多標籤{% else %}單標籤{% endif %}</strong> 資料集
+        <strong>{% if job.is_multi_label %}multi-label{% else %}single-label{% endif %}</strong>
+        <strong>{{ job.task_type }}</strong>
     </small>
     <p class="mb-4">{{ job.description }}</p>
 {% endblock %}
@@ -47,7 +48,7 @@
 
     <!-- main -->
     <div class="row">
-        <div class="col-lg-9">
+        <div class="col-lg-10">
             <div class="card shadow">
                 <div class="card-body py-4">
                 <table class="table" id="dataset-table">
