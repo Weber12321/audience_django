@@ -185,6 +185,29 @@ def call_data_update(dataset_id: int, title: Optional[str], author: Optional[str
         raise e
 
 
+def call_rule_add(task_id: str, content: str, label: str,
+                  rule_type: str, match_type: str):
+    try:
+        api_path = f"{API_PATH}/documents/{task_id}/rules/add"
+        api_headers = API_HEADERS
+        request_data = {
+            "CONTENT": content,
+            "LABEL": label,
+            "RULE_TYPE": rule_type,
+            "MATCH_TYPE": match_type
+        }
+        response = requests.post(
+            url=api_path,
+            headers=api_headers,
+            data=json.dumps(request_data)
+        )
+        return response
+
+    except Exception as e:
+        raise e
+
+
+
 def call_rule_update(rule_id: int, content: str, label: str, rule_type: str, match_type: str):
     try:
         api_path = f"{API_PATH}/documents/rules/{rule_id}/update"

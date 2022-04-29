@@ -338,6 +338,15 @@ PREDICT_TYPE = 'author_name'
 
 OUTPUT_DB = 'audience_result'
 
+# ======================================
+#              doccano
+# ======================================
+if IS_PRODUCTION:
+    DOCCANO_PATH = f'http://172.18.20.190'
+else:
+    DOCCANO_PATH = f'http://127.0.0.1'
+
+
 
 # ---- mixed content debug ----
 # 因應 labeling_jobs api/jobs 在網頁中翻頁會發生 mixed content error 帶入錯誤的 domain host

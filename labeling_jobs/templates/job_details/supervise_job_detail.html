@@ -1,0 +1,486 @@
+{% extends "base.html" %}
+
+{% block title %}{{ labeling_job.name }} | 資料準備任務{% endblock %}
+{% block nav_title %}{{ labeling_job.get_job_data_type_display }}{% endblock %}
+{% block page_title %}{{ labeling_job.name }}{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+        <div class="dropdown mb-4">
+
+            {% if labeling_job.document_set.count and labeling_job.label_set.count %}
+                <a class="btn btn-success"
+                   href="{% url 'labeling_jobs:job-labeling' labeling_job.id %}">開始貼標</a>
+            {% endif %}
+            <button class="btn btn-primary dropdown-toggle" type="button"
+                    id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false">
+                操作
+            </button>
+            <div class="dropdown-menu animated--fade-in"
+                 aria-labelledby="dropdownMenuButton">
+                {#                <a class="dropdown-item"#}
+                {#                   href="{% url 'labeling_jobs:upload-job-create' labeling_job.id %}?next={{ request.path }}">上傳訓練資料</a>#}
+                <a class="dropdown-item"
+                   href="{% url 'labeling_jobs:job-docs' labeling_job.id %}">文章列表</a>
+                <a class="dropdown-item" href="" data-toggle="modal" data-target="#jobUpdateModal">修改</a>
+                <a class="dropdown-item" href="{% url 'labeling_jobs:job-delete' labeling_job.id %}">刪除</a>
+            </div>
+        </div>
+
+    {% endif %}
+{% endblock %}
+{% block page_info %}
+    <div class="mb-2">
+        <small><strong>{{ labeling_job.created_by }}</strong> created this job at
+            <strong>{{ labeling_job.created_at }}</strong></small>
+        {% if labeling_job.is_multi_label %}
+            <span class="badge badge-success">多標籤</span>
+        {% else %}
+            <span class="badge badge-primary">單標籤</span>
+        {% endif %}
+    </div>
+{% endblock %}
+{% block page_description %}<p class="mb-4">{{ labeling_job.description }}</p>{% endblock %}
+{% block content %}
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                標記類型
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if labeling_job.is_multi_label %}
+                                    多標籤
+                                {% else %}
+                                    單標籤
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Earnings (Monthly) Card Example -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                標籤類別數量
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ labeling_job.label_set.count }}</div>
+                        </div>
+                        {#                        <div class="col-auto">#}
+                        {#                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>#}
+                        {#                        </div>#}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Requests Card Example -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                資料數量
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ labeling_job.document_set.count }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="row">
+
+        <!-- Content Column -->
+        <div class="col-lg-8 mb-4">
+
+            <!-- label list -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="h5">標籤列表</h6>
+                        <div class="card-link">
+                            <a href="" data-toggle="modal" data-target="#labelFormModal"
+                               class="btn btn-sm btn-outline-primary">新增標籤</a>
+                        </div>
+                    </div>
+                    <hr>
+                </div>
+                {% for label in labeling_job.label_set.all %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="h5 d-flex justify-content-start text-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}">{{ label.name }}</div>
+                                <div class="text-secondary small mb-4">
+                                    {% if label.description %}{{ label.description }}{% else %}
+                                        請按編輯添加標籤說明。{% endif %}</div>
+                                <div>
+                                    <h4 class="small font-weight-bold">進度
+                                        <span class="float-right"><small> {{ label.show_document_amount }}/{{ label.target_amount }}</small> {{ label.show_progress_percentage }}%</span>
+                                    </h4>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar bg-{% cycle 'primary' 'secondary' 'warning' 'info' 'success' 'danger' 'light' 'dark' as tag_color %}"
+                                             role="progressbar" style="width: {{ label.show_progress_percentage }}%"
+                                             aria-valuenow="label.show_progress_percentage"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <span class="d-flex justify-content-end">
+                                        <a class="btn btn-link text-info btn-sm ml-2"
+                                           href="{% url 'labeling_jobs:labels-detail' label.id %}">查看資料</a>
+                                        <a class="btn btn-link text-secondary btn-sm ml-2"
+                                           href="{% url 'labeling_jobs:labels-update' label.id %}">編輯</a>
+                                        <a class="btn btn-link text-danger btn-sm ml-2"
+                                           href="{% url 'labeling_jobs:labels-delete' label.id %}">刪除</a>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-lg-6 mb-4">
+                        沒有設定標籤
+                    </div>
+                {% endfor %}
+
+                <div class="col-lg-12">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="h5">文章列表</h6>
+                        <span class="card-link">
+                            <a href="" data-toggle="modal" data-target="#labelFormModal"
+                               class="btn btn-sm btn-outline-primary">新增標籤</a>
+                        </span>
+                    </div>
+                    <hr>
+                    <div class="card mb-4">
+                        <div class="card-header py-3 d-flex justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">文章列表</h6>
+                        </div>
+                        <div class="card-body">
+                            <table id="content-table" class="table">
+                                <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">內文</th>
+                                    <th scope="col">標籤</th>
+                                    <th scope="col">資料類型</th>
+                                    <th scope="col">所選標籤</th>
+                                    <th scope="col">網址</th>
+                                    <th scope="col">功能</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="row mb-4">
+                <div class="col-lg-12">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="h5">訓練資料</h6>
+                        <div class="card-link">
+                            <a href="" data-toggle="modal" data-target="#uploadFileModal"
+                               class="btn btn-sm btn-outline-primary">上傳訓練資料</a>
+                            <a class="btn btn-outline-dark btn-sm"
+                               href="{% url 'labeling_jobs:generate-dataset' labeling_job.id %}">
+                                {% if labeling_job.get_train_set.count == 0 %}
+                                    分配訓練資料
+                                {% else %}
+                                    重新分配訓練資料
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="card bg-light shadow">
+                        <div class="card-body">
+                            <div class="table-responsive mt-2">
+                                <table class="table table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col"></th>
+                                        <th scope="col">訓練集</th>
+                                        <th scope="col">驗證集</th>
+                                        <th scope="col">測試集</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for label in labeling_job.label_set.all %}
+                                        <tr>
+                                            <td>{{ label.name }}</td>
+                                            <td>{{ label.show_train_set_count }}</td>
+                                            <td>{{ label.show_dev_set_count }}</td>
+                                            <td>{{ label.show_test_set_count }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    <tr class="table-active">
+                                        <td>總計</td>
+                                        <td>{{ labeling_job.get_train_set.count }}</td>
+                                        <td>{{ labeling_job.get_dev_set.count }}</td>
+                                        <td>{{ labeling_job.get_test_set.count }}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="h5">檔案上傳紀錄</div>
+                    <hr>
+                </div>
+                {% for upload_job in labeling_job.uploadfilejob_set.all %}
+                    <div class="col-lg-12 mb-4">
+                        <div class="card bg-light shadow">
+                            <div class="card-body">
+                                <div class="card-title">{{ upload_job.file.name }}</div>
+                                <div class="text-gray small">
+                                    {{ upload_job.created_by }} uploaded at {{ upload_job.created_at }}
+                                </div>
+                                <div class="mt-2">
+                                    {% if upload_job.job_status == 'done' %}
+                                        <span class="badge badge-success">完成</span>
+                                    {% elif upload_job.job_status == 'processing' %}
+                                        <span class="badge badge-primary">處理中</span>
+                                    {% elif upload_job.job_status == 'wait' %}
+                                        <span class="badge badge-warning">等待中</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">錯誤({{ upload_job.job_status }}）</span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-link mt-2">
+                                    <a href="{% url 'labeling_jobs:upload-job-delete' upload_job.id %}">
+                                        清除此紀錄</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-lg-12">
+                        沒有上傳紀錄
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="jobUpdateModal" tabindex="-1" aria-labelledby="jobUpdateModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jobUpdateModalLabel">修改任務資訊</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" class="">{% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {{ form.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- File upload Modal -->
+    <div class="modal fade" id="uploadFileModal" tabindex="-1" aria-labelledby="uploadFileModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadFileModalLabel">上傳資料</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>檔案格式接受 <code>*.csv</code> ，Microsoft Excel格式的檔案可直接<a
+                            href="https://support.microsoft.com/zh-tw/office/%E5%8C%AF%E5%85%A5%E6%88%96%E5%8C%AF%E5%87%BA%E6%96%87%E5%AD%97-txt-%E6%88%96-csv-%E6%AA%94%E6%A1%88-%E6%A9%9F%E5%99%A8%E7%BF%BB%E8%AD%AF-5250ac4c-663c-47ce-937b-339e391393ba"
+                            target="_blank">匯出</a>成此類型的檔案。</p>
+                    <ul>
+                        <li>
+                            OpView資料下載欄位
+                            <div><small>（可多選，欄位名稱需一樣才讀取得到，對不到的欄位會略過。）</small></div>
+                            <ul>
+                                <li><code>標題</code></li>
+                                <li><code>內容</code></li>
+                                <li><code>來源</code></li>
+                                <li><code>來源網站</code></li>
+                                <li><code>作者</code></li>
+                            </ul>
+                        </li>
+                        <li><code>標籤</code></li>
+                    </ul>
+                    <hr>
+                    <form method="post" enctype="multipart/form-data"
+                          action="{% url 'labeling_jobs:upload-job-create' labeling_job.id %}">
+                        {% csrf_token %}
+                        {{ error }}
+                        {% for field in upload_file_form %}
+                            <div class="form-group">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {{ field.errors }}
+                            </div>
+                        {% endfor %}
+                        <div class="modal-footer">
+                            <input type="hidden" name="next" value="{{ next }}">
+                            <input type="submit" class="btn btn-primary" value="送出">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- label create Modal -->
+    <div class="modal fade" id="labelFormModal" tabindex="-1" aria-labelledby="labelFormModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="labelFormModalLabel">新增標籤</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" action="{% url 'labeling_jobs:labels-add' labeling_job.id %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        {{ error }}
+                        {% for field in label_form %}
+                            <div class="form-group">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {{ field.errors }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="submit" class="btn btn-primary" value="送出">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block custom_script %}
+    <script>
+        var table = $("#content-table").DataTable({
+            serverSide: true,
+            ajax: "{% url 'labeling_jobs:api-document-detail' %}?api-document-detail={{ labeling_job.id }}&format=datatables",
+            columnDefs: [
+                {"visible": false, "targets": [4, 5]}
+            ],
+            columns: [
+                {
+                    data: 'id',
+                    searchable: false
+                },
+                {
+                    data: 'content'
+                },
+                {
+                    data: 'labels',
+                    render: function (data, type, row, meta) {
+                        return data[0].name;
+                    }
+                },
+                {
+                    data: 'document_type',
+                    render: function (data, type, row, meta) {
+                        if (!data) {
+                            return "沒被分配到任何資料集";
+                        } else {
+                            return data;
+                        }
+                    }
+                },
+                {
+                    data: 'all_labels',
+                },
+                {
+                    data: 'url'
+                },
+                {
+                    data: 'labeling_job',
+                    sortable: false,
+                    searchable: false,
+                    render: function (data, type, row, meta) {
+                        edit_btn = '<a href="" ' +
+                            'data-toggle="modal" ' +
+                            'data-target="#ruleFormModal" ' +
+                            `data-rule-url=${row.url} ` +
+                            `data-rule-content=${row.content} ` +
+                            `data-rule-label=${data} ` +
+                            `data-rule-match_type=${row.match_type} ` +
+                            'class="update-rule mr-3">修改</a>'
+                        delete_btn = '<a href="" ' +
+                            `data-rule-url=${row.url} ` +
+                            `data-rule-content=${row.content} ` +
+                            `data-rule-labels=${row.labels[0].name} ` +
+                            'class="delete-rule text-danger">刪除</a>'
+                        return edit_btn + delete_btn
+
+                    }
+                }
+            ]
+        });
+
+        $(document).ready(function () {
+            table.ajax.reload()
+        });
+
+        // todo: update content list
+        $(document).on("click", ".update-rule", function () {
+            const form = $('#ruleFormModal form');
+            form.data("rule-url", $(this).data('ruleUrl'));
+            $("#ruleFormModalLabel").text('修改詞彙權重');
+            $("#id_content").val($(this).data('ruleContent'));
+            $("#id_label").val($(this).data('ruleLabel'));
+            $("#id_match_type").val($(this).data('ruleMatch_type'));
+        });
+
+        $(document).on("click", ".delete-rule", function () {
+            const content = String($(this).data('ruleContent'));
+            const label = String($(this).data('ruleLabels'));
+            const confirm_str = prompt(`確認要刪除屬於「${label}」標籤的詞彙「${content}」嗎？ 請輸入詞彙「${content}」確認刪除。`);
+            if (confirm_str && String(confirm_str).trim() === content.trim()) {
+                $.ajax({
+                    url: $(this).data('ruleUrl'),
+                    type: "DELETE",
+                    beforeSend: function (xhr, settings) {
+                        xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                    },
+                    success: function (data) {
+                        {#alert(`詞彙「${rule}」刪除成功。`)#}
+                        table.ajax.reload()
+                    }
+                });
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+            } else {
+                alert(`取消刪除「${content}」`)
+            }
+        });
+    </script>
+{% endblock %}

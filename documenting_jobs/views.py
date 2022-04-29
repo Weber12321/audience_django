@@ -6,11 +6,12 @@ from django.template import loader
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 
+from audience_toolkits.settings import DOCCANO_PATH
 from documenting_jobs.forms import DocumentingJobForm, RulesUpdateForm, DatasetUpdateForm
 from documenting_jobs.tasks import call_task_create, call_render_tasks, call_get_task, call_dataset_render, \
     call_post_download, call_get_download, call_task_delete, call_dataset_upload, call_data_retrieve, \
     call_rule_retrieve, call_rule_update, call_data_update, call_data_delete, call_rule_delete, call_document_update, \
-    create_sample_dir
+    create_sample_dir, call_rule_add
 
 
 # logger = logging.getLogger(__name__)
@@ -22,7 +23,8 @@ def render_index(request):
     response = call_render_tasks()
     context = {
         'documenting_jobs': response.json(),
-        'form': form
+        'form': form,
+        'doccano': DOCCANO_PATH
     }
     return HttpResponse(template.render(context, request))
 
@@ -33,13 +35,9 @@ def render_detail(request, task_id):
     task = call_get_task(task_id)
     task_type = task.json().get('task_type')
     dataset = call_dataset_render(task_id, task_type)
-    # task_form = DocumentingJobForm()
-    # dataset_form = RulesUpdateForm() if task_type == 'rule_task' else DatasetUpdateForm()
     context = {
         'job': task.json(),
-        'dataset': dataset.json(),
-        # 'task_form': task_form,
-        # 'dataset_form': dataset_form
+        'dataset': dataset.json()
     }
     return HttpResponse(template.render(context, request))
 
@@ -180,6 +178,36 @@ def update_data(request, task_id, dataset_id):
         'data': data.json()
     }
     return HttpResponse(template.render(context, request))
+
+
+@csrf_exempt
+def add_rule(request, task_id):
+    if request.method == 'POST':
+        template = loader.get_template('job_details/error_page.html')
+        response = call_rule_add(
+            task_id=task_id,
+            content=request.POST.get('content'),
+            label=request.POST.get('label'),
+            rule_type=request.POST.get('rule_type'),
+            match_type=request.POST.get('match_type')
+        )
+        if response.status_code != 200:
+            context = {
+                'error_code': response.status_code,
+                'error_message': "錯誤訊息: " + f"{response.json()}"
+            }
+            return HttpResponse(template.render(context, request))
+        return HttpResponseRedirect(
+            reverse('documenting_jobs:job-detail', kwargs={"task_id": task_id})
+        )
+
+    template = loader.get_template('documenting_jobs/update_rule.html')
+
+    context = {
+        'task_id': task_id
+    }
+    return HttpResponse(template.render(context, request))
+
 
 
 @csrf_exempt
