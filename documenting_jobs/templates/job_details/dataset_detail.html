@@ -40,7 +40,8 @@
     <small class="text-muted">
         <strong>{% if job.is_multi_label %}multi-label{% else %}single-label{% endif %}</strong>
         <strong>{{ job.task_type }}</strong>
-    </small>
+    </small><br>
+    <small class="text-muted"> 由 <strong>{{ user }}</strong> 建立</small>
     <p class="mb-4">{{ job.description }}</p>
 {% endblock %}
 
@@ -129,6 +130,25 @@
                 </div>
             </div>
         </div>
+    </div>
+    <!-- stats -->
+    <div class="col-lg-3">
+        {% if job.task_type == "machine_learning_task" %}
+        <p>
+            {% if stats.train.length %}<strong>訓練集</strong>: {{ stats.train.length }}{% endif %}
+
+            {% if stats.dev.length %}<strong>驗證集</strong>: {{ stats.dev.length }}{% endif %}
+
+            {% if stats.test.length %}<strong>測試集</strong>: {{ stats.test.length }}{% endif %}
+
+            {% if stats.ext_test.length %}<strong>額外測試集</strong>: {{ stats.ext_test.length }}{% endif %}
+        </p>
+        {% endif %}
+        {% if job.task_type == "rule_task" %}
+        <p>
+            {% if stats.length %}<strong>規則數量</strong>: {{ stats.length }}{% endif %}
+        </p>
+        {% endif %}
     </div>
     <!-- task updateModal -->
     <div class="modal fade" id="jobUpdateModal" tabindex="-1" aria-labelledby="jobUpdateModalLabel" aria-hidden="true">

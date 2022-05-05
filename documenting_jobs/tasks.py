@@ -1,5 +1,7 @@
 import json
 import logging
+from collections import defaultdict
+from itertools import groupby
 from pathlib import PurePath, Path
 from typing import Optional
 
@@ -207,7 +209,6 @@ def call_rule_add(task_id: str, content: str, label: str,
         raise e
 
 
-
 def call_rule_update(rule_id: int, content: str, label: str, rule_type: str, match_type: str):
     try:
         api_path = f"{API_PATH}/documents/rules/{rule_id}/update"
@@ -269,3 +270,32 @@ def create_sample_dir():
     save_sample_folder = Path(root_dir / folder)
     Path(save_sample_folder).mkdir(exist_ok=True)
     return save_sample_folder
+
+
+def dataset_stats(task_id: str):
+    task = call_get_task(task_id=task_id)
+    task_type = task.json().get('task_type')
+    dataset_response = call_dataset_render(task_id, task_type)
+    stats = {}
+    if task_type == 'rule_task':
+        content_list = [data.get('content') for data in dataset_response.json()]
+
+        stats.update({
+            'length': len(content_list),
+        })
+    elif task_type == 'machine_learning_task':
+        sorted_dataset = sorted(dataset_response.json(), key=key_func)
+        for k, v in groupby(sorted_dataset, key_func):
+            stats.update({
+                k: {
+                    'length': len(list(v)),
+                    }
+            })
+    else:
+        raise ValueError(f"task {task_id} unknown task type {task_type}")
+
+    return stats
+
+
+def key_func(dicts, group_key='dataset_type'):
+    return dicts[group_key]

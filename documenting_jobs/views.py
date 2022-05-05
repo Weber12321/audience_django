@@ -8,10 +8,11 @@ from django.views.decorators.csrf import csrf_exempt
 
 from audience_toolkits.settings import DOCCANO_PATH
 from documenting_jobs.forms import DocumentingJobForm, RulesUpdateForm, DatasetUpdateForm
+from documenting_jobs.models import DocumentingJob
 from documenting_jobs.tasks import call_task_create, call_render_tasks, call_get_task, call_dataset_render, \
     call_post_download, call_get_download, call_task_delete, call_dataset_upload, call_data_retrieve, \
     call_rule_retrieve, call_rule_update, call_data_update, call_data_delete, call_rule_delete, call_document_update, \
-    create_sample_dir, call_rule_add
+    create_sample_dir, call_rule_add, dataset_stats
 
 
 # logger = logging.getLogger(__name__)
@@ -21,8 +22,12 @@ def render_index(request):
     template = loader.get_template(template_name)
     form = DocumentingJobForm()
     response = call_render_tasks()
+    task_ids = [res['task_id'] for res in response.json()]
+    user_list = []
+    for task_id in task_ids:
+        user_list.append(DocumentingJob.objects.filter(task_id=task_id)[0].create_by)
     context = {
-        'documenting_jobs': response.json(),
+        'documenting_jobs': zip(response.json(), user_list),
         'form': form,
         'doccano': DOCCANO_PATH
     }
@@ -33,11 +38,15 @@ def render_detail(request, task_id):
     template_name = "job_details/dataset_detail.html"
     template = loader.get_template(template_name)
     task = call_get_task(task_id)
+    user = DocumentingJob.objects.filter(task_id=task_id)[0].create_by
     task_type = task.json().get('task_type')
     dataset = call_dataset_render(task_id, task_type)
+    stats = dataset_stats(task_id)
     context = {
         'job': task.json(),
-        'dataset': dataset.json()
+        'user': user,
+        'dataset': dataset.json(),
+        'stats': stats
     }
     return HttpResponse(template.render(context, request))
 
@@ -52,6 +61,7 @@ def task_description(request, task_id):
     return HttpResponse(template.render(context, request))
 
 
+@csrf_exempt
 def task_create(request):
     if request.method == 'POST':
         form = DocumentingJobForm(
@@ -69,7 +79,15 @@ def task_create(request):
                 }
                 return HttpResponse(template.render(context, request))
 
-            return HttpResponseRedirect(reverse('documenting_jobs:index'))
+            doc_job = DocumentingJob()
+            doc_job.name = form.cleaned_data['name']
+            doc_job.description = form.cleaned_data['description']
+            doc_job.task_id = task_id
+            doc_job.create_by = request.user
+            doc_job.save()
+
+            # return HttpResponseRedirect(reverse('documenting_jobs:index'))
+            return HttpResponseRedirect(reverse('documenting_jobs:job-detail', kwargs={"task_id": task_id}))
 
 
 @csrf_exempt
@@ -89,6 +107,12 @@ def task_update(request, task_id):
                 'error_message': "錯誤訊息: " + f"{response.json()}"
             }
             return HttpResponse(template.render(context, request))
+
+        doc_job = DocumentingJob.objects.filter(task_id=task_id)[0]
+        doc_job.name = request.POST.get('task_name')
+        doc_job.description = request.POST.get('task_description')
+        doc_job.save()
+
         return HttpResponseRedirect(
             reverse('documenting_jobs:job-detail', kwargs={"task_id": task_id})
         )
@@ -105,6 +129,10 @@ def task_delete(request, task_id):
             'error_message': "錯誤訊息: " + f"{response.json()}"
         }
         return HttpResponse(template.render(context, request))
+
+    doc_job = DocumentingJob.objects.filter(task_id=task_id)
+    doc_job.delete()
+
     return HttpResponseRedirect(reverse('documenting_jobs:index'))
 
 

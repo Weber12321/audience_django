@@ -275,7 +275,8 @@ def call_model_preparing(job: ModelingJob):
         api_headers = API_HEADERS
         api_request_body = {"QUEUE": "queue2",
                             "DATASET_DB": "audience-toolkit-django",
-                            "DATASET_NO": job.jobRef.id,
+                            # "DATASET_NO": job.jobRef.id,
+                            "DATASET_NO": job.docRef.task_id.hex,
                             "TASK_ID": job.task_id.hex,
                             "PREDICT_TYPE": job.feature.upper(),
                             "MODEL_TYPE": job.model_name.upper(),
@@ -312,7 +313,8 @@ def call_model_testing(uploaded_file, job: ModelingJob, remove_old_data=True):
         api_headers = API_HEADERS
         api_request_body = {"QUEUE": "queue2",
                             "DATASET_DB": "audience-toolkit-django",
-                            "DATASET_NO": job.jobRef.id,
+                            # "DATASET_NO": job.jobRef.id,
+                            "DATASET_NO": job.docRef.task_id.hex,
                             "MODEL_JOB_ID": job.id,
                             "PREDICT_TYPE": job.feature.upper(),
                             "MODEL_TYPE": job.model_name.upper(),

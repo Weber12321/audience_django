@@ -10,6 +10,7 @@ from django.urls import reverse
 
 from audience_toolkits import settings
 from core.helpers.model_helpers import get_model_class
+from documenting_jobs.models import DocumentingJob
 from labeling_jobs.models import LabelingJob, Document, Label
 
 
@@ -30,6 +31,7 @@ class ModelingJob(models.Model):
     model_name = models.CharField(max_length=50, choices=__model_choices__, verbose_name="模型類型")
     feature = models.CharField(max_length=50, choices=__feature_choices__, default='content', verbose_name="特徵欄位")
     jobRef = models.ForeignKey(LabelingJob, verbose_name="使用資料", on_delete=models.SET_NULL, blank=True, null=True)
+    docRef = models.ForeignKey(DocumentingJob, verbose_name="模型資料來源", on_delete=models.SET_NULL, blank=True, null=True)
     job_status = models.CharField(max_length=20, verbose_name="模型訓練狀態", default=JobStatus.WAIT,
                                   choices=JobStatus.choices)
     error_message = models.TextField(verbose_name="錯誤訊息", null=True)

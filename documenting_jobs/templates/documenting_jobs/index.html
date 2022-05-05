@@ -32,15 +32,17 @@
                         <tr>
                             <th scope="col">任務名稱</th>
                             <th scope="col">任務類型</th>
+                            <th scope="col">創建者</th>
                             <th scope="col">建立時間</th>
                             <th scope="col">更新時間</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {% for job in documenting_jobs %}
+                        {% for job, user in documenting_jobs %}
                             <tr>
                                 <td><a href="{% url 'documenting_jobs:job-detail' job.task_id %}">{{ job.name }}</a></td>
                                 <td>{{ job.task_type }}</td>
+                                <td>{{ user }}</td>
                                 <td>{{ job.create_time }}</td>
                                 <td>{{ job.update_time|date:"SHORT_DATE_FORMAT" }}</td>
                             </tr>
@@ -128,7 +130,7 @@
                     </button>
                 </div>
                 <form method="post" class=""
-                      action="{% url 'documenting_jobs:doc-add' %}">{% csrf_token %}
+                      action="{% url 'documenting_jobs:doc-add' %}">
                     <div class="modal-body">
                         {% csrf_token %}
                         {{ form }}

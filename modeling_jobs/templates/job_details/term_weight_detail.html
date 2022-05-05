@@ -57,46 +57,15 @@
                 </div>
             </div>
             <div class="card mb-4">
-                {% if job.jobRef %}
-                    {% with labeling_job=job.jobRef %}
+                {% with documenting_jobs=job.docRef %}
+                    {% if documenting_jobs %}
                         <div class="card-header">訓練資料</div>
                         <div class="card-body">
-                            <div class="card-title">使用資料：#{{ labeling_job.id }} <a
-                                    href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">{{ labeling_job.name }}</a>
+                            <div class="card-title">模型資料來源: #{{ documenting_jobs.id }}
+                                <a href="{% url 'documenting_jobs:job-detail' documenting_jobs.task_id|cut:"-" %}">{{ documenting_jobs.name }}</a>
                             </div>
-
-                            <div class="card-title">資料數量：</div>
-                            <div class="table-responsive mt-2">
-                                <table class="table table-bordered">
-                                    <thead>
-                                    <tr>
-                                        <th scope="col"></th>
-                                        <th scope="col">訓練集</th>
-                                        <th scope="col">驗證集</th>
-                                        <th scope="col">測試集</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {% for label in labeling_job.label_set.all %}
-                                        <tr>
-                                            <td>{{ label.name }}</td>
-                                            <td>{{ label.show_train_set_count }}</td>
-                                            <td>{{ label.show_dev_set_count }}</td>
-                                            <td>{{ label.show_test_set_count }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                    <tr class="table-active">
-                                        <td>總計</td>
-                                        <td>{{ labeling_job.get_train_set.count }}</td>
-                                        <td>{{ labeling_job.get_dev_set.count }}</td>
-                                        <td>{{ labeling_job.get_test_set.count }}</td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    {% endwith %}
-                {% endif %}
+                    {% endif %}
+                {% endwith %}
             </div>
 
             <div class="card mb-4">

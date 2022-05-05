@@ -27,7 +27,7 @@ class ModelingJobForm(forms.ModelForm):
         model = ModelingJob
         fields = "__all__"
         exclude = ["model_path", "job_status", "is_multi_label", "ext_test_status", "created_at", "created_by",
-                   "error_message"]
+                   "error_message", "jobRef"]
         # last_job_id = ModelingJob.objects.last().id if ModelingJob.objects.last() is not None else 0
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control',
@@ -35,7 +35,8 @@ class ModelingJobForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': '請描述模型的用途'}),
             'model_name': forms.Select(attrs={'class': 'form-control'}),
             'feature': forms.Select(attrs={'class': 'form-control'}),
-            'jobRef': forms.Select(attrs={'class': 'form-control'}),
+            # 'jobRef': forms.Select(attrs={'class': 'form-control'}),
+            'docRef': forms.Select(attrs={'class': 'form-control'})
         }
         labels = {
             'name': '任務名稱',
