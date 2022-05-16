@@ -342,7 +342,7 @@ OUTPUT_DB = 'audience_result'
 #              doccano
 # ======================================
 if IS_PRODUCTION:
-    DOCCANO_PATH = f'http://172.18.20.190'
+    DOCCANO_PATH = f'https://rd2demo.eland.com.tw/doccano'
 else:
     DOCCANO_PATH = f'http://127.0.0.1'
 
