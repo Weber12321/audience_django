@@ -53,50 +53,15 @@
                 </div>
             </div>
             <div class="card shadow mb-4">
-{#                {% with labeling_job=job.jobRef %}#}
-{#                    {% if labeling_job %}#}
                 {% with documenting_jobs=job.docRef %}
                     {% if documenting_jobs %}
 
-                        <div class="card-header">訓練資料</div>
+                    <div class="card-header">訓練資料</div>
                         <div class="card-body">
                             <div class="card-title">模型資料來源: #{{ documenting_jobs.id }}
                                 <a href="{% url 'documenting_jobs:job-detail' documenting_jobs.task_id|cut:"-" %}">{{ documenting_jobs.name }}</a>
                             </div>
-{#                            <div class="card-title">使用資料：#{{ labeling_job.id }} <a#}
-{#                                    href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">{{ labeling_job.name }}</a>#}
-{#                            </div>#}
-
-{#                            <div class="card-title">資料數量：</div>#}
-{#                            <div class="table-responsive mt-2">#}
-{#                                <table class="table table-bordered">#}
-{#                                    <thead>#}
-{#                                    <tr>#}
-{#                                        <th scope="col"></th>#}
-{#                                        <th scope="col">訓練集</th>#}
-{#                                        <th scope="col">驗證集</th>#}
-{#                                        <th scope="col">測試集</th>#}
-{#                                    </tr>#}
-{#                                    </thead>#}
-{#                                    <tbody>#}
-{#                                    {% for label in labeling_job.label_set.all %}#}
-{#                                        <tr>#}
-{#                                            <td>{{ label.name }}</td>#}
-{#                                            <td>{{ label.show_train_set_count }}</td>#}
-{#                                            <td>{{ label.show_dev_set_count }}</td>#}
-{#                                            <td>{{ label.show_test_set_count }}</td>#}
-{#                                        </tr>#}
-{#                                    {% endfor %}#}
-{#                                    <tr class="table-active">#}
-{#                                        <td>總計</td>#}
-{#                                        <td>{{ labeling_job.get_train_set.count }}</td>#}
-{#                                        <td>{{ labeling_job.get_dev_set.count }}</td>#}
-{#                                        <td>{{ labeling_job.get_test_set.count }}</td>#}
-{#                                    </tr>#}
-{#                                    </tbody>#}
-{#                                </table>#}
-{#                            </div>#}
-{#                        </div>#}
+                        </div>
 
                     {% endif %}
                 {% endwith %}
@@ -120,25 +85,6 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-{#                                {% for label, cm_row in dev_report.report.items %}#}
-{#                                    <tr>#}
-{#                                        <td>#}
-{#                                            {{ label }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"precision"|floatformat:2 }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"recall"|floatformat:2 }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"support"|floatformat:0 }}#}
-{#                                        </td>#}
-{#                                    </tr>#}
-{#                                {% endfor %}#}
                                 </tbody>
                             </table>
                         </div>
@@ -162,25 +108,6 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-{#                                {% for label, cm_row in test_report.report.items %}#}
-{#                                    <tr>#}
-{#                                        <td>#}
-{#                                            {{ label }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"precision"|floatformat:2 }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"recall"|floatformat:2 }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"support"|floatformat:0 }}#}
-{#                                        </td>#}
-{#                                    </tr>#}
-{#                                {% endfor %}#}
                                 </tbody>
                             </table>
                         </div>
@@ -203,25 +130,6 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-{#                                {% for label, cm_row in ext_test_report.report.items %}#}
-{#                                    <tr>#}
-{#                                        <td>#}
-{#                                            {{ label }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"precision"|floatformat:2 }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"recall"|floatformat:2 }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}#}
-{#                                        </td>#}
-{#                                        <td>#}
-{#                                            {{ cm_row|get_item:"support"|floatformat:0 }}#}
-{#                                        </td>#}
-{#                                    </tr>#}
-{#                                {% endfor %}#}
                                 </tbody>
                             </table>
                         </div>
@@ -229,7 +137,6 @@
                             <a id="ext_test_download" href="{% url 'modeling_jobs:api-doc-download-details' job.id 'ext_test' %}">額外預測細節下載(csv)</a>
                         </div>
                 </div>
-        </div>
     </div>
     <!-- Modal -->
     <div class="modal fade" id="jobUpdateModal" tabindex="-1" aria-labelledby="jobUpdateModalLabel" aria-hidden="true">

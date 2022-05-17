@@ -237,7 +237,6 @@ def add_rule(request, task_id):
     return HttpResponse(template.render(context, request))
 
 
-
 @csrf_exempt
 def update_rule(request, task_id, rule_id):
     if request.method == 'POST':
@@ -300,7 +299,6 @@ def delete_rule(request, task_id, rule_id):
         return HttpResponseRedirect(
             reverse('documenting_jobs:job-detail', kwargs={"task_id": task_id})
         )
-
 
 def download_sample_file(request):
     parent_dir = create_sample_dir()
