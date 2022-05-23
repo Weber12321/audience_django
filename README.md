@@ -4,7 +4,7 @@
 
 ## Workflow
 
-![](C:\Users\ychuang\PycharmProjects\audience-toolkit-dango\audience_site.png)
+![](audience_site.png)
 
 ## Requirements
 
