@@ -33,6 +33,7 @@
                     操作
                 </button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                    <a href="{% url 'predicting_jobs:job-task-list' predicting_job.id %}" class="dropdown-item" id="result-btn">查看任務資訊</a>
                     <a class="dropdown-item" href="" data-toggle="modal" data-target="#jobUpdateModal">修改</a>
                     <a class="dropdown-item" href="{% url 'predicting_jobs:job-delete' predicting_job.id %}">刪除</a>
                 </div>
@@ -117,7 +118,7 @@
                                 <th scope="col">#</th>
                                 <th scope="col">資料範圍名稱</th>
                                 <th scope="col">狀態</th>
-                                <th scope="col">命中文章數</th>
+{#                                <th scope="col">命中文章數</th>#}
                                 <th scope="col">資料源</th>
                                 <th scope="col">時間範圍</th>
                                 <th scope="col"></th>
@@ -129,7 +130,7 @@
                                 <th scope="row">{{ target.id }}</th>
                                 <td>{{ target.name }}</td>
                                 <td id="target-status-{{ target.id }}">{{ target.get_job_status_display }}</td>
-                                <td id="doc-count-{{ target.id }}">{{ target.predictingresult_set.count }}</td>
+{#                                <td id="doc-count-{{ target.id }}">{{ target.predictingresult_set.count }}</td>#}
                                 <td>{{ target.source.name }}</td>
                                 <td>{{ target.begin_post_time }}<br>~<br>{{ target.end_post_time }}</td>
                                 <td>
@@ -154,6 +155,10 @@
                                             <a href="{% url 'predicting_jobs:result-samples' predicting_job.id target.id %}"
                                                class="dropdown-item" id="result-btn">查看抽樣結果</a>
                                             {#                                            {% endif %}#}
+
+                                            <a href="{% url 'predicting_jobs:task-list' predicting_job.id target.id %}"
+                                               class="dropdown-item" id="result-btn">查看任務資訊</a>
+
                                             <a href="{% url 'predicting_jobs:job-target-update' predicting_job.id target.id %}"
                                                class="dropdown-item">修改</a>
                                             <a href="{% url 'predicting_jobs:job-target-delete' predicting_job.id target.id %}"
@@ -334,6 +339,14 @@
             {#$('#test-btn-' + job_id).attr("hidden", true)#}
         }
 
+        function set_row_break_display(job_id) {
+            $('#state-' + job_id).text("中斷")
+            {#$('#result-btn').hide()#}
+            {#$('#train-btn-' + job_id).text("重試")#}
+            {#    .removeClass("disabled")#}
+            {#$('#test-btn-' + job_id).attr("hidden", true)#}
+        }
+
         function get_progress(url) {
             return $.get({
                 url: url
@@ -368,6 +381,10 @@
                         timeout = 1000
                         set_row_processing_display(job_id)
                         break
+                    case 'break':
+                        set_row_break_display(job_id)
+                        break
+
                     default:
                         console.log(state)
                         set_row_error_display(job_id)

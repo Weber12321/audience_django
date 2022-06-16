@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load result_extras %}
+{% block nav_title %} 資料整備任務 {% endblock %}
+{% block page_title %}
+    任務列表
+{% endblock %}
+{% block page_functions %}
+    {% if user.is_staff %}
+        <div class="d-sm-flex align-items-center justify-content-between mb-3">
+            <button type="button" class="btn btn-outline-primary"
+                    onclick="window.location.href='{% url 'documenting_jobs:sample-download' %}'">
+                範例資料
+            </button>
+            <button type="button" class="btn btn-outline-primary" onclick="">
+                資料標註平台
+            </button>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <h4>資料整備流程</h4>
+        <p>
+            先至 <b>doccano 資料標註平台</b> 進行資料標註，再建立新任務將 <u>結果資料</u>(csv) 上傳至任務頁面。<br>
+            <small>
+                <a href="https://doccano.github.io/doccano/">What is doccano?</a>
+            </small>
+        </p>
+        <p>
+            上傳格式請參考 <b>任務範例資料</b>
+        </p>
+    <div class="row">
+        <div class="card shadow col-sm-3">
+        <div class="card-body">
+            <div class="card-title font-weight-bold">machine_learning_task</div>
+                <p>建立任務請選擇 機器學習模型資料</p>
+                <p>每項任務請至少準備以下類型資料:</p>
+                <ul>
+                    <li>train 訓練資料</li>
+                    <li>dev 驗證資料</li>
+                    <li>test 測試資料</li>
+                </ul>
+                <p>上傳資料欄位，<span style="color:red">*</span>為必要欄位:</p>
+                <ul>
+                    <li>title</li>
+                    <li>author</li>
+                    <li>s_id</li>
+                    <li>s_area_id</li>
+                    <li><span style="color:red">*</span>content</li>
+                    <li>post_time</li>
+                    <li><span style="color:red">*</span>label</li>
+                    <li><span style="color:red">*</span>document_type
+                    <ul>
+                        <li>train</li>
+                        <li>dev</li>
+                        <li>test</li>
+                        <li>ext_test</li>
+                    </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="card shadow col-sm-3">
+            <div class="card-body">
+                <div class="card-title font-weight-bold">rule_task</div>
+                <p>建立任務請選擇 規則模型資料</p>
+                <p>上傳資料欄位，所有欄位均為必要欄位:</p>
+                <ul>
+                    <li>content</li>
+                    <li>label</li>
+                    <li>rule_type
+                    <ul>
+                        <li>keyword</li>
+                        <li>regex</li>
+                    </ul>
+                    </li>
+                    <li>match_type
+                    <ul>
+                        <li>start</li>
+                        <li>end</li>
+                        <li>partially</li>
+                        <li>exactly</li>
+                    </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}

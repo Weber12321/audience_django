@@ -1,10 +1,11 @@
 import logging
+import uuid
+from collections import defaultdict
 from datetime import datetime
-from typing import List, Iterable
+from typing import List, Iterable, Dict, Optional
 
 from django.utils import timezone
 from django_q.models import OrmQ
-from tqdm import tqdm
 
 from audience_toolkits import settings
 from core.audience.audience_worker import AudienceWorker
@@ -177,3 +178,311 @@ def get_queued_tasks_id():
 
 def get_queued_tasks_dict():
     return {t.task_id(): t for t in OrmQ.objects.all()}
+
+
+# =========================
+#       Audience API
+# =========================
+
+import json
+import requests
+from audience_toolkits.settings import API_HEADERS, API_PATH
+
+
+# create_task
+def call_create_task(job: PredictingJob, predicting_target, output_db):
+    applying_models = job.applyingmodel_set.order_by("priority", "created_at")
+
+    job.job_status = JobStatus.PROCESSING
+    job.save()
+
+    source: Source = predicting_target.source
+
+    if predicting_target.begin_post_time > predicting_target.end_post_time:
+        predicting_target.job_status = JobStatus.ERROR
+        predicting_target.save()
+        return
+
+    api_path = f'{API_PATH}/tasks/'
+
+    api_headers = API_HEADERS
+
+    # check if the model information is set in the backends, remove this method later
+    check_model_record(applying_models=applying_models)
+
+    task_id = uuid.uuid1().hex
+    predicting_target.task_id = task_id
+    predicting_target.save()
+
+
+    api_request_body = {
+        "TASK_ID": task_id,
+        "START_TIME": f"{predicting_target.begin_post_time}",
+        "END_TIME": f"{predicting_target.end_post_time}",
+        "INPUT_SCHEMA": source.schema,
+        "INPUT_TABLE": source.tablename,
+        "OUTPUT_SCHEMA": output_db,
+        "COUNTDOWN": 5,
+        "QUEUE": "queue1",
+        "MODEL_ID_LIST": [apply_model.modeling_job.task_id.hex for apply_model in applying_models],
+        "SITE_CONFIG": {"host": source.host,
+                        "port": source.port,
+                        "user": source.username,
+                        "password": source.password,
+                        'db': source.schema,
+                        'charset': 'utf8mb4'}
+    }
+
+    try:
+        predicting_target.job_status = JobStatus.PROCESSING
+        predicting_target.save()
+
+        r = requests.post(api_path, headers=api_headers, data=json.dumps(api_request_body))
+
+        logger.info(f"HTTP status_code: {r.status_code}; response: {r.json()}")
+
+        if r.status_code != 200:
+            predicting_target.job_status = JobStatus.ERROR
+            predicting_target.save()
+
+        response_dict = r.json()
+        return response_dict
+
+    except Exception as e:
+        # if something wrong
+        logger.error(e)
+        job.error_message = e
+        job.job_status = JobStatus.ERROR
+
+    finally:
+        job.save()
+
+
+# result_samples
+def call_result_samples(task_id):
+    sample_path = f'{API_PATH}/tasks/{task_id}/sample/'
+    api_headers = {
+        'accept': 'application/json',
+    }
+
+    r = requests.get(sample_path, headers=api_headers)
+
+    sample_data: Optional[Dict] = r.json()
+
+    return sample_data
+
+
+# check_status
+def call_check_status(task_id):
+    check_status_path = f'{API_PATH}/tasks/{task_id}'
+    api_headers = {
+        'accept': 'application/json',
+    }
+
+    r = requests.get(check_status_path, headers=api_headers)
+
+    if r.status_code != 200:
+        return
+
+    check_status_result = r.json()
+
+    return check_status_result
+
+
+# abort_task
+def call_abort_task(job: PredictingJob, predicting_target: PredictingTarget):
+    task_id = predicting_target.task_id
+
+    if not task_id:
+        return
+
+    api_path = f'{API_PATH}/tasks/abort/'
+
+    api_headers = API_HEADERS
+
+    api_request_body = {
+        "TASK_ID": task_id
+    }
+
+    try:
+        r = requests.post(api_path, headers=api_headers, data=json.dumps(api_request_body))
+        logger.info(f"HTTP status_code: {r.status_code}; response: {r.json()}")
+
+        if r.status_code != 200:
+            predicting_target.job_status = JobStatus.ERROR
+            predicting_target.save()
+
+        else:
+            predicting_target.job_status = JobStatus.BREAK
+            predicting_target.save()
+
+        response_dict = r.json()
+        return response_dict
+
+    except Exception as e:
+        # if something wrong
+        logger.error(e)
+        job.error_message = e
+        job.job_status = JobStatus.ERROR
+        job.save()
+
+
+# delete_task
+def call_delete_task(job: PredictingJob, predicting_target: PredictingTarget):
+    task_id = predicting_target.task_id
+
+    if not task_id:
+        return
+
+    api_path = f'{API_PATH}/tasks/delete/'
+
+    api_headers = API_HEADERS
+
+    api_request_body = {
+        "TASK_ID": task_id
+    }
+
+    try:
+        r = requests.post(api_path, headers=api_headers, data=json.dumps(api_request_body))
+        logger.info(f"HTTP status_code: {r.status_code}; response: {r.json()}")
+
+        if r.status_code != 200:
+            predicting_target.job_status = JobStatus.ERROR
+            predicting_target.save()
+
+        else:
+            predicting_target.job_status = JobStatus.WAIT
+            predicting_target.save()
+
+        response_dict = r.json()
+        return response_dict
+
+    except Exception as e:
+        # if something wrong
+        logger.error(e)
+        job.error_message = e
+        job.job_status = JobStatus.ERROR
+        job.save()
+
+
+def get_temp_rule(applying_models: List[ApplyingModel]) -> List[Dict]:
+    model_list = []
+
+    for applying_model in applying_models:
+        if applying_model.modeling_job.model_name.lower() == 'regex_model':
+            model = get_model(applying_model.modeling_job)
+            if model.patterns:
+                rule = dict(model.patterns)
+                pattern = defaultdict(list)
+                for k, v in rule.items():
+                    for i in v:
+                        pattern[k].append(i[0])
+                model_list.append(dict(pattern))
+        if applying_model.modeling_job.model_name.lower() == 'keyword_model':
+            model = get_model(applying_model.modeling_job)
+            if model.rules:
+                model_list.append(dict(model.rules))
+
+    return model_list
+
+
+def check_job_status(job: PredictingJob):
+    check_targets_status(job)
+    targets = job.predictingtarget_set.all()
+
+    try:
+        for target in targets:
+            if target.job_status == JobStatus.DONE:
+                continue
+            if target.job_status == JobStatus.PROCESSING:
+                return
+            if target.job_status == JobStatus.ERROR:
+                job.status = JobStatus.ERROR
+                job.save()
+                return
+            if target.job_status == JobStatus.BREAK:
+                job.status = JobStatus.BREAK
+                job.save()
+                return
+        job.status = JobStatus.DONE
+        job.save()
+    except Exception as e:
+        job.status = JobStatus.ERROR
+        job.save()
+
+
+def check_jobs_status(jobs: List[PredictingJob]):
+    for job in jobs:
+        check_job_status(job)
+
+
+def check_targets_status(job: PredictingJob):
+    targets = job.predictingtarget_set.all()
+    for target in targets:
+
+        if target.job_status == JobStatus.PROCESSING:
+            _result_dict = call_check_status(target.task_id)
+            if isinstance(_result_dict['error_message'], Dict):
+                if _result_dict['error_message']['prod_stat'] == 'finish':
+                    target.job_status = JobStatus.DONE
+                    target.save()
+                if _result_dict['error_message']['stat'] == 'FAILURE':
+                    target.job_status = JobStatus.ERROR
+                    target.save()
+            else:
+                pass
+
+
+def check_target_status(target: PredictingTarget):
+    _result_dict = call_check_status(target.task_id)
+    if isinstance(_result_dict['error_message'], Dict):
+        if _result_dict['error_message']['prod_stat'] == 'finish':
+            target.job_status = JobStatus.DONE
+            target.save()
+        if _result_dict['error_message']['prod_stat'] == 'no_data':
+            target.job_status = JobStatus.DONE
+            target.save()
+        if _result_dict['error_message']['stat'] == 'FAILURE':
+            target.job_status = JobStatus.ERROR
+            target.save()
+        if _result_dict['error_message']['stat'] == 'BREAK':
+            target.job_status = JobStatus.BREAK
+            target.save()
+    else:
+        pass
+
+    return _result_dict
+
+
+def check_model_record(applying_models):
+    for applying_model in applying_models:
+        r = requests.get(url=f"{API_PATH}/models/{applying_model.modeling_job.task_id.hex}")
+        if r.status_code != 200:
+            result = call_model_preparing(
+                model_job_id=applying_model.modeling_job.task_id.hex,
+                labeling_job_id=applying_model.modeling_job.jobRef.id,
+                model_type=applying_model.modeling_job.model_name,
+                feature=applying_model.modeling_job.feature.upper()
+            )
+            if result.status_code != 200:
+                raise ValueError(f"cannot create a number due to {result.json()}")
+        else:
+            continue
+
+
+def call_model_preparing(model_job_id: str, labeling_job_id: int, model_type: str, feature: str):
+    api_path = f'{API_PATH}/models/prepare/'
+    api_headers = API_HEADERS
+    body = {
+        "QUEUE": "queue2",
+        "DATASET_DB": "audience-toolkit-django",
+        "DATASET_NO": labeling_job_id,
+        "MODEL_JOB_ID": model_job_id,
+        "PREDICT_TYPE": feature,
+        "MODEL_TYPE": model_type,
+        "MODEL_INFO": {
+            "model_path": f"{model_job_id}_{model_type}"
+        }
+    }
+    r = requests.post(api_path, headers=api_headers, data=json.dumps(body))
+    return r

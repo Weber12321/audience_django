@@ -1,13 +1,16 @@
 import json
 import logging
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+from pathlib import PurePath, Path
 from typing import List, Union, Dict, Tuple
 
 import numpy as np
+import requests
 from django.db.models import QuerySet
 from sklearn import preprocessing
 
 from audience_toolkits import settings
+from audience_toolkits.settings import API_HEADERS, API_PATH
 from core.audience.models.base_model import SuperviseModel, RuleBaseModel
 from core.audience.models.classic.term_weight_model import TermWeightModel
 from core.dao.input_example import Features, InputExample
@@ -258,3 +261,366 @@ def eval_dataset(model, job: ModelingJob, dataset, dataset_type: Document.TypeCh
         else:
             raise ValueError(f"Unknown prediction data format {type(pred)}")
         pr.save()
+
+
+# ===================================
+#           Modeling API
+# ===================================
+def call_model_preparing(job: ModelingJob):
+    job.job_status = ModelingJob.JobStatus.PROCESSING
+    job.save()
+    try:
+        model_path = f"{job.id}_{job.model_name}"
+        api_path = f'{API_PATH}/models/prepare/'
+        api_headers = API_HEADERS
+        api_request_body = {"QUEUE": "queue2",
+                            "DATASET_DB": "audience-toolkit-django",
+                            # "DATASET_NO": job.jobRef.id,
+                            "DATASET_NO": job.docRef.task_id.hex,
+                            "TASK_ID": job.task_id.hex,
+                            "PREDICT_TYPE": job.feature.upper(),
+                            "MODEL_TYPE": job.model_name.upper(),
+                            "MODEL_INFO": {"model_path": model_path,
+                                           "feature_model": "SGD"
+                                           }
+                            }
+
+        result = requests.post(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+
+        if result.status_code != 200:
+            logger.debug(result.json())
+            job.error_message = result.json()
+            job.job_status = ModelingJob.JobStatus.ERROR
+            job.save()
+
+    except Exception as e:
+        logger.debug(e)
+        job.error_message = e
+        job.job_status = ModelingJob.JobStatus.ERROR
+        job.save()
+        raise ValueError("Task Failed")
+
+
+def call_model_testing(uploaded_file, job: ModelingJob, remove_old_data=True):
+    job.job_test_status = ModelingJob.JobStatus.PROCESSING
+    job.save()
+    try:
+        create_ext_data(uploaded_file=uploaded_file, job=job.jobRef, remove_old_data=remove_old_data)
+        logger.debug(job.model_name, job.model_path, job.is_multi_label)
+
+        model_path = f"{job.id}_{job.model_name}"
+        api_path = f'{API_PATH}/models/test/'
+        api_headers = API_HEADERS
+        api_request_body = {"QUEUE": "queue2",
+                            "DATASET_DB": "audience-toolkit-django",
+                            # "DATASET_NO": job.jobRef.id,
+                            "DATASET_NO": job.docRef.task_id.hex,
+                            "MODEL_JOB_ID": job.id,
+                            "PREDICT_TYPE": job.feature.upper(),
+                            "MODEL_TYPE": job.model_name.upper(),
+                            "MODEL_INFO": {"model_path": model_path,
+                                           "feature_model": "SGD"
+                                           }
+                            }
+        result = requests.post(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+
+        if isinstance(result.json(), str):
+            logger.debug(f'Task is failed, since {result.json()}')
+            job.error_message = result.json()
+            job.ext_test_status = ModelingJob.JobStatus.ERROR
+            job.save()
+
+    except Exception as e:
+        logger.debug(e)
+        job.error_message = e
+        job.ext_test_status = ModelingJob.JobStatus.ERROR
+        job.save()
+        raise ValueError("Task Failed")
+
+
+def call_model_status(task_id: str):
+    api_path = f"{API_PATH}/models/{task_id}"
+    api_headers = API_HEADERS
+    result = requests.get(url=api_path, headers=api_headers)
+    return result.status_code, result.json()
+
+
+def call_import_model_status(task_id: str, upload_job_id: int):
+    api_path = f"{API_PATH}/models/{task_id}/import_model/{upload_job_id}"
+    api_headers = API_HEADERS
+    result = requests.get(url=api_path, headers=api_headers)
+    return result.status_code, result.json()
+
+
+def call_model_report(task_id: str):
+    api_path = f"{API_PATH}/models/{task_id}/report/"
+    api_headers = API_HEADERS
+    report = requests.get(url=api_path, headers=api_headers)
+    return report.status_code, report.json()
+
+
+def call_get_term_weight_set(task_id: str):
+    api_path = f"{API_PATH}/models/{task_id}/term_weight"
+    api_headers = API_HEADERS
+    result = requests.get(url=api_path, headers=api_headers)
+    return result.status_code, result.json()
+
+
+# def call_model_import(upload_job: UploadModelJob):
+#     upload_job.job_status = UploadModelJob.JobStatus.PROCESSING
+#     upload_job.save()
+#     try:
+#         file = upload_job.file
+#         api_path = f'{API_PATH}/models/import_model/'
+#         api_headers = API_HEADERS.update({'Content-Type': 'multipart/form-data'})
+#         api_request_body = {"QUEUE": "queue2",
+#                             "TASK_ID": upload_job.modeling_job.task_id.hex,
+#                             "PREDICT_TYPE": upload_job.modeling_job.feature.upper(),
+#                             "MODEL_PATH": f'{upload_job.modeling_job.id}_{upload_job.modeling_job.model_name}'}
+#         if upload_job.modeling_job.model_name in {"TERM_WEIGHT_MODEL"}:
+#             logger.debug(upload_job.modeling_job.model_name)
+#             r = requests.put(url=api_path,
+#                              headers=api_headers,
+#                              files={'file': open(file.path, 'rb')},
+#                              data=json.dumps(api_request_body))
+#             if r.status_code != 200:
+#                 logger.debug(r.json())
+#                 upload_job.job_status = UploadModelJob.JobStatus.ERROR
+#         else:
+#             raise ValueError(f'Unknown or unsupported model {upload_job.modeling_job.model_name}.')
+#     except Exception as e:
+#         logger.debug(e)
+#         upload_job.job_status = UploadModelJob.JobStatus.ERROR
+#     finally:
+#         upload_job.save()
+
+
+def process_report(task_id: str):
+    status_code, report = call_model_report(task_id=task_id)
+    last_report = report[-1]['report'] if isinstance(report[-1]['report'], dict) else json.loads(report[-1]['report'])
+    reports: dict = _process_report(last_report)
+    accuracy = reports.pop('accuracy')
+    macro_avg = reports.pop('macro avg')
+    macro_avg['f1_score'] = macro_avg['f1-score']
+    weighted_avg = reports.pop('weighted avg')
+    weighted_avg['f1_score'] = weighted_avg['f1-score']
+    label_info = namedtuple('label_info', ['label', 'precision', 'recall', 'f1_score', 'support'])
+    labels = []
+    for key in reports.keys():
+        label = reports.get(key)
+        s = label_info(key, label.get('precision'), label.get('recall'), label.get('f1-score'), label.get('support'))
+        labels.append(s)
+    return {"accuracy": accuracy,
+            "macro_avg": macro_avg,
+            "weighted_avg": weighted_avg,
+            "labels": labels}
+
+
+def _process_report(report: dict):
+    for key in report.keys():
+        if key != 'accuracy':
+            for i in report[key]:
+                report[key][i] = round(report[key][i], 3)
+
+    return report
+
+
+def get_progress_api(pk):
+    job = ModelingJob.objects.get(pk=pk)
+    status_code, status_result = call_model_status(task_id=job.task_id.hex)
+
+    if status_code == 200:
+        if status_result['training_status'] in ('finished', 'untrainable'):
+            job.job_status = ModelingJob.JobStatus.DONE
+            job.save()
+        elif status_result['training_status'] in ('pending', 'started'):
+            job.job_status = ModelingJob.JobStatus.PROCESSING
+            job.save()
+        elif status_result['training_status'] == 'failed':
+            job.job_status = ModelingJob.JobStatus.ERROR
+            job.save()
+        elif status_result['training_status'] == 'break':
+            job.job_status = ModelingJob.JobStatus.BREAK
+            job.save()
+        else:
+            job.job_status = ModelingJob.JobStatus.WAIT
+            job.save()
+        if status_result['ext_status']:
+            if status_result['ext_status'] == 'finished':
+                job.job_status = ModelingJob.JobStatus.DONE
+                job.save()
+            elif status_result['ext_status'] in ('pending', 'started'):
+                job.job_status = ModelingJob.JobStatus.PROCESSING
+                job.save()
+            elif status_result['ext_status'] == 'failed':
+                job.job_status = ModelingJob.JobStatus.ERROR
+                job.save()
+            elif status_result['ext_status'] == 'break':
+                job.job_status = ModelingJob.JobStatus.BREAK
+                job.save()
+            else:
+                job.job_status = ModelingJob.JobStatus.WAIT
+                job.save()
+    elif status_code == 400:
+        job.job_status = ModelingJob.JobStatus.WAIT
+        job.save()
+    else:
+        job.error_message = status_result
+        job.job_status = ModelingJob.JobStatus.ERROR
+        job.save()
+
+    # upload_set = ModelingJob.objects.filter(uploadmodeljob__modeling_job_id__exact=pk).values_list('uploadmodeljob__id',
+    #                                                                                                'task_id')
+    #
+    # for upload_job_id, task_id in upload_set:
+    #     _status_code, _status_result = call_import_model_status(task_id=task_id,
+    #                                                             upload_job_id=upload_job_id)
+    #
+    #     upload_job = UploadModelJob.objects.get(pk=upload_job_id)
+    #
+    #     if _status_code == 200:
+    #         if _status_result['status'] == 'finished':
+    #             upload_job.job_status = UploadModelJob.JobStatus.DONE
+    #             upload_job.save()
+    #         if _status_result['status'] == 'failed':
+    #             upload_job.job_status = UploadModelJob.JobStatus.ERROR
+    #             upload_job.save()
+    #     else:
+    #         upload_job.job_status = UploadModelJob.JobStatus.ERROR
+    #         upload_job.save()
+
+    return job
+
+
+def get_report_details(task_id):
+    report_code, report_set = call_model_report(task_id)
+
+    if report_code != 200:
+        return None
+
+    # return [convert_dict_to_namedtuple(report['dataset_type'], report) for report in report_set]
+    return {report['dataset_type']: convert_report_info_to_dict(report) for report in report_set}
+
+
+#
+# def get_report_ids(report_dict: dict):
+#     return {k: v['id'] for k, v in report_dict.items()}
+
+
+def convert_report_info_to_dict(report: dict):
+    report_dict = {}
+    for key, value in report.items():
+        if key == 'report':
+            report_dict.update({key: json.loads(value)})
+        else:
+            report_dict.update({key: value})
+
+    report_dict['report'].pop('accuracy')
+    return report_dict
+
+
+# def get_detail_file_link(report_dict: dict):
+#     report_id_dict = get_report_ids(report_dict)
+#     prefix = f"{API_PATH}/models/download_details/"
+#     _output_dict = defaultdict(str)
+#     for k, v in report_id_dict.items():
+#         _output_dict[k] = prefix + str(v)
+#
+#     return _output_dict
+def get_detail_file_link(task_id: str):
+    _output_dict = defaultdict(str)
+    prefix = f"{API_PATH}/models/download_details/{task_id}/"
+    set_name = {'train', 'dev', 'test', 'ext_test'}
+    for s in set_name:
+        _output_dict[s] = prefix + s
+
+    return _output_dict
+
+
+def call_download_details(task_id: str, data_type: str):
+    api_path = f"{API_PATH}/models/download_details/{task_id}/{data_type}"
+    api_headers = API_HEADERS
+    response = requests.get(url=api_path, headers=api_headers)
+    detail_folder_path = create_details_dir()
+    file_path = Path(detail_folder_path / f'{task_id}_{data_type}.csv')
+    with open(file_path, 'wb') as f:
+        f.write(response.content)
+    return file_path
+
+
+def create_details_dir(term_weight: bool = False):
+    root_dir = PurePath(__file__).parent
+    folder = "term_weight_details" if term_weight else "model_details"
+    save_detail_folder = Path(root_dir / folder)
+    Path(save_detail_folder).mkdir(exist_ok=True)
+    return save_detail_folder
+
+
+def call_get_term_weights(task_id: str):
+    api_path = f"{API_PATH}/models/{task_id}/term_weight"
+    api_headers = API_HEADERS
+    response = requests.get(url=api_path, headers=api_headers)
+    return response
+
+
+def call_term_weight_add(task_id: str, label: str, term: str, weight: float):
+    api_path = f"{API_PATH}/models/term_weight/add"
+    api_headers = API_HEADERS
+    api_request_body = {
+        "TASK_ID": task_id,
+        "LABEL": label,
+        "TERM": term,
+        "WEIGHT": weight
+    }
+
+    response = requests.put(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+    return response
+
+
+def call_term_weight_update(term_weight_id: int, label: str, term: str, weight: float):
+    api_path = f"{API_PATH}/models/term_weight/update"
+    api_headers = API_HEADERS
+    api_request_body = {
+        "TERM_WEIGHT_ID": term_weight_id,
+        "LABEL": label,
+        "TERM": term,
+        "WEIGHT": weight
+    }
+
+    response = requests.post(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+    return response
+
+
+def call_term_weight_delete(term_weight_id: int):
+    api_path = f"{API_PATH}/models/term_weight/delete"
+    api_headers = API_HEADERS
+    api_request_body = {
+        "TERM_WEIGHT_ID": term_weight_id
+    }
+    response = requests.delete(url=api_path, headers=api_headers, data=json.dumps(api_request_body))
+    return response
+
+
+def call_term_weight_download(task_id: str):
+    api_path = f"{API_PATH}/models/{task_id}/term_weight/download"
+    api_headers = API_HEADERS
+    response = requests.get(url=api_path, headers=api_headers)
+    if response.status_code != 200:
+        return response
+
+    detail_folder_path = create_details_dir(term_weight=True)
+    file_path = Path(detail_folder_path / f'{task_id}_term_weight.csv')
+    with open(file_path, 'wb') as f:
+        f.write(response.content)
+    return file_path
+
+
+def call_model_import(task_id: str, file):
+    api_path = f'{API_PATH}/models/{task_id}/import_model/'
+    api_headers = API_HEADERS.update({'Content-Type': 'multipart/form-data'})
+    response = requests.post(url=api_path,
+                             headers=api_headers,
+                             # files={'file': open(file, 'rb')}
+                             files={'file': file}
+                             )
+    return response

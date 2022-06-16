@@ -26,7 +26,7 @@ class SuperviseModel(ABC):
         self.feature = feature if isinstance(feature, Features) else Features(feature)
         self.is_multi_label = True
         self.na_tag = na_tag
-        logger.debug(f'na_tag: {self.na_tag} (If model predict noting, it will be the default prediction)')
+        logger.debug(f'na_tag: {self.na_tag} (If model predict nothing, it will be the default prediction)')
 
     @abstractmethod
     def fit(self, examples: Iterable[InputExample], y_true):

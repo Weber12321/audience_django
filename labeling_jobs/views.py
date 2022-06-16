@@ -17,6 +17,7 @@ from rest_framework.response import Response
 from rest_framework_datatables.django_filters.backends import DatatablesFilterBackend
 from rest_framework_datatables.django_filters.filters import GlobalFilter
 from rest_framework_datatables.django_filters.filterset import DatatablesFilterSet
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 
 from .forms import LabelingJobForm, UploadFileJobForm, LabelForm, RuleForm, RegexForm
 from .models import LabelingJob, UploadFileJob, Document, Label, Rule, SampleData
@@ -83,11 +84,11 @@ class LabelingJobDetailAndUpdateView(LoginRequiredMixin, generic.UpdateView):
 
     def get_template_names(self):
         if self.object.job_data_type == LabelingJob.DataTypes.RULE_BASE_MODEL:
-            return 'job_detail/keyword_job_detail.html'
+            return 'job_details/keyword_job_detail.html'
         elif self.object.job_data_type == LabelingJob.DataTypes.REGEX_MODEL:
-            return 'job_detail/regex_job_detail.html'
+            return 'job_details/regex_job_detail.html'
         else:
-            return 'job_detail/supervise_job_detail.html'
+            return 'job_details/supervise_job_detail.html'
 
     # def get_form(self, form_class=None):
 
@@ -445,7 +446,20 @@ class LabelingJobsSet(viewsets.ModelViewSet):
     """
     queryset = LabelingJob.objects.all().order_by("-created_at")
     serializer_class = LabelingJobSerializer
+
+    def get_serializer_context(self):
+        result = super().get_serializer_context()
+        result.update({"request": None})
+        return result
+
+    # def get_queryset(self):
+    #     return LabelingJob.objects.all().order_by("-created_at")
     # permission_classes = [permissions.IsAuthenticated]
+
+    # def get(self, request, *args, **kwargs):
+    #     qs = self.get_queryset()
+    #     page = self.paginate_queryset(qs)
+    #     return self.get_paginated_response(page)
 
 
 class LabelSet(viewsets.ModelViewSet):

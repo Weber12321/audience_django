@@ -1,4 +1,5 @@
 import json
+import uuid
 from collections import namedtuple
 from typing import Union, List, NamedTuple
 
@@ -9,6 +10,7 @@ from django.urls import reverse
 
 from audience_toolkits import settings
 from core.helpers.model_helpers import get_model_class
+from documenting_jobs.models import DocumentingJob
 from labeling_jobs.models import LabelingJob, Document, Label
 
 
@@ -29,6 +31,7 @@ class ModelingJob(models.Model):
     model_name = models.CharField(max_length=50, choices=__model_choices__, verbose_name="模型類型")
     feature = models.CharField(max_length=50, choices=__feature_choices__, default='content', verbose_name="特徵欄位")
     jobRef = models.ForeignKey(LabelingJob, verbose_name="使用資料", on_delete=models.SET_NULL, blank=True, null=True)
+    docRef = models.ForeignKey(DocumentingJob, verbose_name="模型資料來源", on_delete=models.SET_NULL, blank=True, null=True)
     job_status = models.CharField(max_length=20, verbose_name="模型訓練狀態", default=JobStatus.WAIT,
                                   choices=JobStatus.choices)
     error_message = models.TextField(verbose_name="錯誤訊息", null=True)
@@ -37,6 +40,7 @@ class ModelingJob(models.Model):
     model_path = models.CharField(max_length=100, verbose_name="模型存放位置", blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="建立者")
+    task_id = models.UUIDField(default=uuid.uuid1, unique=True, editable=False, verbose_name="audience api 任務 ID")
 
     def __str__(self):
         return self.name

@@ -13,7 +13,7 @@
             </button>
             <button id="train-btn-{{ job.id }}"
                     class="btn btn-outline-primary"
-                    {% if not job.is_trainable %}hidden{% endif %}
+{#                    {% if not job.is_trainable %}hidden{% endif %}#}
                     onclick="train_model({{ job.id }},'{% url 'modeling_jobs:training-model' job.id %}')">
                 開始訓練
             </button>
@@ -53,43 +53,13 @@
                 </div>
             </div>
             <div class="card shadow mb-4">
-                {% with labeling_job=job.jobRef %}
-                    {% if labeling_job %}
+                {% with documenting_jobs=job.docRef %}
+                    {% if documenting_jobs %}
 
-                        <div class="card-header">訓練資料</div>
+                    <div class="card-header">訓練資料</div>
                         <div class="card-body">
-                            <div class="card-title">使用資料：#{{ labeling_job.id }} <a
-                                    href="{% url 'labeling_jobs:job-detail' labeling_job.id %}">{{ labeling_job.name }}</a>
-                            </div>
-
-                            <div class="card-title">資料數量：</div>
-                            <div class="table-responsive mt-2">
-                                <table class="table table-bordered">
-                                    <thead>
-                                    <tr>
-                                        <th scope="col"></th>
-                                        <th scope="col">訓練集</th>
-                                        <th scope="col">驗證集</th>
-                                        <th scope="col">測試集</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {% for label in labeling_job.label_set.all %}
-                                        <tr>
-                                            <td>{{ label.name }}</td>
-                                            <td>{{ label.show_train_set_count }}</td>
-                                            <td>{{ label.show_dev_set_count }}</td>
-                                            <td>{{ label.show_test_set_count }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                    <tr class="table-active">
-                                        <td>總計</td>
-                                        <td>{{ labeling_job.get_train_set.count }}</td>
-                                        <td>{{ labeling_job.get_dev_set.count }}</td>
-                                        <td>{{ labeling_job.get_test_set.count }}</td>
-                                    </tr>
-                                    </tbody>
-                                </table>
+                            <div class="card-title">模型資料來源: #{{ documenting_jobs.id }}
+                                <a href="{% url 'documenting_jobs:job-detail' documenting_jobs.task_id|cut:"-" %}">{{ documenting_jobs.name }}</a>
                             </div>
                         </div>
 
@@ -100,13 +70,11 @@
         <div class="col-md-6 mb-4">
             <div class="h5">模型效果</div>
             <hr>
-            {% if job.get_latest_train_report %}
-                {% with train_report=job.get_latest_train_report %}
-                    <div class="card shadow mb-4">
-                        <div class="card-header">訓練集</div>
+                <div id='dt' class="card shadow mb-4">
+                    <div id='dev_report_id' class="card-header"></div>
                         <div class="card-body">
-                            <div>準確率：{{ train_report.accuracy|floatformat:2 }}</div>
-                            <table class="table">
+                            <div id='dev_acc'></div>
+                            <table id="dev_table" class="table">
                                 <thead>
                                 <tr>
                                     <th></th>
@@ -117,42 +85,19 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for label, cm_row in train_report.get_report.items %}
-                                    <tr>
-                                        <td>
-                                            {{ label }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"precision"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"recall"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"support"|floatformat:0 }}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
                                 </tbody>
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a href="{% url 'modeling_jobs:report-detail' job.id train_report.id %}">檢視預測細節</a>
+                            <a id='dev_download' href="{% url 'modeling_jobs:api-doc-download-details' job.id 'dev' %}">驗證細節下載(csv)</a>
                         </div>
                     </div>
-                {% endwith %}
-            {% endif %}
 
-            {% if job.get_latest_dev_report %}
-                {% with dev_report=job.get_latest_dev_report %}
-                    <div class="card shadow mb-4">
-                        <div class="card-header">驗證集</div>
+                <div id="tt" class="card shadow mb-4">
+                    <div id="test_report_id" class="card-header"></div>
                         <div class="card-body">
-                            <div>準確率：{{ dev_report.accuracy|floatformat:2 }}</div>
-                            <table class="table">
+                            <div id="test_acc"></div>
+                            <table id="test_table" class="table">
                                 <thead>
                                 <tr>
                                     <th></th>
@@ -163,41 +108,18 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for label, cm_row in dev_report.get_report.items %}
-                                    <tr>
-                                        <td>
-                                            {{ label }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"precision"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"recall"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"support"|floatformat:0 }}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
                                 </tbody>
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a href="{% url 'modeling_jobs:report-detail' job.id dev_report.id %}">檢視預測細節</a>
+                            <a id='test_download' href="{% url 'modeling_jobs:api-doc-download-details' job.id 'test' %}">預測細節下載(csv)</a>
                         </div>
                     </div>
-                {% endwith %}
-            {% endif %}
-            {% if job.get_latest_test_report %}
-                {% with test_report=job.get_latest_test_report %}
-                    <div class="card shadow mb-4">
-                        <div class="card-header">測試集</div>
+                <div id="ett" class="card shadow mb-4">
+                    <div id="ext_test_report_id" class="card-header"></div>
                         <div class="card-body">
-                            <div>準確率：{{ test_report.accuracy|floatformat:2 }}</div>
-                            <table class="table">
+                            <div id="ext_test_acc"></div>
+                            <table id="ext_test_table" class="table">
                                 <thead>
                                 <tr>
                                     <th></th>
@@ -208,81 +130,13 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for label, cm_row in test_report.get_report.items %}
-                                    <tr>
-                                        <td>
-                                            {{ label }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"precision"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"recall"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"support"|floatformat:0 }}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
                                 </tbody>
                             </table>
                         </div>
                         <div class="card-footer">
-                            <a href="{% url 'modeling_jobs:report-detail' job.id test_report.id %}">檢視預測細節</a>
+                            <a id="ext_test_download" href="{% url 'modeling_jobs:api-doc-download-details' job.id 'ext_test' %}">額外預測細節下載(csv)</a>
                         </div>
-                    </div>
-                {% endwith %}
-            {% endif %}
-
-            {% if job.get_latest_ext_test_report %}
-                {% with ext_test_report=job.get_latest_ext_test_report %}
-                    <div class="card shadow mb-4">
-                        <div class="card-header">額外測試集</div>
-                        <div class="card-body">
-                            <div>準確率：{{ ext_test_report.accuracy|floatformat:2 }}</div>
-                            <table class="table">
-                                <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>precision</th>
-                                    <th>recall</th>
-                                    <th>f1-score</th>
-                                    <th>support</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for label, cm_row in ext_test_report.get_report.items %}
-                                    <tr>
-                                        <td>
-                                            {{ label }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"precision"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"recall"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"f1-score"|floatformat:2 }}
-                                        </td>
-                                        <td>
-                                            {{ cm_row|get_item:"support"|floatformat:0 }}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="card-footer">
-                            <a href="{% url 'modeling_jobs:report-detail' job.id ext_test_report.id %}">檢視預測細節</a>
-                        </div>
-                    </div>
-                {% endwith %}
-            {% endif %}
-        </div>
+                </div>
     </div>
     <!-- Modal -->
     <div class="modal fade" id="jobUpdateModal" tabindex="-1" aria-labelledby="jobUpdateModalLabel" aria-hidden="true">
@@ -370,6 +224,7 @@
             if (!is_trainable) {
                 $('#test-btn-' + job_id).attr("hidden", false);
             }
+
         }
 
         function set_row_processing_display(job_id, details, is_trainable) {
@@ -385,7 +240,7 @@
         function set_row_wait_display(job_id, details, is_trainable) {
             $('#state-' + job_id).text("等待中").attr('data-original-title', details);
             $('#train-btn-' + job_id)
-                .text("開始訓練")
+                .text("訓練模型")
                 .removeClass("disabled");
             if (!is_trainable) {
                 $('#test-btn-' + job_id).attr("hidden", true);
@@ -432,12 +287,90 @@
                         console.log(state)
                         set_row_error_display(job_id, details, is_trainable)
                 }
+                if (check_response_exist(result.report.dev) == true) {
+                    $('#dt').show()
+                    let report_id = result.report.dev.id
+                    let report_acc = result.report.dev.accuracy.toFixed(2)
+                    let report_details = result.report.dev.report
+                    $('#dev_report_id').text(`驗證集報告_${report_id}`)
+                    $('#dev_acc').text(`準確度: ${report_acc}`)
+                    let output = display_table(report_details)
+                    $('#dev_table tbody').empty()
+                    $('#dev_table tbody').append(output)
+                    {#let download_link = result.download_links.dev#}
+                    {#$('#dev_download').attr("href", download_link)#}
+                } else {
+                    $('#dt').hide()
+                }
+                if (check_response_exist(result.report.test) == true) {
+                   $('#tt').show()
+                   let report_id = result.report.test.id
+                   let report_acc = result.report.test.accuracy.toFixed(2)
+                   let report_details = result.report.test.report
+                   $('#test_report_id').text(`測試集報告_${report_id}`)
+                   $('#test_acc').text(`準確度: ${report_acc}`)
+
+                   let output = display_table(report_details)
+
+                   $('#test_table tbody').empty()
+                   $('#test_table tbody').append(output)
+
+                   {#let download_link = result.download_links.test#}
+
+                   {#$('#test_download').attr("href", download_link)#}
+
+               } else {
+                   $('#tt').hide()
+               }
+               if (check_response_exist(result.report.ext_test) == true) {
+                   $('#ett').show()
+                   let report_id = result.report.ext_test.id
+                   let report_acc = result.report.ext_test.accuracy.toFixed(2)
+                   let report_details = result.report.ext_test.report
+                   $('#ext_test_report_id').text(`額外測試集報告_${report_id}`)
+                   $('#ext_test_acc').text(`準確度: ${report_acc}`)
+
+                   let output = display_table(report_details)
+
+                   $('#ext_test_table tbody').empty()
+                   $('#ext_test_table tbody').append(output)
+
+                   {#let download_link = result.download_links.ext_test#}
+
+                   {#$('#ext_test_download').attr("href", download_link)#}
+               } else {
+                   $('#ett').hide()
+               }
 
                 setTimeout(function () {
                     {#console.log(url)#}
                     update_progress(job_id, url)
                 }, timeout);
             });
+        }
+        function check_response_exist(report_details_set){
+            return report_details_set != null;
+        }
+
+        function display_table(report_details) {
+           let output = '';
+
+            for (let key in report_details) {
+                output += '<tr><td>'
+                output += key
+                for (let k in report_details[key]) {
+                    if (Number.isInteger(report_details[key][k])) {
+                        var temp_score = report_details[key][k]
+                    }
+                    else {
+                        var temp_score = report_details[key][k].toFixed(2)
+                    }
+                    output += '</td><td>'
+                    output += temp_score
+                }
+                output += '</td></tr>'
+            }
+            return output;
         }
 
         update_progress(

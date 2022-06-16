@@ -6,7 +6,7 @@
 {% endblock %}
 {% block page_functions %}
     {% if user.is_staff %}
-        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div class="d-sm-flex align-items-center justify-content-between mb-3">
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#jobCreateModal">
                 建立新任務
             </button>
@@ -26,7 +26,8 @@
                             <th>id</th>
                             <th scope="col">模型名稱</th>
                             <th scope="col">模型類型</th>
-                            <th scope="col">使用資料</th>
+{#                            <th scope="col">使用資料</th>#}
+                            <th scope="col">模型資料來源</th>
                             <th scope="col">建立時間</th>
                             <th scope="col">建立者</th>
                             <th scope="col">模型狀態</th>
@@ -39,9 +40,16 @@
                                 <td>{{ job.id }}</td>
                                 <td><a href="{% url 'modeling_jobs:job-detail' job.id %}">{{ job.name }}</a></td>
                                 <td>{{ job.get_model_name_display }}</td>
+{#                                <td>#}
+{#                                    {% if job.jobRef %}#}
+{#                                        <a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a>#}
+{#                                    {% else %}#}
+{#                                        無#}
+{#                                    {% endif %}#}
+{#                                </td>#}
                                 <td>
-                                    {% if job.jobRef %}
-                                        <a href="{% url 'labeling_jobs:job-detail' job.jobRef.id %}">{{ job.jobRef.name }}</a>
+                                    {% if job.docRef %}
+                                        <a href="{% url 'documenting_jobs:job-detail' job.docRef.id %}">{{ job.docRef.name }}</a>
                                     {% else %}
                                         無
                                     {% endif %}

@@ -5,25 +5,41 @@
     模型訓練任務
 {% endblock %}
 {% block page_title %}{{ report.name }}{% endblock %}
-{% block page_functions %}
-    {% if user.is_staff %}
-        <div class="dropdown mb-4">
-            <a class="btn btn-primary" href="{% url 'modeling_jobs:job-detail' report.modeling_job.id %}">回模型任務</a>
-        </div>
-    {% endif %}
-{% endblock %}
+{#{% block page_functions %}#}
+{#    {% if user.is_staff %}#}
+{#        <div class="dropdown mb-4">#}
+{#            <a class="btn btn-primary" href="{% url 'modeling_jobs:job-detail' report.modeling_job.id %}">回模型任務</a>#}
+{#        </div>#}
+{#    {% endif %}#}
+{#{% endblock %}#}
 {% block page_info %}
 {% endblock %}
 {% block page_description %}
 {% endblock %}
 {% block content %}
-    <div class="row">
-        <div class="col-lg-7 mb-4">
+
+<table id="records_table">
+    <tr>
+        <th>Rank</th>
+        <th>Content</th>
+        <th>UID</th>
+    </tr>
+</table>
+
+{% block custom_script %}
+    <script>
+
+
+    </script>
+{% endblock %}
+
+
             {% for prediction in page_obj %}
+                <p>{{ prediction }}</p>
                 <div class="card shadow mb-4 {% if prediction.is_right_answer %}border-left-primary{% else %}border-left-danger{% endif %}">
                     <div class="card-body">
                         <div class="h5">
-                            <a href="{% url 'labeling_jobs:doc-detail' prediction.document.labeling_job.id prediction.document.id %}">{{ prediction.document.id }}</a>
+                            <a href="{% url 'labeling_jobs:doc-detail'  prediction.document.id %}">{{ prediction.document.id }}</a>
                             {{ prediction.document.title }}
                         </div>
                         <p>{{ prediction.document.content }}</p>
@@ -97,8 +113,8 @@
                     </table>
                 </div>
             </div>
-        </div>
     </div>
+</div>
     <div class="col-12 pagination text-center">
             <span class="step-links">
                 {% if page_obj.has_previous %}

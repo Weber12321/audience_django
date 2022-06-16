@@ -16,19 +16,31 @@ urlpatterns = [
     path('updateTask', views.update_task, name='api-doc-update'),
     path('deleteTask', views.delete_task, name='api-doc-delete'),
     path('insert_csv', views.insert_csv, name='api-doc-insert_csv'),
+    # refactor: ok
     path('<int:pk>/training', views.training_model, name='training-model'),
-    path('<int:job_id>/import', views.UploadModelJobCreate.as_view(), name='import-model'),
+    # refactor: delete
+    # path('<int:job_id>/import', views.UploadModelJobCreate.as_view(), name='import-model'),
+    # refactor: ok
     path('<int:pk>/ext_test', views.testing_model_via_ext_data, name='api-ext-testing-model'),
+    # refactor: ok
     path('<int:modeling_job_id>/result_page', views.result_page, name='api-doc-result-page'),
-
+    # add
+    path('<int:pk>/download/<str:data_type>', views.download_model_details, name='api-doc-download-details'),
+    # refactor: ok
     path('api/<int:pk>/progress', views.get_progress, name='api-job-progress'),
-    # report curd
-    path('<int:job_id>/report/<int:pk>', views.ReportDetail.as_view(), name="report-detail"),
+    # report curd: out of service
+    # path('<int:pk>/report', views.render_reports, name="report-detail"),
 
-    # term weight curd
-    path('<int:job_id>/term_weight/add', views.TermWeightCreate.as_view(), name="term-weight-add"),
-    path('<int:job_id>/term_weight/<int:pk>/update', views.TermWeightUpdate.as_view(), name="term-weight-update"),
-    path('<int:job_id>/term_weight/<int:pk>/delete', views.TermWeightDelete.as_view(), name="term-weight-delete"),
+    # term weight curd : all term weight crud methods move to ajax
+    path('<int:pk>/term_weight/download', views.download_term_weights, name='api-term-weight-download'),
+    path('<int:pk>/term_weight/add', views.add_term_weight, name='api-term-weight-add'),
+    path('<int:pk>/term_weight/update', views.update_term_weight, name='api-term-weight-update'),
+    path('<int:pk>/term_weight/delete', views.delete_term_weight, name='api-term-weight-delete'),
+    path('<int:pk>/term_weight/', views.render_term_weight, name="api-term-weight"),
+    path('<int:pk>/upload', views.upload_term_weight, name='api-term-weight-upload'),
+    # path('<int:job_id>/term_weight/add', views.render_term_add, name="term-weight-add"),
+    # path('<int:job_id>/term_weight/<int:pk>/update', views.TermWeightUpdate.as_view(), name="term-weight-update"),
+    # path('<int:job_id>/term_weight/<int:pk>/delete', views.TermWeightDelete.as_view(), name="term-weight-delete"),
 
 ]
 

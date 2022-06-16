@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load result_extras %}
+{% block page_title %}
+    {{ job.id }}
+{% endblock %}
+{% block page_description %}
+    {{ job.name }}
+{% endblock %}
+{% block content %}
+    <h1>&#129322; 錯誤代碼 {{ error_code }}</h1>
+    <p>{{ error_message }}</p>
+{% endblock %}

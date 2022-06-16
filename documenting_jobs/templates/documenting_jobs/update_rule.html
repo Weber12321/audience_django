@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}資料整備任務{% endblock %}
+{% block nav_title %}資料整備任務{% endblock %}
+{% block page_title %}
+    更新規則資料
+{% endblock %}
+{% block page_description %}
+    <p>請盡量描述任務的定義與細節。</p>
+{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col">
+            <div class="card o-hidden border-0 shadow-lg my-3">
+                <div class="card-body p-0">
+                    <!-- Nested Row within Card Body -->
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="p-5">
+                                <form id="add-data" method="post"
+                                action="{% url 'documenting_jobs:rule-update' task_id rule.id %}"
+                                enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <p>
+                                        <label for="content">規則內容: </label>
+                                        <input type="text" name="content" id="content" value="{{ rule.content }}"
+                                               maxlength="200" size="50">
+                                    </p>
+                                    <p>
+                                        <label for="label">標籤名稱: </label>
+                                        <input type="text" name="label" id="label" value="{{ rule.label }}"
+                                               maxlength="100">
+
+                                    </p>
+                                    <p>
+                                        <label for="rule_type">規則類型: </label>
+                                        <select id="rule_type" name="rule_type">
+                                            <option value="regex">正則表達式</option>
+                                            <option value="keyword">關鍵字</option>
+                                        </select>
+                                    </p>
+                                    <p>
+                                        <label for="match_type">命中類型: </label>
+                                        <select id="match_type" name="match_type">
+                                            <option value="start">比對開頭</option>
+                                            <option value="end">比對結尾</option>
+                                            <option value="partially">部分命中</option>
+                                            <option value="exactly">完全命中</option>
+                                        </select>
+                                    </p>
+                                    <p>
+                                        <input type="hidden" name="next" value="{{ next }}">
+                                        <input type="submit" id="submit-term-form" class="btn btn-primary" value="送出">
+                                    </p>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

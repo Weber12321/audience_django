@@ -28,7 +28,7 @@ class PredictingTargetForm(forms.ModelForm):
     class Meta:
         model = PredictingTarget
         fields = '__all__'
-        exclude = ['error_message', 'job_status']
+        exclude = ['error_message', 'job_status', 'task_id']
         widgets = {
             "predicting_job": forms.Select(attrs={'class': 'form-control'}),
             "name": forms.TextInput(attrs={'class': 'form-control'}),
